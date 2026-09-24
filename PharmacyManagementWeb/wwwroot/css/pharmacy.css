@@ -1,0 +1,152 @@
+﻿:root {
+    --pharmacy-primary: #16a34a;
+    --pharmacy-primary-dark: #15803d;
+    --pharmacy-sidebar-bg: #0f2e1d;
+    --pharmacy-sidebar-hover: #16442c;
+}
+
+body {
+    background-color: #f3f5f4;
+}
+
+/* ===== Layout khi đã đăng nhập ===== */
+.pharmacy-wrapper {
+    display: flex;
+    min-height: 100vh;
+}
+
+.pharmacy-sidebar {
+    width: 250px;
+    background-color: var(--pharmacy-sidebar-bg);
+    color: #fff;
+    flex-shrink: 0;
+    padding: 1rem 0;
+}
+
+    .pharmacy-sidebar .brand {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1.25rem 1.5rem;
+        font-weight: 700;
+        font-size: 1.1rem;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        margin-bottom: 0.5rem;
+    }
+
+    .pharmacy-sidebar .nav-link {
+        color: rgba(255,255,255,0.85);
+        padding: 0.65rem 1.25rem;
+        border-radius: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+    }
+
+        .pharmacy-sidebar .nav-link:hover,
+        .pharmacy-sidebar .nav-link.active {
+            background-color: var(--pharmacy-sidebar-hover);
+            color: #fff;
+        }
+
+    .pharmacy-sidebar .nav-section-title {
+        color: rgba(255,255,255,0.4);
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        padding: 0.75rem 1.25rem 0.25rem;
+        letter-spacing: 0.05em;
+    }
+
+.pharmacy-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.pharmacy-topbar {
+    background: #fff;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 0.75rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.pharmacy-content {
+    padding: 1.5rem;
+}
+
+/* ===== Card thống kê Dashboard ===== */
+.stat-card {
+    background: #fff;
+    border-radius: 0.6rem;
+    padding: 1.1rem 1.3rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    height: 100%;
+}
+
+    .stat-card .stat-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        color: #fff;
+        margin-bottom: 0.6rem;
+    }
+
+    .stat-card .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+
+    .stat-card .stat-label {
+        color: #6b7280;
+        font-size: 0.85rem;
+    }
+
+.bg-icon-green {
+    background-color: #16a34a;
+}
+
+.bg-icon-blue {
+    background-color: #2563eb;
+}
+
+.bg-icon-orange {
+    background-color: #ea580c;
+}
+
+.bg-icon-red {
+    background-color: #dc2626;
+}
+
+/* ===== Trang Login ===== */
+.pharmacy-login-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #0f2e1d 0%, #16a34a 100%);
+}
+
+.pharmacy-login-card {
+    background: #fff;
+    border-radius: 0.75rem;
+    padding: 2.5rem;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+    .pharmacy-login-card .brand-logo {
+        text-align: center;
+        margin-bottom: 1.5rem;
+    }
+
+        .pharmacy-login-card .brand-logo .icon {
+            font-size: 2.5rem;
+            color: var(--pharmacy-primary);
+        }

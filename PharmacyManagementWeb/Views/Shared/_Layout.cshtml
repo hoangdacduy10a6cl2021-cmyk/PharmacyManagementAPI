@@ -1,49 +1,68 @@
-﻿<!DOCTYPE html>
-<html lang="en">
+﻿@{
+    var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
+    var fullName = User.FindFirst("FullName")?.Value ?? User.Identity?.Name ?? "";
+    bool isAdmin = role == "Admin";
+    string CurrentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    string ActiveClass(string controllerName) => CurrentController.Equals(controllerName, StringComparison.OrdinalIgnoreCase) ? "active" : "";
+}
+<!DOCTYPE html>
+<html lang="vi">
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - PharmacyManagementWeb</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"] - Tâm Thần Pharmacy</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/PharmacyManagementWeb.styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/site.css" />
+    <link rel="stylesheet" href="~/css/pharmacy.css" />
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">PharmacyManagementWeb</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
-                    </ul>
-                </div>
+    <div class="pharmacy-wrapper">
+        <aside class="pharmacy-sidebar">
+            <div class="brand">
+                <span>💊</span> Tâm Thần Pharmacy
             </div>
-        </nav>
-    </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
+
+            <nav class="nav flex-column">
+                <a class="nav-link @ActiveClass("Home")" asp-controller="Home" asp-action="Index">🏠 Trang chủ</a>
+                <a class="nav-link @ActiveClass("Order")" asp-controller="Order" asp-action="Index">🛒 Bán hàng</a>
+                <a class="nav-link @ActiveClass("Prescription")" asp-controller="Prescription" asp-action="Index">📋 Đơn thuốc</a>
+                <a class="nav-link @ActiveClass("Customer")" asp-controller="Customer" asp-action="Index">👥 Khách hàng</a>
+                <a class="nav-link @ActiveClass("Medicine")" asp-controller="Medicine" asp-action="Index">💊 Thuốc / Kho</a>
+
+                @if (isAdmin)
+                {
+                    <div class="nav-section-title">Quản trị</div>
+                    <a class="nav-link @ActiveClass("Category")" asp-controller="Category" asp-action="Index">🏷️ Danh mục</a>
+                    <a class="nav-link @ActiveClass("Supplier")" asp-controller="Supplier" asp-action="Index">🚚 Nhà cung cấp</a>
+                    <a class="nav-link @ActiveClass("PurchaseOrder")" asp-controller="PurchaseOrder" asp-action="Index">📦 Nhập hàng</a>
+                    <a class="nav-link @ActiveClass("Promotion")" asp-controller="Promotion" asp-action="Index">🏷️ Khuyến mãi</a>
+                }
+
+                <div class="nav-section-title">Báo cáo</div>
+                <a class="nav-link @ActiveClass("Report")" asp-controller="Report" asp-action="Index">📊 Báo cáo</a>
+            </nav>
+        </aside>
+
+        <div class="pharmacy-main">
+            <header class="pharmacy-topbar">
+                <div class="fw-semibold">@ViewData["Title"]</div>
+                <div class="d-flex align-items-center gap-3">
+                    <div class="text-end">
+                        <div class="fw-semibold">@fullName</div>
+                        <div class="text-muted small">@(isAdmin ? "Quản trị viên" : "Nhân viên bán hàng / Dược sĩ")</div>
+                    </div>
+                    <a class="btn btn-outline-danger btn-sm" asp-controller="Account" asp-action="Logout">Đăng xuất</a>
+                </div>
+            </header>
+
+            <main class="pharmacy-content">
+                @RenderBody()
+            </main>
+        </div>
     </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - PharmacyManagementWeb - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-        </div>
-    </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

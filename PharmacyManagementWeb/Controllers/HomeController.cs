@@ -1,32 +1,31 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using PharmacyManagementWeb.Models;
-using System.Diagnostics;
+using PharmacyManagementWeb.Models.ApiModels;
+using PharmacyManagementWeb.Services;
 
 namespace PharmacyManagementWeb.Controllers
 {
+    [Authorize]
     public class HomeController : Controller
     {
-        private readonly ILogger<HomeController> _logger;
+        private readonly IApiClient _apiClient;
 
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(IApiClient apiClient)
         {
-            _logger = logger;
+            _apiClient = apiClient;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            return View();
-        }
+            var result = await _apiClient.GetAsync<DashboardModel>("/api/Report/dashboard");
 
-        public IActionResult Privacy()
-        {
-            return View();
-        }
+            if (!result.Success)
+            {
+                ViewBag.Error = result.ErrorMessage ?? "Không thể tải dữ liệu Dashboard.";
+                return View(new DashboardModel());
+            }
 
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+            return View(result.Data ?? new DashboardModel());
         }
     }
 }
