@@ -15,11 +15,15 @@
     <link rel="stylesheet" href="~/css/site.css" />
     <link rel="stylesheet" href="~/css/pharmacy.css" />
 </head>
-<body>
+<body class="@(isAdmin ? "theme-admin" : "theme-staff")">
     <div class="pharmacy-wrapper">
         <aside class="pharmacy-sidebar">
             <div class="brand">
                 <span>💊</span> Tâm Thần Pharmacy
+                @if (isAdmin)
+                {
+                    <span class="badge bg-light text-dark ms-1" style="font-size:0.65rem;">ADMIN</span>
+                }
             </div>
 
             <nav class="nav flex-column">
@@ -49,7 +53,7 @@
                 <div class="d-flex align-items-center gap-3">
                     <div class="text-end">
                         <div class="fw-semibold">@fullName</div>
-                        <div class="text-muted small">@(isAdmin ? "Quản trị viên" : "Nhân viên bán hàng / Dược sĩ")</div>
+                        <div class="badge-role small px-2 py-1 rounded">@(isAdmin ? "Quản trị viên" : "Nhân viên bán hàng / Dược sĩ")</div>
                     </div>
                     <a class="btn btn-outline-danger btn-sm" asp-controller="Account" asp-action="Logout">Đăng xuất</a>
                 </div>

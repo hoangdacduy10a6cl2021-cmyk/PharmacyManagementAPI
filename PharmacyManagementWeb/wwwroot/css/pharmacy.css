@@ -3,6 +3,37 @@
     --pharmacy-primary-dark: #15803d;
     --pharmacy-sidebar-bg: #0f2e1d;
     --pharmacy-sidebar-hover: #16442c;
+    --pharmacy-topbar-accent: #16a34a;
+}
+
+/* Theme Nhân viên/Dược sĩ - xanh lá (mặc định) */
+body.theme-staff {
+    --pharmacy-sidebar-bg: #0f2e1d;
+    --pharmacy-sidebar-hover: #16442c;
+    --pharmacy-primary: #16a34a;
+    --pharmacy-topbar-accent: #16a34a;
+}
+
+/* Theme Admin - xanh dương/tím đậm */
+body.theme-admin {
+    --pharmacy-sidebar-bg: #1e1b4b;
+    --pharmacy-sidebar-hover: #2f2a75;
+    --pharmacy-primary: #4f46e5;
+    --pharmacy-topbar-accent: #4f46e5;
+}
+
+    body.theme-admin .pharmacy-topbar {
+        border-bottom: 3px solid var(--pharmacy-topbar-accent);
+    }
+
+    body.theme-admin .badge-role {
+        background-color: #eef2ff;
+        color: #4338ca;
+    }
+
+body.theme-staff .badge-role {
+    background-color: #dcfce7;
+    color: #15803d;
 }
 
 body {
