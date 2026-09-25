@@ -1,0 +1,126 @@
+﻿@model List<PharmacyManagementWeb.Models.ApiModels.MedicineModel>
+@{
+    ViewData["Title"] = "Thuốc / Kho";
+    bool isAdmin = User.IsInRole("Admin");
+    var categories = ViewBag.Categories as List<PharmacyManagementWeb.Models.ApiModels.CategoryModel> ?? new();
+}
+
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-danger">@ViewBag.Error</div>
+}
+
+<div class="stat-card mb-3">
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label small mb-1">Tìm thuốc, mã, mã vạch</label>
+            <input type="text" name="search" value="@ViewBag.Search" class="form-control" placeholder="Nhập tên/mã thuốc..." />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small mb-1">Danh mục</label>
+            <select name="categoryId" class="form-select">
+                <option value="">-- Tất cả danh mục --</option>
+                @foreach (var c in categories)
+                {
+                    if (ViewBag.CategoryId != null && (int)ViewBag.CategoryId == c.Id)
+                    {
+                        <option value="@c.Id" selected>@c.Name</option>
+                    }
+                    else
+                    {
+                        <option value="@c.Id">@c.Name</option>
+                    }
+                }
+            </select>
+        </div>
+        <div class="col-md-2 form-check ms-2">
+            <input type="checkbox" class="form-check-input" name="lowStock" value="true" id="lowStock" checked="@(ViewBag.LowStock == true)" />
+            <label class="form-check-label small" for="lowStock">Sắp hết hàng</label>
+        </div>
+        <div class="col-md-2 form-check">
+            <input type="checkbox" class="form-check-input" name="expiringSoon" value="true" id="expiringSoon" checked="@(ViewBag.ExpiringSoon == true)" />
+            <label class="form-check-label small" for="expiringSoon">Sắp hết hạn</label>
+        </div>
+        <div class="col-md-1">
+            <button type="submit" class="btn btn-success w-100">Lọc</button>
+        </div>
+    </form>
+</div>
+
+<div class="stat-card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="mb-0">Danh sách thuốc (@Model.Count)</h6>
+        @if (isAdmin)
+        {
+            <a asp-action="Create" class="btn btn-success btn-sm">+ Thêm thuốc</a>
+        }
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-sm align-middle">
+            <thead>
+                <tr>
+                    <th>Mã thuốc</th>
+                    <th>Tên thuốc</th>
+                    <th>Danh mục</th>
+                    <th class="text-end">Đơn giá</th>
+                    <th class="text-end">Tồn kho</th>
+                    <th>HSD</th>
+                    <th>Trạng thái</th>
+                    @if (isAdmin)
+                    {
+                        <th class="text-end">Thao tác</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var m in Model)
+                {
+                    bool expiringSoon = m.ExpiryDate.HasValue && m.ExpiryDate.Value <= DateTime.Now.AddDays(90);
+                    bool lowStock = m.Stock <= 20;
+
+                    <tr>
+                        <td>@m.Code</td>
+                        <td>@m.Name</td>
+                        <td>@m.CategoryName</td>
+                        <td class="text-end">@m.SellPrice.ToString("N0")đ</td>
+                        <td class="text-end">@m.Stock</td>
+                        <td>@(m.ExpiryDate?.ToString("MM/yyyy") ?? "-")</td>
+                        <td>
+                            @if (!m.IsActive)
+                            {
+                                <span class="badge bg-secondary">Ngừng KD</span>
+                            }
+                            else if (expiringSoon)
+                            {
+                                <span class="badge bg-warning text-dark">Sắp hết hạn</span>
+                            }
+                            else if (lowStock)
+                            {
+                                <span class="badge bg-danger">Sắp hết hàng</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-success">Còn hàng</span>
+                            }
+                        </td>
+                        @if (isAdmin)
+                        {
+                            <td class="text-end">
+                                <a asp-action="Edit" asp-route-id="@m.Id" class="btn btn-outline-secondary btn-sm">Sửa</a>
+                                <form asp-action="Delete" asp-route-id="@m.Id" method="post" class="d-inline"
+                                      onsubmit="return confirm('Xác nhận xoá/ngưng kinh doanh thuốc này?');">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm">Xoá</button>
+                                </form>
+                            </td>
+                        }
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="8" class="text-center text-muted py-3">Không có dữ liệu.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,68 @@
+﻿@model PharmacyManagementWeb.Models.ApiModels.OrderModel
+@{
+    ViewData["Title"] = "Hoá đơn " + Model.Code;
+}
+
+<div class="stat-card" style="max-width: 700px;">
+    <div class="d-flex justify-content-between align-items-start mb-3">
+        <div>
+            <h5 class="mb-0">Hoá đơn #@Model.Code</h5>
+            <div class="text-muted small">@Model.OrderDate.ToString("HH:mm dd/MM/yyyy")</div>
+        </div>
+        <span class="badge bg-success fs-6">@Model.Status</span>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-6">
+            <div class="text-muted small">Khách hàng</div>
+            <div class="fw-semibold">@(Model.CustomerName ?? "Khách vãng lai")</div>
+        </div>
+        <div class="col-6">
+            <div class="text-muted small">Nhân viên bán</div>
+            <div class="fw-semibold">@Model.UserName</div>
+        </div>
+    </div>
+
+    <table class="table table-sm">
+        <thead>
+            <tr>
+                <th>Thuốc</th>
+                <th class="text-end">SL</th>
+                <th class="text-end">Đơn giá</th>
+                <th class="text-end">Thành tiền</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var d in Model.Details)
+            {
+                <tr>
+                    <td>@d.MedicineName <div class="text-muted small">@d.MedicineCode</div></td>
+                    <td class="text-end">@d.Quantity</td>
+                    <td class="text-end">@d.UnitPrice.ToString("N0")đ</td>
+                    <td class="text-end">@d.Subtotal.ToString("N0")đ</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <div class="border-top pt-3">
+        <div class="d-flex justify-content-between">
+            <span>Tạm tính</span>
+            <span>@Model.TotalAmount.ToString("N0")đ</span>
+        </div>
+        <div class="d-flex justify-content-between">
+            <span>Giảm giá</span>
+            <span>-@Model.DiscountAmount.ToString("N0")đ</span>
+        </div>
+        <div class="d-flex justify-content-between fw-bold fs-5 mt-2">
+            <span>Tổng cộng</span>
+            <span class="text-success">@Model.FinalAmount.ToString("N0")đ</span>
+        </div>
+        <div class="text-muted small mt-1">Hình thức thanh toán: @Model.PaymentMethod</div>
+    </div>
+
+    <div class="mt-4">
+        <a asp-action="Index" class="btn btn-success">+ Tạo hoá đơn mới</a>
+        <button type="button" class="btn btn-outline-secondary" onclick="window.print()">In hoá đơn</button>
+    </div>
+</div>

@@ -1,0 +1,108 @@
+﻿@model PharmacyManagementWeb.Models.ApiModels.MedicineFormViewModel
+@{
+    bool isEdit = Model.Id > 0;
+    ViewData["Title"] = isEdit ? "Sửa thuốc" : "Thêm thuốc";
+}
+
+<div class="stat-card" style="max-width: 700px;">
+    <h6 class="mb-3">@ViewData["Title"]</h6>
+
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <form asp-action="@(isEdit ? "Edit" : "Create")" asp-route-id="@Model.Id" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Id" />
+
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label asp-for="Code" class="form-label"></label>
+                <input asp-for="Code" class="form-control" readonly="@(isEdit ? "readonly" : null)" />
+                <span asp-validation-for="Code" class="text-danger small"></span>
+            </div>
+            <div class="col-md-8">
+                <label asp-for="Name" class="form-label"></label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger small"></span>
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="CategoryId" class="form-label"></label>
+                <select asp-for="CategoryId" class="form-select">
+                    <option value="">-- Chọn danh mục --</option>
+                    @foreach (var c in Model.Categories)
+                    {
+                        <option value="@c.Id">@c.Name</option>
+                    }
+                </select>
+                <span asp-validation-for="CategoryId" class="text-danger small"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="SupplierId" class="form-label"></label>
+                <select asp-for="SupplierId" class="form-select">
+                    <option value="">-- Không chọn --</option>
+                    @foreach (var s in Model.Suppliers)
+                    {
+                        <option value="@s.Id">@s.Name</option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-4">
+                <label asp-for="Unit" class="form-label"></label>
+                <input asp-for="Unit" class="form-control" />
+            </div>
+            <div class="col-md-4">
+                <label asp-for="SellPrice" class="form-label"></label>
+                <input asp-for="SellPrice" class="form-control" type="number" step="100" />
+                <span asp-validation-for="SellPrice" class="text-danger small"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="ImportPrice" class="form-label"></label>
+                <input asp-for="ImportPrice" class="form-control" type="number" step="100" />
+                <span asp-validation-for="ImportPrice" class="text-danger small"></span>
+            </div>
+
+            @if (isEdit)
+            {
+                <div class="col-md-4">
+                    <label class="form-label">Tồn kho hiện tại</label>
+                    <input value="@Model.Stock" class="form-control" disabled />
+                    <div class="form-text">Tồn kho chỉ thay đổi qua Phiếu nhập / Bán hàng.</div>
+                </div>
+            }
+            else
+            {
+                <div class="col-md-4">
+                    <label asp-for="Stock" class="form-label"></label>
+                    <input asp-for="Stock" class="form-control" type="number" />
+                </div>
+            }
+
+            <div class="col-md-4">
+                <label asp-for="ExpiryDate" class="form-label"></label>
+                <input asp-for="ExpiryDate" class="form-control" type="date" />
+            </div>
+            <div class="col-md-4">
+                <label asp-for="Barcode" class="form-label"></label>
+                <input asp-for="Barcode" class="form-control" />
+            </div>
+
+            @if (isEdit)
+            {
+                <div class="col-md-12 form-check mt-3">
+                    <input asp-for="IsActive" class="form-check-input" />
+                    <label asp-for="IsActive" class="form-check-label"></label>
+                </div>
+            }
+        </div>
+
+        <div class="mt-4">
+            <button type="submit" class="btn btn-success">Lưu</button>
+            <a asp-action="Index" class="btn btn-outline-secondary">Huỷ</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
