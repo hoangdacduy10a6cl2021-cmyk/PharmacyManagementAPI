@@ -1,0 +1,78 @@
+﻿@model PharmacyManagementWeb.Models.ApiModels.RevenueReportModel
+@{
+    ViewData["Title"] = "Báo cáo doanh thu";
+}
+
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-danger">@ViewBag.Error</div>
+}
+
+<div class="stat-card mb-3">
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label small mb-1">Từ ngày</label>
+            <input type="date" name="fromDate" value="@Model.FromDate.ToString("yyyy-MM-dd")" class="form-control" />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label small mb-1">Đến ngày</label>
+            <input type="date" name="toDate" value="@Model.ToDate.ToString("yyyy-MM-dd")" class="form-control" />
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-success w-100">Xem báo cáo</button>
+        </div>
+    </form>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-icon bg-icon-green">💰</div>
+            <div class="stat-value">@Model.TotalRevenue.ToString("N0")đ</div>
+            <div class="stat-label">Tổng doanh thu</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-icon bg-icon-blue">🧾</div>
+            <div class="stat-value">@Model.TotalOrders</div>
+            <div class="stat-label">Tổng số đơn hàng</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-icon bg-icon-orange">📊</div>
+            <div class="stat-value">@Model.AverageOrderValue.ToString("N0")đ</div>
+            <div class="stat-label">Giá trị TB / đơn</div>
+        </div>
+    </div>
+</div>
+
+<div class="stat-card">
+    <h6 class="mb-3">Chi tiết doanh thu theo ngày</h6>
+    <div class="table-responsive">
+        <table class="table table-sm">
+            <thead>
+                <tr>
+                    <th>Ngày</th>
+                    <th class="text-end">Doanh thu</th>
+                    <th class="text-end">Số đơn</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var d in Model.DailyBreakdown)
+                {
+                    <tr>
+                        <td>@d.Date.ToString("dd/MM/yyyy")</td>
+                        <td class="text-end">@d.Revenue.ToString("N0")đ</td>
+                        <td class="text-end">@d.OrderCount</td>
+                    </tr>
+                }
+                @if (!Model.DailyBreakdown.Any())
+                {
+                    <tr><td colspan="3" class="text-center text-muted py-3">Không có dữ liệu trong khoảng thời gian này.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

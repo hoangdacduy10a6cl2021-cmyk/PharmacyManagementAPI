@@ -69,15 +69,31 @@ namespace PharmacyManagementWeb.Services
                 }
             }
 
-            // Cố gắng đọc message lỗi từ API dạng { "message": "..." }
+            // Cố gắng đọc lỗi từ API: { "message": "..." } hoặc lỗi validation { "errors": { "Field": ["..."] } }
             string? errorMessage = $"Lỗi {(int)response.StatusCode}";
             try
             {
                 using var doc = JsonDocument.Parse(content);
-                if (doc.RootElement.TryGetProperty("message", out var msgEl))
+                var root = doc.RootElement;
+                if (root.TryGetProperty("message", out var msgEl))
+                {
                     errorMessage = msgEl.GetString();
+                }
+                else if (root.TryGetProperty("errors", out var errorsEl) && errorsEl.ValueKind == JsonValueKind.Object)
+                {
+                    var messages = new List<string>();
+                    foreach (var prop in errorsEl.EnumerateObject())
+                        foreach (var err in prop.Value.EnumerateArray())
+                            messages.Add(err.GetString() ?? "");
+                    if (messages.Any()) errorMessage = string.Join(" ", messages);
+                }
             }
             catch { /* ignore parse error, dùng message mặc định */ }
+
+            if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                errorMessage = "Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại.";
+            else if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+                errorMessage = "Bạn không có quyền thực hiện thao tác này.";
 
             return new ApiResult<T> { Success = false, ErrorMessage = errorMessage };
         }

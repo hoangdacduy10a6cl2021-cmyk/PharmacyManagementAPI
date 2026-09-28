@@ -47,7 +47,7 @@ namespace PharmacyManagementWeb.Controllers
             List<PrescriptionDetailInput>? details;
             try
             {
-                details = JsonSerializer.Deserialize<List<PrescriptionDetailInput>>(detailsJson ?? "[]");
+                details = JsonSerializer.Deserialize<List<PrescriptionDetailInput>>(detailsJson ?? "[]", new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             }
             catch
             {

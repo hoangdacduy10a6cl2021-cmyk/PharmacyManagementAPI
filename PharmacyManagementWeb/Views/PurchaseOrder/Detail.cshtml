@@ -1,0 +1,60 @@
+﻿@model PharmacyManagementWeb.Models.ApiModels.PurchaseOrderModel
+@{
+    ViewData["Title"] = "Phiếu nhập " + Model.Code;
+}
+
+<div class="stat-card" style="max-width: 700px;">
+    <div class="d-flex justify-content-between align-items-start mb-3">
+        <div>
+            <h5 class="mb-0">Phiếu nhập #@Model.Code</h5>
+            <div class="text-muted small">@Model.ImportDate.ToString("HH:mm dd/MM/yyyy")</div>
+        </div>
+        <span class="badge bg-success fs-6">@Model.Status</span>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-6">
+            <div class="text-muted small">Nhà cung cấp</div>
+            <div class="fw-semibold">@Model.SupplierName</div>
+        </div>
+        <div class="col-6">
+            <div class="text-muted small">Người nhập</div>
+            <div class="fw-semibold">@Model.UserName</div>
+        </div>
+    </div>
+
+    <table class="table table-sm">
+        <thead>
+            <tr>
+                <th>Thuốc</th>
+                <th class="text-end">SL</th>
+                <th class="text-end">Giá nhập</th>
+                <th class="text-end">Thành tiền</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var d in Model.Details)
+            {
+                <tr>
+                    <td>@d.MedicineName <div class="text-muted small">@d.MedicineCode</div></td>
+                    <td class="text-end">@d.Quantity</td>
+                    <td class="text-end">@d.ImportPrice.ToString("N0")đ</td>
+                    <td class="text-end">@d.Subtotal.ToString("N0")đ</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <div class="border-top pt-3 d-flex justify-content-between fw-bold fs-5">
+        <span>Tổng tiền nhập</span>
+        <span class="text-success">@Model.TotalAmount.ToString("N0")đ</span>
+    </div>
+
+    <div class="mt-4">
+        @if (User.IsInRole("Admin"))
+        {
+            <a asp-action="Create" class="btn btn-success">+ Tạo phiếu nhập mới</a>
+        }
+        <a asp-action="Index" class="btn btn-outline-secondary">Quay lại danh sách</a>
+    </div>
+</div>

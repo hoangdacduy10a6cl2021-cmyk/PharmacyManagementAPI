@@ -68,7 +68,7 @@ namespace PharmacyManagementWeb.Controllers
             List<CartItemInput>? items;
             try
             {
-                items = JsonSerializer.Deserialize<List<CartItemInput>>(cartJson ?? "[]");
+                items = JsonSerializer.Deserialize<List<CartItemInput>>(cartJson ?? "[]", new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             }
             catch
             {

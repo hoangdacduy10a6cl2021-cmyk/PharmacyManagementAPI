@@ -1,0 +1,171 @@
+﻿@{
+    ViewData["Title"] = "Tạo phiếu nhập";
+    var suppliers = ViewBag.Suppliers as List<PharmacyManagementWeb.Models.ApiModels.SupplierModel> ?? new();
+}
+
+<div class="row g-3">
+    <div class="col-lg-7">
+        <div class="stat-card mb-3">
+            <label class="form-label small mb-1">Tìm thuốc để nhập</label>
+            <div class="position-relative">
+                <input type="text" id="medicineSearch" class="form-control" placeholder="Nhập tên hoặc mã thuốc..." autocomplete="off" />
+                <div id="searchResults" class="list-group position-absolute w-100 shadow" style="z-index: 1000; max-height: 260px; overflow-y: auto; display:none;"></div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <h6 class="mb-3">Danh sách thuốc nhập</h6>
+            <table class="table table-sm align-middle">
+                <thead>
+                    <tr>
+                        <th>Tên thuốc</th>
+                        <th style="width:100px;">Số lượng</th>
+                        <th style="width:140px;">Giá nhập</th>
+                        <th class="text-end">Thành tiền</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="cartBody">
+                    <tr id="emptyCartRow"><td colspan="5" class="text-center text-muted py-3">Chưa có thuốc nào.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="stat-card">
+            <h6 class="mb-3">Thông tin phiếu nhập</h6>
+
+            <div class="mb-3">
+                <label class="form-label small mb-1">Nhà cung cấp</label>
+                <select id="supplierSelect" class="form-select">
+                    <option value="">-- Chọn nhà cung cấp --</option>
+                    @foreach (var s in suppliers)
+                    {
+                        <option value="@s.Id">@s.Name</option>
+                    }
+                </select>
+            </div>
+
+            <div class="d-flex justify-content-between mb-3 fw-bold fs-5">
+                <span>Tổng tiền nhập</span>
+                <span id="totalAmountText" class="text-success">0đ</span>
+            </div>
+
+            <form id="createForm" asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="supplierId" id="hiddenSupplierId" />
+                <input type="hidden" name="cartJson" id="hiddenCartJson" />
+                <button type="submit" id="createBtn" class="btn btn-success w-100 py-2" disabled>Tạo phiếu nhập</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    let cart = []; // { medicineId, code, name, importPrice, quantity }
+
+    const searchInput = document.getElementById('medicineSearch');
+    const searchResults = document.getElementById('searchResults');
+    let searchTimeout;
+
+    searchInput.addEventListener('input', function () {
+        clearTimeout(searchTimeout);
+        const term = this.value.trim();
+        if (term.length === 0) { searchResults.style.display = 'none'; return; }
+
+        searchTimeout = setTimeout(async () => {
+            const res = await fetch('/Order/SearchMedicine?term=' + encodeURIComponent(term));
+            const data = await res.json();
+            renderSearchResults(data);
+        }, 250);
+    });
+
+    function renderSearchResults(items) {
+        if (!items.length) {
+            searchResults.innerHTML = '<div class="list-group-item text-muted small">Không tìm thấy thuốc.</div>';
+            searchResults.style.display = 'block';
+            return;
+        }
+        searchResults.innerHTML = items.map(m => `
+            <button type="button" class="list-group-item list-group-item-action"
+                    onclick='addToCart(${JSON.stringify(m)})'>
+                ${m.name} <span class="text-muted small">(${m.code}) - Tồn hiện tại: ${m.stock}</span>
+            </button>
+        `).join('');
+        searchResults.style.display = 'block';
+    }
+
+    document.addEventListener('click', function (e) {
+        if (!searchResults.contains(e.target) && e.target !== searchInput) {
+            searchResults.style.display = 'none';
+        }
+    });
+
+    function addToCart(medicine) {
+        if (cart.find(i => i.medicineId === medicine.id)) {
+            alert('Thuốc này đã có trong phiếu nhập.');
+        } else {
+            cart.push({ medicineId: medicine.id, code: medicine.code, name: medicine.name, importPrice: 0, quantity: 1 });
+        }
+        searchInput.value = '';
+        searchResults.style.display = 'none';
+        renderCart();
+    }
+
+    function removeFromCart(medicineId) {
+        cart = cart.filter(i => i.medicineId !== medicineId);
+        renderCart();
+    }
+
+    function updateQuantity(medicineId, value) {
+        const item = cart.find(i => i.medicineId === medicineId);
+        if (item) item.quantity = Math.max(1, parseInt(value) || 1);
+        renderCart();
+    }
+
+    function updateImportPrice(medicineId, value) {
+        const item = cart.find(i => i.medicineId === medicineId);
+        if (item) item.importPrice = Math.max(0, parseFloat(value) || 0);
+        renderCart();
+    }
+
+    function renderCart() {
+        const body = document.getElementById('cartBody');
+        if (cart.length === 0) {
+            body.innerHTML = '<tr id="emptyCartRow"><td colspan="5" class="text-center text-muted py-3">Chưa có thuốc nào.</td></tr>';
+        } else {
+            body.innerHTML = cart.map(i => `
+                <tr>
+                    <td>${i.name} <div class="text-muted small">${i.code}</div></td>
+                    <td><input type="number" class="form-control form-control-sm" value="${i.quantity}" min="1"
+                               onchange="updateQuantity(${i.medicineId}, this.value)" /></td>
+                    <td><input type="number" class="form-control form-control-sm" value="${i.importPrice}" min="0" step="100"
+                               onchange="updateImportPrice(${i.medicineId}, this.value)" /></td>
+                    <td class="text-end">${(i.importPrice * i.quantity).toLocaleString('vi-VN')}đ</td>
+                    <td><button type="button" class="btn btn-sm btn-outline-danger" onclick="removeFromCart(${i.medicineId})">&times;</button></td>
+                </tr>
+            `).join('');
+        }
+        updateSummary();
+    }
+
+    function updateSummary() {
+        const total = cart.reduce((sum, i) => sum + i.importPrice * i.quantity, 0);
+        document.getElementById('totalAmountText').textContent = total.toLocaleString('vi-VN') + 'đ';
+        const supplierId = document.getElementById('supplierSelect').value;
+        document.getElementById('createBtn').disabled = cart.length === 0 || !supplierId;
+    }
+
+    document.getElementById('supplierSelect').addEventListener('change', updateSummary);
+
+    document.getElementById('createForm').addEventListener('submit', function (e) {
+        if (cart.length === 0) { e.preventDefault(); return; }
+        document.getElementById('hiddenSupplierId').value = document.getElementById('supplierSelect').value;
+        document.getElementById('hiddenCartJson').value = JSON.stringify(cart.map(i => ({
+            medicineId: i.medicineId, quantity: i.quantity, importPrice: i.importPrice
+        })));
+    });
+</script>
+}

@@ -1,0 +1,56 @@
+﻿@model List<PharmacyManagementWeb.Models.ApiModels.PurchaseOrderModel>
+@{
+    ViewData["Title"] = "Nhập hàng";
+    bool isAdmin = User.IsInRole("Admin");
+}
+
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-danger">@ViewBag.Error</div>
+}
+
+<div class="stat-card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="mb-0">Danh sách phiếu nhập (@Model.Count)</h6>
+        @if (isAdmin)
+        {
+            <a asp-action="Create" class="btn btn-success btn-sm">+ Tạo phiếu nhập</a>
+        }
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-sm align-middle">
+            <thead>
+                <tr>
+                    <th>Mã phiếu</th>
+                    <th>Nhà cung cấp</th>
+                    <th>Người nhập</th>
+                    <th>Ngày nhập</th>
+                    <th class="text-end">Tổng tiền</th>
+                    <th>Trạng thái</th>
+                    <th class="text-end">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var p in Model)
+                {
+                    <tr>
+                        <td>@p.Code</td>
+                        <td>@p.SupplierName</td>
+                        <td>@p.UserName</td>
+                        <td>@p.ImportDate.ToString("dd/MM/yyyy")</td>
+                        <td class="text-end">@p.TotalAmount.ToString("N0")đ</td>
+                        <td><span class="badge bg-success">@p.Status</span></td>
+                        <td class="text-end">
+                            <a asp-action="Detail" asp-route-id="@p.Id" class="btn btn-outline-secondary btn-sm">Xem</a>
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="7" class="text-center text-muted py-3">Không có dữ liệu.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

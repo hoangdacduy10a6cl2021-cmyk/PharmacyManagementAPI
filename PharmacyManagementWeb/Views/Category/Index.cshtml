@@ -1,0 +1,60 @@
+﻿@model List<PharmacyManagementWeb.Models.ApiModels.CategoryModel>
+@{
+    ViewData["Title"] = "Danh mục";
+    bool isAdmin = User.IsInRole("Admin");
+}
+
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-danger">@ViewBag.Error</div>
+}
+
+<div class="stat-card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="mb-0">Danh sách danh mục (@Model.Count)</h6>
+        @if (isAdmin)
+        {
+            <a asp-action="Create" class="btn btn-success btn-sm">+ Thêm danh mục</a>
+        }
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-sm align-middle">
+            <thead>
+                <tr>
+                    <th>Tên danh mục</th>
+                    <th>Mô tả</th>
+                    <th class="text-end">Số thuốc</th>
+                    @if (isAdmin)
+                    {
+                        <th class="text-end">Thao tác</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var c in Model)
+                {
+                    <tr>
+                        <td>@c.Name</td>
+                        <td>@c.Description</td>
+                        <td class="text-end">@c.MedicineCount</td>
+                        @if (isAdmin)
+                        {
+                            <td class="text-end">
+                                <a asp-action="Edit" asp-route-id="@c.Id" class="btn btn-outline-secondary btn-sm">Sửa</a>
+                                <form asp-action="Delete" asp-route-id="@c.Id" method="post" class="d-inline"
+                                      onsubmit="return confirm('Xác nhận xoá danh mục này?');">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm">Xoá</button>
+                                </form>
+                            </td>
+                        }
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="4" class="text-center text-muted py-3">Không có dữ liệu.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

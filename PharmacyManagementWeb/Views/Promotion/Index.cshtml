@@ -1,0 +1,77 @@
+﻿@model List<PharmacyManagementWeb.Models.ApiModels.PromotionModel>
+@{
+    ViewData["Title"] = "Khuyến mãi";
+    bool isAdmin = User.IsInRole("Admin");
+}
+
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-danger">@ViewBag.Error</div>
+}
+
+<div class="stat-card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="mb-0">Danh sách khuyến mãi (@Model.Count)</h6>
+        @if (isAdmin)
+        {
+            <a asp-action="Create" class="btn btn-success btn-sm">+ Tạo khuyến mãi</a>
+        }
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-sm align-middle">
+            <thead>
+                <tr>
+                    <th>Mã KM</th>
+                    <th>Tên chương trình</th>
+                    <th>Loại</th>
+                    <th class="text-end">Giá trị</th>
+                    <th>Thời gian áp dụng</th>
+                    <th>Trạng thái</th>
+                    @if (isAdmin)
+                    {
+                        <th class="text-end">Thao tác</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var p in Model)
+                {
+                    <tr>
+                        <td>@p.Code</td>
+                        <td>@p.Name</td>
+                        <td>@(p.DiscountType == "PhanTram" ? "Theo %" : "Theo số tiền")</td>
+                        <td class="text-end">@(p.DiscountType == "PhanTram" ? $"{p.DiscountValue}%" : $"{p.DiscountValue:N0}đ")</td>
+                        <td>@p.StartDate.ToString("dd/MM") - @p.EndDate.ToString("dd/MM/yyyy")</td>
+                        <td>
+                            @{
+                                var badgeClass = p.CurrentStatus switch
+                                {
+                                    "Đang diễn ra" => "bg-success",
+                                    "Chưa bắt đầu" => "bg-info text-dark",
+                                    "Đã kết thúc" => "bg-secondary",
+                                    _ => "bg-dark"
+                                };
+                            }
+                            <span class="badge @badgeClass">@p.CurrentStatus</span>
+                        </td>
+                        @if (isAdmin)
+                        {
+                            <td class="text-end">
+                                <a asp-action="Edit" asp-route-id="@p.Id" class="btn btn-outline-secondary btn-sm">Sửa</a>
+                                <form asp-action="Delete" asp-route-id="@p.Id" method="post" class="d-inline"
+                                      onsubmit="return confirm('Xác nhận xoá khuyến mãi này?');">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm">Xoá</button>
+                                </form>
+                            </td>
+                        }
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="7" class="text-center text-muted py-3">Không có dữ liệu.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

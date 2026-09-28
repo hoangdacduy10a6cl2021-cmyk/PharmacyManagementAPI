@@ -1,0 +1,73 @@
+﻿@model List<PharmacyManagementWeb.Models.ApiModels.SupplierModel>
+@{
+    ViewData["Title"] = "Nhà cung cấp";
+    bool isAdmin = User.IsInRole("Admin");
+}
+
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-danger">@ViewBag.Error</div>
+}
+
+<div class="stat-card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="mb-0">Danh sách nhà cung cấp (@Model.Count)</h6>
+        @if (isAdmin)
+        {
+            <a asp-action="Create" class="btn btn-success btn-sm">+ Thêm nhà cung cấp</a>
+        }
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-sm align-middle">
+            <thead>
+                <tr>
+                    <th>Tên NCC</th>
+                    <th>SĐT</th>
+                    <th>Email</th>
+                    <th>Địa chỉ</th>
+                    <th>Trạng thái</th>
+                    @if (isAdmin)
+                    {
+                        <th class="text-end">Thao tác</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var s in Model)
+                {
+                    <tr>
+                        <td>@s.Name</td>
+                        <td>@s.Phone</td>
+                        <td>@s.Email</td>
+                        <td>@s.Address</td>
+                        <td>
+                            @if (s.IsActive)
+                            {
+                                <span class="badge bg-success">Hoạt động</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">Ngừng hoạt động</span>
+                            }
+                        </td>
+                        @if (isAdmin)
+                        {
+                            <td class="text-end">
+                                <a asp-action="Edit" asp-route-id="@s.Id" class="btn btn-outline-secondary btn-sm">Sửa</a>
+                                <form asp-action="Delete" asp-route-id="@s.Id" method="post" class="d-inline"
+                                      onsubmit="return confirm('Xác nhận xoá/ngưng hoạt động nhà cung cấp này?');">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm">Xoá</button>
+                                </form>
+                            </td>
+                        }
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="6" class="text-center text-muted py-3">Không có dữ liệu.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
