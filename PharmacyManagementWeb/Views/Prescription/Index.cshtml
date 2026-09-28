@@ -1,0 +1,79 @@
+﻿@model List<PharmacyManagementWeb.Models.ApiModels.PrescriptionModel>
+@{
+    ViewData["Title"] = "Đơn thuốc";
+}
+
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-danger">@ViewBag.Error</div>
+}
+
+<div class="stat-card mb-3">
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-md-5">
+            <label class="form-label small mb-1">Tìm mã đơn, tên bệnh nhân</label>
+            <input type="text" name="search" value="@ViewBag.Search" class="form-control" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small mb-1">Trạng thái</label>
+            <select name="status" class="form-select">
+                <option value="">-- Tất cả --</option>
+                <option value="Đang sử dụng" selected="@(ViewBag.Status == "Đang sử dụng")">Đang sử dụng</option>
+                <option value="Đã giao" selected="@(ViewBag.Status == "Đã giao")">Đã giao</option>
+            </select>
+        </div>
+        <div class="col-md-1">
+            <button type="submit" class="btn btn-success w-100">Lọc</button>
+        </div>
+    </form>
+</div>
+
+<div class="stat-card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="mb-0">Danh sách đơn thuốc (@Model.Count)</h6>
+        <a asp-action="Create" class="btn btn-success btn-sm">+ Tạo đơn thuốc</a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-sm align-middle">
+            <thead>
+                <tr>
+                    <th>Mã đơn</th>
+                    <th>Bệnh nhân</th>
+                    <th>Bác sĩ</th>
+                    <th>Ngày kê</th>
+                    <th>Trạng thái</th>
+                    <th class="text-end">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var p in Model)
+                {
+                    <tr>
+                        <td>@p.Code</td>
+                        <td>@p.PatientName</td>
+                        <td>@p.DoctorName</td>
+                        <td>@p.PrescriptionDate.ToString("dd/MM/yyyy")</td>
+                        <td>
+                            @if (p.Status == "Đã giao")
+                            {
+                                <span class="badge bg-success">Đã giao</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning text-dark">Đang sử dụng</span>
+                            }
+                        </td>
+                        <td class="text-end">
+                            <a asp-action="Detail" asp-route-id="@p.Id" class="btn btn-outline-secondary btn-sm">Xem</a>
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="6" class="text-center text-muted py-3">Không có dữ liệu.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,168 @@
+﻿@model PharmacyManagementWeb.Models.ApiModels.PrescriptionFormViewModel
+@{
+    ViewData["Title"] = "Tạo đơn thuốc";
+}
+
+<div class="stat-card mb-3" style="max-width: 800px;">
+    <h6 class="mb-3">@ViewData["Title"]</h6>
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <form id="prescriptionForm" asp-action="Create" method="post">
+        @Html.AntiForgeryToken()
+
+        <div class="row g-3 mb-3">
+            <div class="col-md-6">
+                <label asp-for="PatientName" class="form-label"></label>
+                <input asp-for="PatientName" class="form-control" autofocus />
+                <span asp-validation-for="PatientName" class="text-danger small"></span>
+            </div>
+            <div class="col-md-3">
+                <label asp-for="Age" class="form-label"></label>
+                <input asp-for="Age" class="form-control" type="number" />
+            </div>
+            <div class="col-md-3">
+                <label asp-for="Gender" class="form-label"></label>
+                <select asp-for="Gender" class="form-select">
+                    <option value="">-- Chọn --</option>
+                    <option value="Nam">Nam</option>
+                    <option value="Nữ">Nữ</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="DoctorName" class="form-label"></label>
+                <input asp-for="DoctorName" class="form-control" />
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Diagnosis" class="form-label"></label>
+                <input asp-for="Diagnosis" class="form-control" />
+            </div>
+            <div class="col-md-12">
+                <label asp-for="Note" class="form-label"></label>
+                <input asp-for="Note" class="form-control" placeholder="Ví dụ: Uống sau ăn, nhiều nước" />
+            </div>
+        </div>
+
+        <hr />
+        <h6 class="mb-2">Danh sách thuốc</h6>
+
+        <div class="position-relative mb-2">
+            <input type="text" id="medicineSearch" class="form-control" placeholder="Tìm tên hoặc mã thuốc để thêm..." autocomplete="off" />
+            <div id="searchResults" class="list-group position-absolute w-100 shadow" style="z-index: 1000; max-height: 240px; overflow-y: auto; display:none;"></div>
+        </div>
+
+        <table class="table table-sm align-middle">
+            <thead>
+                <tr>
+                    <th>Tên thuốc</th>
+                    <th>Liều dùng</th>
+                    <th style="width:100px;">Số lượng</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody id="detailsBody">
+                <tr id="emptyRow"><td colspan="4" class="text-center text-muted py-2">Chưa thêm thuốc nào.</td></tr>
+            </tbody>
+        </table>
+
+        <input type="hidden" name="detailsJson" id="hiddenDetailsJson" />
+
+        <button type="submit" class="btn btn-success mt-3">Lưu đơn thuốc</button>
+        <a asp-action="Index" class="btn btn-outline-secondary mt-3">Huỷ</a>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        let details = []; // { medicineId, code, name, dosage, quantity }
+
+        const searchInput = document.getElementById('medicineSearch');
+        const searchResults = document.getElementById('searchResults');
+        let searchTimeout;
+
+        searchInput.addEventListener('input', function () {
+            clearTimeout(searchTimeout);
+            const term = this.value.trim();
+            if (term.length === 0) { searchResults.style.display = 'none'; return; }
+
+            searchTimeout = setTimeout(async () => {
+                const res = await fetch('/Order/SearchMedicine?term=' + encodeURIComponent(term));
+                const data = await res.json();
+                renderSearchResults(data);
+            }, 250);
+        });
+
+        function renderSearchResults(items) {
+            if (!items.length) {
+                searchResults.innerHTML = '<div class="list-group-item text-muted small">Không tìm thấy thuốc.</div>';
+                searchResults.style.display = 'block';
+                return;
+            }
+            searchResults.innerHTML = items.map(m => `
+                <button type="button" class="list-group-item list-group-item-action"
+                        onclick='addDetail(${JSON.stringify(m)})'>
+                    ${m.name} <span class="text-muted small">(${m.code})</span>
+                </button>
+            `).join('');
+            searchResults.style.display = 'block';
+        }
+
+        document.addEventListener('click', function (e) {
+            if (!searchResults.contains(e.target) && e.target !== searchInput) {
+                searchResults.style.display = 'none';
+            }
+        });
+
+        function addDetail(medicine) {
+            if (details.find(d => d.medicineId === medicine.id)) {
+                alert('Thuốc này đã có trong đơn.');
+                searchInput.value = '';
+                searchResults.style.display = 'none';
+                return;
+            }
+            details.push({ medicineId: medicine.id, code: medicine.code, name: medicine.name, dosage: '', quantity: 1 });
+            searchInput.value = '';
+            searchResults.style.display = 'none';
+            renderDetails();
+        }
+
+        function removeDetail(medicineId) {
+            details = details.filter(d => d.medicineId !== medicineId);
+            renderDetails();
+        }
+
+        function updateDosage(medicineId, value) {
+            const d = details.find(x => x.medicineId === medicineId);
+            if (d) d.dosage = value;
+        }
+
+        function updateQuantity(medicineId, value) {
+            const d = details.find(x => x.medicineId === medicineId);
+            if (d) d.quantity = parseInt(value) || 1;
+        }
+
+        function renderDetails() {
+            const body = document.getElementById('detailsBody');
+            if (details.length === 0) {
+                body.innerHTML = '<tr id="emptyRow"><td colspan="4" class="text-center text-muted py-2">Chưa thêm thuốc nào.</td></tr>';
+                return;
+            }
+            body.innerHTML = details.map(d => `
+                <tr>
+                    <td>${d.name} <div class="text-muted small">${d.code}</div></td>
+                    <td><input type="text" class="form-control form-control-sm" placeholder="VD: 3 lần/ngày - 7 ngày"
+                               value="${d.dosage}" onchange="updateDosage(${d.medicineId}, this.value)" /></td>
+                    <td><input type="number" class="form-control form-control-sm" value="${d.quantity}" min="1"
+                               onchange="updateQuantity(${d.medicineId}, this.value)" /></td>
+                    <td><button type="button" class="btn btn-sm btn-outline-danger" onclick="removeDetail(${d.medicineId})">&times;</button></td>
+                </tr>
+            `).join('');
+        }
+
+        document.getElementById('prescriptionForm').addEventListener('submit', function (e) {
+            document.getElementById('hiddenDetailsJson').value = JSON.stringify(details.map(d => ({
+                medicineId: d.medicineId, dosage: d.dosage, quantity: d.quantity
+            })));
+        });
+    </script>
+}

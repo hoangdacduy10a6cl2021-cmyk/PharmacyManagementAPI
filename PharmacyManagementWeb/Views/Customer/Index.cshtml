@@ -1,0 +1,79 @@
+﻿@model List<PharmacyManagementWeb.Models.ApiModels.CustomerModel>
+@{
+    ViewData["Title"] = "Khách hàng";
+    bool isAdmin = User.IsInRole("Admin");
+}
+
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-danger">@ViewBag.Error</div>
+}
+
+<div class="stat-card mb-3">
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-md-6">
+            <label class="form-label small mb-1">Tìm tên, SĐT khách hàng</label>
+            <input type="text" name="search" value="@ViewBag.Search" class="form-control" placeholder="Nhập tên hoặc số điện thoại..." />
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-success w-100">Tìm</button>
+        </div>
+    </form>
+</div>
+
+<div class="stat-card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="mb-0">Danh sách khách hàng (@Model.Count)</h6>
+        <a asp-action="Create" class="btn btn-success btn-sm">+ Thêm khách hàng</a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-sm align-middle">
+            <thead>
+                <tr>
+                    <th>Họ tên</th>
+                    <th>SĐT</th>
+                    <th>Địa chỉ</th>
+                    <th>Loại KH</th>
+                    <th class="text-end">Tổng chi tiêu</th>
+                    <th class="text-end">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var c in Model)
+                {
+                    <tr>
+                        <td>@c.Name</td>
+                        <td>@c.Phone</td>
+                        <td>@c.Address</td>
+                        <td>
+                            @if (c.CustomerType == "VIP")
+                            {
+                                <span class="badge bg-warning text-dark">VIP</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">Thường</span>
+                            }
+                        </td>
+                        <td class="text-end">@c.TotalSpent.ToString("N0")đ</td>
+                        <td class="text-end">
+                            <a asp-action="Edit" asp-route-id="@c.Id" class="btn btn-outline-secondary btn-sm">Sửa</a>
+                            @if (isAdmin)
+                            {
+                                <form asp-action="Delete" asp-route-id="@c.Id" method="post" class="d-inline"
+                                      onsubmit="return confirm('Xác nhận xoá khách hàng này?');">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm">Xoá</button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="6" class="text-center text-muted py-3">Không có dữ liệu.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
