@@ -4,6 +4,7 @@
     bool isAdmin = role == "Admin";
     string CurrentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
     string ActiveClass(string controllerName) => CurrentController.Equals(controllerName, StringComparison.OrdinalIgnoreCase) ? "active" : "";
+    var initial = string.IsNullOrWhiteSpace(fullName) ? "?" : fullName.Trim().Split(' ').Last().Substring(0, 1).ToUpper();
 }
 <!DOCTYPE html>
 <html lang="vi">
@@ -11,51 +12,72 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>@ViewData["Title"] - Tâm Thần Pharmacy</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" />
-    <link rel="stylesheet" href="~/css/pharmacy.css" />
+        <link rel="stylesheet" href="~/css/pharmacy.css" asp-append-version="true" />
 </head>
 <body class="@(isAdmin ? "theme-admin" : "theme-staff")">
     <div class="pharmacy-wrapper">
         <aside class="pharmacy-sidebar">
             <div class="brand">
-                <span>💊</span> Tâm Thần Pharmacy
-                @if (isAdmin)
-                {
-                    <span class="badge bg-light text-dark ms-1" style="font-size:0.65rem;">ADMIN</span>
-                }
+                                <svg class="brand-logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="gSide" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0" stop-color="#34d399" />
+                            <stop offset="1" stop-color="#0d9488" />
+                        </linearGradient>
+                    </defs>
+                    <rect x="35" y="4" width="30" height="92" rx="10" fill="url(#gSide)" />
+                    <rect x="4" y="35" width="92" height="30" rx="10" fill="url(#gSide)" />
+                    <path d="M36 72 C36 46 54 30 76 28 C76 52 62 72 36 72 Z" fill="#fff" />
+                    <path d="M38 70 C46 58 56 49 68 40" stroke="#0d9488" stroke-width="2.2" fill="none" stroke-linecap="round" />
+                </svg>
+                <div>
+                    <div class="brand-name">Tâm Thần Pharmacy</div>
+                    <div class="brand-tagline">Vì sức khoẻ cộng đồng</div>
+                </div>
             </div>
 
             <nav class="nav flex-column">
-                <a class="nav-link @ActiveClass("Home")" asp-controller="Home" asp-action="Index">🏠 Trang chủ</a>
-                <a class="nav-link @ActiveClass("Order")" asp-controller="Order" asp-action="Index">🛒 Bán hàng</a>
-                <a class="nav-link @ActiveClass("Prescription")" asp-controller="Prescription" asp-action="Index">📋 Đơn thuốc</a>
-                <a class="nav-link @ActiveClass("Customer")" asp-controller="Customer" asp-action="Index">👥 Khách hàng</a>
-                <a class="nav-link @ActiveClass("Medicine")" asp-controller="Medicine" asp-action="Index">💊 Thuốc / Kho</a>
+                <a class="nav-link @ActiveClass("Home")" asp-controller="Home" asp-action="Index"><i class="bi bi-house-door"></i><span>Trang chủ</span></a>
+                <a class="nav-link @ActiveClass("Order")" asp-controller="Order" asp-action="Index"><i class="bi bi-cart3"></i><span>Bán hàng</span></a>
+                <a class="nav-link @ActiveClass("Prescription")" asp-controller="Prescription" asp-action="Index"><i class="bi bi-journal-medical"></i><span>Đơn thuốc</span></a>
+                <a class="nav-link @ActiveClass("Customer")" asp-controller="Customer" asp-action="Index"><i class="bi bi-people"></i><span>Khách hàng</span></a>
+                <a class="nav-link @ActiveClass("Medicine")" asp-controller="Medicine" asp-action="Index"><i class="bi bi-capsule"></i><span>Thuốc / Kho</span></a>
 
                 @if (isAdmin)
                 {
                     <div class="nav-section-title">Quản trị</div>
-                    <a class="nav-link @ActiveClass("Category")" asp-controller="Category" asp-action="Index">🏷️ Danh mục</a>
-                    <a class="nav-link @ActiveClass("Supplier")" asp-controller="Supplier" asp-action="Index">🚚 Nhà cung cấp</a>
-                    <a class="nav-link @ActiveClass("PurchaseOrder")" asp-controller="PurchaseOrder" asp-action="Index">📦 Nhập hàng</a>
-                    <a class="nav-link @ActiveClass("Promotion")" asp-controller="Promotion" asp-action="Index">🏷️ Khuyến mãi</a>
+                    <a class="nav-link @ActiveClass("Category")" asp-controller="Category" asp-action="Index"><i class="bi bi-tags"></i><span>Danh mục</span></a>
+                    <a class="nav-link @ActiveClass("Supplier")" asp-controller="Supplier" asp-action="Index"><i class="bi bi-truck"></i><span>Nhà cung cấp</span></a>
+                    <a class="nav-link @ActiveClass("PurchaseOrder")" asp-controller="PurchaseOrder" asp-action="Index"><i class="bi bi-box-seam"></i><span>Nhập hàng</span></a>
+                    <a class="nav-link @ActiveClass("Promotion")" asp-controller="Promotion" asp-action="Index"><i class="bi bi-percent"></i><span>Khuyến mãi</span></a>
                 }
 
                 <div class="nav-section-title">Báo cáo</div>
-                <a class="nav-link @ActiveClass("Report")" asp-controller="Report" asp-action="Index">📊 Báo cáo</a>
+                <a class="nav-link @ActiveClass("Report")" asp-controller="Report" asp-action="Index"><i class="bi bi-bar-chart-line"></i><span>Báo cáo</span></a>
             </nav>
         </aside>
 
         <div class="pharmacy-main">
             <header class="pharmacy-topbar">
-                <div class="fw-semibold">@ViewData["Title"]</div>
+                <div class="topbar-title">@ViewData["Title"]</div>
+
+                <form class="topbar-search" asp-controller="Medicine" asp-action="Index" method="get">
+                    <i class="bi bi-search"></i>
+                    <input type="text" name="search" placeholder="Tìm tên thuốc, mã thuốc, mã vạch..." autocomplete="off" />
+                </form>
+
                 <div class="d-flex align-items-center gap-3">
-                    <div class="text-end">
+                    <div class="text-end lh-sm">
                         <div class="fw-semibold">@fullName</div>
-                        <div class="badge-role small px-2 py-1 rounded">@(isAdmin ? "Quản trị viên" : "Nhân viên bán hàng / Dược sĩ")</div>
+                        <span class="badge-role small px-2 py-1 rounded d-inline-block mt-1" style="font-size:0.72rem;">@(isAdmin ? "Quản trị viên" : "Nhân viên bán hàng / Dược sĩ")</span>
                     </div>
-                    <a class="btn btn-outline-danger btn-sm" asp-controller="Account" asp-action="Logout">Đăng xuất</a>
+                    <div class="user-avatar">@initial</div>
+                    <a class="btn btn-outline-danger btn-sm" asp-controller="Account" asp-action="Logout" title="Đăng xuất"><i class="bi bi-box-arrow-right"></i></a>
                 </div>
             </header>
 

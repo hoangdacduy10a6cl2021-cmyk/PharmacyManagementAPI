@@ -2,6 +2,11 @@
 @{
     ViewData["Title"] = "Khách hàng";
     bool isAdmin = User.IsInRole("Admin");
+
+    int totalCount = Model.Count;
+    int vipCount = Model.Count(c => c.CustomerType == "VIP");
+    decimal totalSpent = Model.Sum(c => c.TotalSpent);
+    int newThisMonth = Model.Count(c => c.CreatedAt.Year == DateTime.Now.Year && c.CreatedAt.Month == DateTime.Now.Month);
 }
 
 @if (ViewBag.Error != null)
@@ -9,61 +14,96 @@
     <div class="alert alert-danger">@ViewBag.Error</div>
 }
 
+<div class="row g-3 mb-3">
+    <div class="col-6 col-xl-3">
+        <div class="stat-tile compact tile-blue">
+            <div class="tile-icon"><i class="bi bi-people"></i></div>
+            <div><div class="tile-label">Tổng khách hàng</div><div class="tile-value">@totalCount</div></div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="stat-tile compact tile-orange">
+            <div class="tile-icon"><i class="bi bi-star"></i></div>
+            <div><div class="tile-label">Khách VIP</div><div class="tile-value">@vipCount</div></div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="stat-tile compact tile-green">
+            <div class="tile-icon"><i class="bi bi-cash-coin"></i></div>
+            <div><div class="tile-label">Tổng chi tiêu</div><div class="tile-value">@totalSpent.ToString("N0")đ</div></div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="stat-tile compact tile-red">
+            <div class="tile-icon"><i class="bi bi-person-plus"></i></div>
+            <div><div class="tile-label">Khách mới tháng này</div><div class="tile-value">@newThisMonth</div></div>
+        </div>
+    </div>
+</div>
+
 <div class="stat-card mb-3">
-    <form method="get" class="row g-2 align-items-end">
-        <div class="col-md-6">
-            <label class="form-label small mb-1">Tìm tên, SĐT khách hàng</label>
-            <input type="text" name="search" value="@ViewBag.Search" class="form-control" placeholder="Nhập tên hoặc số điện thoại..." />
+    <form method="get" class="list-toolbar">
+        <div class="search-box">
+            <i class="bi bi-search"></i>
+            <input type="text" name="search" value="@ViewBag.Search" class="form-control" placeholder="Tìm theo tên hoặc số điện thoại rồi nhấn Enter..." />
         </div>
-        <div class="col-md-2">
-            <button type="submit" class="btn btn-success w-100">Tìm</button>
-        </div>
+
+        @if (!string.IsNullOrEmpty(ViewBag.Search as string))
+        {
+            <a asp-action="Index" class="btn btn-outline-secondary btn-sm"><i class="bi bi-x-circle me-1"></i>Xoá lọc</a>
+        }
+
+        <a asp-action="Create" class="btn btn-success ms-auto"><i class="bi bi-plus-lg me-1"></i>Thêm khách hàng</a>
     </form>
 </div>
 
 <div class="stat-card">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h6 class="mb-0">Danh sách khách hàng (@Model.Count)</h6>
-        <a asp-action="Create" class="btn btn-success btn-sm">+ Thêm khách hàng</a>
-    </div>
-
     <div class="table-responsive">
-        <table class="table table-sm align-middle">
+        <table class="table align-middle">
             <thead>
                 <tr>
-                    <th>Họ tên</th>
+                    <th>Khách hàng</th>
                     <th>SĐT</th>
                     <th>Địa chỉ</th>
                     <th>Loại KH</th>
                     <th class="text-end">Tổng chi tiêu</th>
+                    <th>Ngày tạo</th>
                     <th class="text-end">Thao tác</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach (var c in Model)
                 {
+                    var initial = string.IsNullOrWhiteSpace(c.Name) ? "?" : c.Name.Trim().Split(' ').Last().Substring(0, 1).ToUpper();
+
                     <tr>
-                        <td>@c.Name</td>
-                        <td>@c.Phone</td>
-                        <td>@c.Address</td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="avatar-circle">@initial</div>
+                                <span class="fw-semibold">@c.Name</span>
+                            </div>
+                        </td>
+                        <td>@(string.IsNullOrEmpty(c.Phone) ? "-" : c.Phone)</td>
+                        <td class="text-muted">@(string.IsNullOrEmpty(c.Address) ? "-" : c.Address)</td>
                         <td>
                             @if (c.CustomerType == "VIP")
                             {
-                                <span class="badge bg-warning text-dark">VIP</span>
+                                <span class="status-pill pill-yellow"><i class="bi bi-star-fill"></i> VIP</span>
                             }
                             else
                             {
-                                <span class="badge bg-secondary">Thường</span>
+                                <span class="status-pill pill-green">Thành viên</span>
                             }
                         </td>
-                        <td class="text-end">@c.TotalSpent.ToString("N0")đ</td>
+                        <td class="text-end fw-semibold">@c.TotalSpent.ToString("N0")đ</td>
+                        <td class="text-muted">@c.CreatedAt.ToString("dd/MM/yyyy")</td>
                         <td class="text-end">
-                            <a asp-action="Edit" asp-route-id="@c.Id" class="btn btn-outline-secondary btn-sm">Sửa</a>
+                            <a asp-action="Edit" asp-route-id="@c.Id" class="act-btn" title="Sửa"><i class="bi bi-pencil"></i></a>
                             @if (isAdmin)
                             {
                                 <form asp-action="Delete" asp-route-id="@c.Id" method="post" class="d-inline"
                                       onsubmit="return confirm('Xác nhận xoá khách hàng này?');">
-                                    <button type="submit" class="btn btn-outline-danger btn-sm">Xoá</button>
+                                    <button type="submit" class="act-btn danger" title="Xoá"><i class="bi bi-trash3"></i></button>
                                 </form>
                             }
                         </td>
@@ -71,9 +111,14 @@
                 }
                 @if (!Model.Any())
                 {
-                    <tr><td colspan="6" class="text-center text-muted py-3">Không có dữ liệu.</td></tr>
+                    <tr>
+                        <td colspan="7">
+                            <div class="empty-state"><i class="bi bi-people"></i>Không tìm thấy khách hàng nào.</div>
+                        </td>
+                    </tr>
                 }
             </tbody>
         </table>
     </div>
+    <div class="table-foot">Hiển thị @Model.Count khách hàng</div>
 </div>

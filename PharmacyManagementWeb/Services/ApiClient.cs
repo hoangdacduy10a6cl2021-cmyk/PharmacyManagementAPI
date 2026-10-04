@@ -15,6 +15,7 @@ namespace PharmacyManagementWeb.Services
     {
         Task<ApiResult<T>> GetAsync<T>(string path);
         Task<ApiResult<T>> PostAsync<T>(string path, object body);
+        Task<ApiResult<T>> PostFileAsync<T>(string path, IFormFile file, string fieldName = "file");
         Task<ApiResult<T>> PutAsync<T>(string path, object body);
         Task<ApiResult<T>> PatchAsync<T>(string path, object body);
         Task<ApiResult<bool>> DeleteAsync(string path);
@@ -120,6 +121,19 @@ namespace PharmacyManagementWeb.Services
             var json = JsonSerializer.Serialize(body);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
             var response = await client.PutAsync(path, content);
+            return await HandleResponse<T>(response);
+        }
+        public async Task<ApiResult<T>> PostFileAsync<T>(string path, IFormFile file, string fieldName = "file")
+        {
+            var client = CreateClient();
+            using var content = new MultipartFormDataContent();
+            using var stream = file.OpenReadStream();
+            var fileContent = new StreamContent(stream);
+            fileContent.Headers.ContentType = new MediaTypeHeaderValue(
+                string.IsNullOrWhiteSpace(file.ContentType) ? "application/octet-stream" : file.ContentType);
+            content.Add(fileContent, fieldName, file.FileName);
+
+            var response = await client.PostAsync(path, content);
             return await HandleResponse<T>(response);
         }
 

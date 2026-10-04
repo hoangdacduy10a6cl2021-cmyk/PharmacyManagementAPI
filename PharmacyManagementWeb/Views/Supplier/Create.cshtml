@@ -1,51 +1,45 @@
-﻿@model PharmacyManagementWeb.Models.ApiModels.PromotionFormViewModel
+﻿@model PharmacyManagementWeb.Models.ApiModels.SupplierFormViewModel
 @{
-    ViewData["Title"] = "Tạo khuyến mãi";
+    ViewData["Title"] = "Thêm nhà cung cấp";
 }
 
-<div class="stat-card" style="max-width: 650px;">
-    <h6 class="mb-3">@ViewData["Title"]</h6>
+<div class="stat-card form-card" style="max-width:660px;">
+    <div class="form-head">
+        <div class="fh-icon"><i class="bi bi-truck"></i></div>
+        <div>
+            <h5>@ViewData["Title"]</h5>
+            <div class="sub">Đơn vị cung cấp thuốc cho cửa hàng</div>
+        </div>
+    </div>
+
     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
     <form asp-action="Create" method="post">
         @Html.AntiForgeryToken()
+
         <div class="row g-3">
-            <div class="col-md-4">
-                <label asp-for="Code" class="form-label"></label>
-                <input asp-for="Code" class="form-control" autofocus />
-                <span asp-validation-for="Code" class="text-danger small"></span>
-            </div>
-            <div class="col-md-8">
+            <div class="col-12">
                 <label asp-for="Name" class="form-label"></label>
-                <input asp-for="Name" class="form-control" />
+                <input asp-for="Name" class="form-control" autofocus />
                 <span asp-validation-for="Name" class="text-danger small"></span>
             </div>
             <div class="col-md-6">
-                <label asp-for="DiscountType" class="form-label"></label>
-                <select asp-for="DiscountType" class="form-select">
-                    <option value="PhanTram">Theo phần trăm (%)</option>
-                    <option value="SoTien">Theo số tiền (đ)</option>
-                </select>
+                <label asp-for="Phone" class="form-label"></label>
+                <input asp-for="Phone" class="form-control" />
             </div>
             <div class="col-md-6">
-                <label asp-for="DiscountValue" class="form-label"></label>
-                <input asp-for="DiscountValue" class="form-control" type="number" step="0.01" />
-                <span asp-validation-for="DiscountValue" class="text-danger small"></span>
+                <label asp-for="Email" class="form-label"></label>
+                <input asp-for="Email" class="form-control" />
+                <span asp-validation-for="Email" class="text-danger small"></span>
             </div>
-            <div class="col-md-6">
-                <label asp-for="StartDate" class="form-label"></label>
-                <input asp-for="StartDate" class="form-control" type="date" />
-                <span asp-validation-for="StartDate" class="text-danger small"></span>
-            </div>
-            <div class="col-md-6">
-                <label asp-for="EndDate" class="form-label"></label>
-                <input asp-for="EndDate" class="form-control" type="date" />
-                <span asp-validation-for="EndDate" class="text-danger small"></span>
+            <div class="col-12">
+                <label asp-for="Address" class="form-label"></label>
+                <input asp-for="Address" class="form-control" />
             </div>
         </div>
 
-        <div class="mt-4">
-            <button type="submit" class="btn btn-success">Lưu</button>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-success px-4"><i class="bi bi-check2 me-1"></i>Lưu</button>
             <a asp-action="Index" class="btn btn-outline-secondary">Huỷ</a>
         </div>
     </form>

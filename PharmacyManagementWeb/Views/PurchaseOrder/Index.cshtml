@@ -2,6 +2,7 @@
 @{
     ViewData["Title"] = "Nhập hàng";
     bool isAdmin = User.IsInRole("Admin");
+    int thisMonth = Model.Count(p => p.ImportDate.Year == DateTime.Now.Year && p.ImportDate.Month == DateTime.Now.Month);
 }
 
 @if (ViewBag.Error != null)
@@ -9,17 +10,38 @@
     <div class="alert alert-danger">@ViewBag.Error</div>
 }
 
-<div class="stat-card">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h6 class="mb-0">Danh sách phiếu nhập (@Model.Count)</h6>
+<div class="row g-3 mb-3">
+    <div class="col-6 col-xl-3">
+        <div class="stat-tile compact tile-blue">
+            <div class="tile-icon"><i class="bi bi-box-seam"></i></div>
+            <div><div class="tile-label">Tổng phiếu nhập</div><div class="tile-value">@Model.Count</div></div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="stat-tile compact tile-green">
+            <div class="tile-icon"><i class="bi bi-cash-coin"></i></div>
+            <div><div class="tile-label">Tổng tiền nhập</div><div class="tile-value">@Model.Sum(p => p.TotalAmount).ToString("N0")đ</div></div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="stat-tile compact tile-orange">
+            <div class="tile-icon"><i class="bi bi-calendar-check"></i></div>
+            <div><div class="tile-label">Phiếu tháng này</div><div class="tile-value">@thisMonth</div></div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
         @if (isAdmin)
         {
-            <a asp-action="Create" class="btn btn-success btn-sm">+ Tạo phiếu nhập</a>
+            <a asp-action="Create" class="btn btn-success w-100 h-100 d-flex align-items-center justify-content-center fw-semibold" style="min-height:68px;">
+                <i class="bi bi-plus-lg me-2"></i>Tạo phiếu nhập
+            </a>
         }
     </div>
+</div>
 
+<div class="stat-card">
     <div class="table-responsive">
-        <table class="table table-sm align-middle">
+        <table class="table align-middle">
             <thead>
                 <tr>
                     <th>Mã phiếu</th>
@@ -35,20 +57,20 @@
                 @foreach (var p in Model)
                 {
                     <tr>
-                        <td>@p.Code</td>
+                        <td class="fw-semibold" style="color:var(--pharmacy-primary-dark);">@p.Code</td>
                         <td>@p.SupplierName</td>
                         <td>@p.UserName</td>
                         <td>@p.ImportDate.ToString("dd/MM/yyyy")</td>
-                        <td class="text-end">@p.TotalAmount.ToString("N0")đ</td>
-                        <td><span class="badge bg-success">@p.Status</span></td>
+                        <td class="text-end fw-semibold">@p.TotalAmount.ToString("N0")đ</td>
+                        <td><span class="status-pill pill-green">@p.Status</span></td>
                         <td class="text-end">
-                            <a asp-action="Detail" asp-route-id="@p.Id" class="btn btn-outline-secondary btn-sm">Xem</a>
+                            <a asp-action="Detail" asp-route-id="@p.Id" class="act-btn" title="Xem chi tiết"><i class="bi bi-eye"></i></a>
                         </td>
                     </tr>
                 }
                 @if (!Model.Any())
                 {
-                    <tr><td colspan="7" class="text-center text-muted py-3">Không có dữ liệu.</td></tr>
+                    <tr><td colspan="7"><div class="empty-state"><i class="bi bi-box-seam"></i>Chưa có phiếu nhập nào.</div></td></tr>
                 }
             </tbody>
         </table>

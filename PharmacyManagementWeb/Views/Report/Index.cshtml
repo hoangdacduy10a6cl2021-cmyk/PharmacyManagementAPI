@@ -1,6 +1,19 @@
 ﻿@model PharmacyManagementWeb.Models.ApiModels.RevenueReportModel
 @{
     ViewData["Title"] = "Báo cáo doanh thu";
+
+    var today = DateTime.Today;
+    var monthStart = new DateTime(today.Year, today.Month, 1);
+
+    var days = Model.DailyBreakdown;
+    var maxRevenue = days.Any() ? days.Max(d => d.Revenue) : 0;
+    if (maxRevenue <= 0) maxRevenue = 1;
+    bool showChart = days.Count > 0 && days.Count <= 31;
+    bool showValues = days.Count <= 12;
+
+    string Short(decimal v) => v >= 1_000_000 ? (v / 1_000_000).ToString("0.#") + "tr"
+                             : v >= 1_000 ? (v / 1_000).ToString("0.#") + "k"
+                             : v.ToString("0");
 }
 
 @if (ViewBag.Error != null)
@@ -9,49 +22,75 @@
 }
 
 <div class="stat-card mb-3">
-    <form method="get" class="row g-2 align-items-end">
-        <div class="col-md-4">
+    <form method="get" class="list-toolbar">
+        <div>
             <label class="form-label small mb-1">Từ ngày</label>
             <input type="date" name="fromDate" value="@Model.FromDate.ToString("yyyy-MM-dd")" class="form-control" />
         </div>
-        <div class="col-md-4">
+        <div>
             <label class="form-label small mb-1">Đến ngày</label>
             <input type="date" name="toDate" value="@Model.ToDate.ToString("yyyy-MM-dd")" class="form-control" />
         </div>
-        <div class="col-md-2">
-            <button type="submit" class="btn btn-success w-100">Xem báo cáo</button>
+        <div class="align-self-end">
+            <button type="submit" class="btn btn-success"><i class="bi bi-bar-chart-line me-1"></i>Xem báo cáo</button>
+        </div>
+
+        <div class="ms-auto d-flex gap-2 align-self-end">
+            <a asp-action="Index" asp-route-fromDate="@today.ToString("yyyy-MM-dd")" asp-route-toDate="@today.ToString("yyyy-MM-dd")" class="btn btn-outline-secondary btn-sm">Hôm nay</a>
+            <a asp-action="Index" asp-route-fromDate="@today.AddDays(-6).ToString("yyyy-MM-dd")" asp-route-toDate="@today.ToString("yyyy-MM-dd")" class="btn btn-outline-secondary btn-sm">7 ngày</a>
+            <a asp-action="Index" asp-route-fromDate="@monthStart.ToString("yyyy-MM-dd")" asp-route-toDate="@today.ToString("yyyy-MM-dd")" class="btn btn-outline-secondary btn-sm">Tháng này</a>
         </div>
     </form>
 </div>
 
 <div class="row g-3 mb-3">
     <div class="col-md-4">
-        <div class="stat-card">
-            <div class="stat-icon bg-icon-green">💰</div>
-            <div class="stat-value">@Model.TotalRevenue.ToString("N0")đ</div>
-            <div class="stat-label">Tổng doanh thu</div>
+        <div class="stat-tile tile-green">
+            <div class="tile-icon"><i class="bi bi-cash-coin"></i></div>
+            <div><div class="tile-label">Tổng doanh thu</div><div class="tile-value">@Model.TotalRevenue.ToString("N0")đ</div></div>
         </div>
     </div>
     <div class="col-md-4">
-        <div class="stat-card">
-            <div class="stat-icon bg-icon-blue">🧾</div>
-            <div class="stat-value">@Model.TotalOrders</div>
-            <div class="stat-label">Tổng số đơn hàng</div>
+        <div class="stat-tile tile-blue">
+            <div class="tile-icon"><i class="bi bi-receipt"></i></div>
+            <div><div class="tile-label">Tổng số đơn hàng</div><div class="tile-value">@Model.TotalOrders</div></div>
         </div>
     </div>
     <div class="col-md-4">
-        <div class="stat-card">
-            <div class="stat-icon bg-icon-orange">📊</div>
-            <div class="stat-value">@Model.AverageOrderValue.ToString("N0")đ</div>
-            <div class="stat-label">Giá trị TB / đơn</div>
+        <div class="stat-tile tile-orange">
+            <div class="tile-icon"><i class="bi bi-graph-up-arrow"></i></div>
+            <div><div class="tile-label">Giá trị TB / đơn</div><div class="tile-value">@Model.AverageOrderValue.ToString("N0")đ</div></div>
         </div>
     </div>
 </div>
 
+@if (showChart)
+{
+    <div class="stat-card mb-3">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="mb-0">Biểu đồ doanh thu theo ngày</h6>
+            <span class="text-muted small">Đơn vị: nghìn (k) / triệu (tr) đồng</span>
+        </div>
+        <div class="bar-chart" style="gap:@(days.Count > 14 ? "0.3rem" : "0.8rem");">
+            @foreach (var d in days)
+            {
+                var pct = d.Revenue <= 0 ? 3 : Math.Max(6, (int)Math.Round((double)(d.Revenue / maxRevenue) * 100));
+                <div class="bar-col" title="@d.Date.ToString("dd/MM/yyyy"): @d.Revenue.ToString("N0")đ - @d.OrderCount đơn">
+                    <div class="bar-value">@(showValues && d.Revenue > 0 ? Short(d.Revenue) : "")</div>
+                    <div class="bar-track">
+                        <div class="bar-fill @(d.Revenue <= 0 ? "empty" : "")" style="height:@(pct)%"></div>
+                    </div>
+                    <div class="bar-label">@d.Date.ToString("dd/MM")</div>
+                </div>
+            }
+        </div>
+    </div>
+}
+
 <div class="stat-card">
     <h6 class="mb-3">Chi tiết doanh thu theo ngày</h6>
     <div class="table-responsive">
-        <table class="table table-sm">
+        <table class="table align-middle">
             <thead>
                 <tr>
                     <th>Ngày</th>
@@ -60,17 +99,17 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach (var d in Model.DailyBreakdown)
+                @foreach (var d in days)
                 {
                     <tr>
                         <td>@d.Date.ToString("dd/MM/yyyy")</td>
-                        <td class="text-end">@d.Revenue.ToString("N0")đ</td>
+                        <td class="text-end fw-semibold">@d.Revenue.ToString("N0")đ</td>
                         <td class="text-end">@d.OrderCount</td>
                     </tr>
                 }
-                @if (!Model.DailyBreakdown.Any())
+                @if (!days.Any())
                 {
-                    <tr><td colspan="3" class="text-center text-muted py-3">Không có dữ liệu trong khoảng thời gian này.</td></tr>
+                    <tr><td colspan="3"><div class="empty-state"><i class="bi bi-bar-chart-line"></i>Không có dữ liệu trong khoảng thời gian này.</div></td></tr>
                 }
             </tbody>
         </table>

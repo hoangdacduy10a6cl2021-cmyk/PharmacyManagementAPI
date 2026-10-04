@@ -3,14 +3,23 @@
     ViewData["Title"] = "Sửa danh mục";
 }
 
-<div class="stat-card" style="max-width: 600px;">
-    <h6 class="mb-3">@ViewData["Title"]</h6>
-    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+<div class="stat-card form-card" style="max-width:620px;">
+    <div class="form-head">
+        <div class="fh-icon"><i class="bi bi-tag"></i></div>
+        <div>
+            <h5>@ViewData["Title"]</h5>
+            @if (ViewBag.MedicineCount != null)
+            {
+                <div class="sub">Danh mục này đang có <strong>@ViewBag.MedicineCount</strong> thuốc</div>
+            }
+            else
+            {
+                <div class="sub">Cập nhật thông tin danh mục</div>
+            }
+        </div>
+    </div>
 
-    @if (ViewBag.MedicineCount != null)
-    {
-        <div class="alert alert-light border small">Danh mục này đang có <strong>@ViewBag.MedicineCount</strong> thuốc.</div>
-    }
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
     <form asp-action="Edit" asp-route-id="@Model.Id" method="post">
         @Html.AntiForgeryToken()
@@ -22,10 +31,13 @@
         </div>
         <div class="mb-3">
             <label asp-for="Description" class="form-label"></label>
-            <textarea asp-for="Description" class="form-control" rows="2"></textarea>
+            <textarea asp-for="Description" class="form-control" rows="3"></textarea>
         </div>
-        <button type="submit" class="btn btn-success">Lưu</button>
-        <a asp-action="Index" class="btn btn-outline-secondary">Huỷ</a>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-success px-4"><i class="bi bi-check2 me-1"></i>Lưu</button>
+            <a asp-action="Index" class="btn btn-outline-secondary">Huỷ</a>
+        </div>
     </form>
 </div>
 

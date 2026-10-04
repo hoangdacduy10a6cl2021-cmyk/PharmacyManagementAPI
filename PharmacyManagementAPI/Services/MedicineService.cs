@@ -13,17 +13,38 @@ namespace PharmacyManagementAPI.Services
         Task<(MedicineDto? data, string? error)> CreateAsync(CreateMedicineDto dto);
         Task<(MedicineDto? data, string? error)> UpdateAsync(int id, UpdateMedicineDto dto);
         Task<(bool success, string? error)> DeleteAsync(int id);
+        Task<(MedicineDto? data, string? error)> UploadImageAsync(int id, IFormFile file);
+        Task<(MedicineDto? data, string? error)> DeleteImageAsync(int id);
     }
 
     public class MedicineService : IMedicineService
     {
         private readonly ApplicationDbContext _context;
+        private readonly IWebHostEnvironment _env;
         private const int LOW_STOCK_THRESHOLD = 20;
         private const int EXPIRING_SOON_DAYS = 90;
+        private const long MAX_IMAGE_SIZE = 2 * 1024 * 1024; // 2MB
+        private static readonly string[] AllowedImageExtensions = { ".jpg", ".jpeg", ".png", ".webp", ".gif" };
 
-        public MedicineService(ApplicationDbContext context)
+        public MedicineService(ApplicationDbContext context, IWebHostEnvironment env)
         {
             _context = context;
+            _env = env;
+        }
+
+        private string GetUploadFolder()
+        {
+            var root = _env.WebRootPath ?? Path.Combine(_env.ContentRootPath, "wwwroot");
+            var folder = Path.Combine(root, "uploads", "medicines");
+            Directory.CreateDirectory(folder);
+            return folder;
+        }
+
+        private void DeleteImageFile(string? imageUrl)
+        {
+            if (string.IsNullOrEmpty(imageUrl)) return;
+            var path = Path.Combine(GetUploadFolder(), Path.GetFileName(imageUrl));
+            if (File.Exists(path)) File.Delete(path);
         }
 
         private static MedicineDto ToDto(Medicine m) => new MedicineDto
@@ -41,6 +62,7 @@ namespace PharmacyManagementAPI.Services
             Stock = m.Stock,
             ExpiryDate = m.ExpiryDate,
             Barcode = m.Barcode,
+            ImageUrl = m.ImageUrl,
             IsActive = m.IsActive
         };
 
@@ -190,9 +212,57 @@ namespace PharmacyManagementAPI.Services
                 return (true, "Thuốc đã có giao dịch liên kết nên đã được chuyển sang trạng thái ngưng kinh doanh thay vì xoá.");
             }
 
+            var oldImage = medicine.ImageUrl;
             _context.Medicines.Remove(medicine);
             await _context.SaveChangesAsync();
+            DeleteImageFile(oldImage);
             return (true, null);
+        }
+
+        public async Task<(MedicineDto? data, string? error)> UploadImageAsync(int id, IFormFile file)
+        {
+            var medicine = await _context.Medicines
+                .Include(m => m.Category)
+                .Include(m => m.Supplier)
+                .FirstOrDefaultAsync(m => m.Id == id);
+
+            if (medicine == null) return (null, "Không tìm thấy thuốc.");
+
+            if (file == null || file.Length == 0) return (null, "Vui lòng chọn file ảnh.");
+            if (file.Length > MAX_IMAGE_SIZE) return (null, "Ảnh không được vượt quá 2MB.");
+
+            var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+            if (!AllowedImageExtensions.Contains(ext))
+                return (null, "Chỉ chấp nhận ảnh .jpg, .jpeg, .png, .webp, .gif.");
+
+            var fileName = $"{Guid.NewGuid():N}{ext}";
+            var fullPath = Path.Combine(GetUploadFolder(), fileName);
+            using (var stream = new FileStream(fullPath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            DeleteImageFile(medicine.ImageUrl);
+            medicine.ImageUrl = $"/uploads/medicines/{fileName}";
+            await _context.SaveChangesAsync();
+
+            return (ToDto(medicine), null);
+        }
+
+        public async Task<(MedicineDto? data, string? error)> DeleteImageAsync(int id)
+        {
+            var medicine = await _context.Medicines
+                .Include(m => m.Category)
+                .Include(m => m.Supplier)
+                .FirstOrDefaultAsync(m => m.Id == id);
+
+            if (medicine == null) return (null, "Không tìm thấy thuốc.");
+
+            DeleteImageFile(medicine.ImageUrl);
+            medicine.ImageUrl = null;
+            await _context.SaveChangesAsync();
+
+            return (ToDto(medicine), null);
         }
     }
 }

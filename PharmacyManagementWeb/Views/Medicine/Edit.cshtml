@@ -1,18 +1,26 @@
 ﻿@model PharmacyManagementWeb.Models.ApiModels.MedicineFormViewModel
+@inject IConfiguration Config
 @{
     bool isEdit = Model.Id > 0;
     ViewData["Title"] = isEdit ? "Sửa thuốc" : "Thêm thuốc";
 }
 
-<div class="stat-card" style="max-width: 700px;">
-    <h6 class="mb-3">@ViewData["Title"]</h6>
+<div class="stat-card form-card">
+    <div class="form-head">
+        <div class="fh-icon"><i class="bi bi-capsule"></i></div>
+        <div>
+            <h5>@ViewData["Title"]</h5>
+            <div class="sub">@(isEdit ? "Cập nhật thông tin thuốc trong kho" : "Nhập thông tin thuốc mới vào hệ thống")</div>
+        </div>
+    </div>
 
     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
-    <form asp-action="@(isEdit ? "Edit" : "Create")" asp-route-id="@Model.Id" method="post">
+    <form asp-action="@(isEdit ? "Edit" : "Create")" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data">
         @Html.AntiForgeryToken()
         <input type="hidden" asp-for="Id" />
 
+        <div class="section-title" style="margin-top:0;">Thông tin cơ bản</div>
         <div class="row g-3">
             <div class="col-md-4">
                 <label asp-for="Code" class="form-label"></label>
@@ -24,7 +32,6 @@
                 <input asp-for="Name" class="form-control" />
                 <span asp-validation-for="Name" class="text-danger small"></span>
             </div>
-
             <div class="col-md-6">
                 <label asp-for="CategoryId" class="form-label"></label>
                 <select asp-for="CategoryId" class="form-select">
@@ -46,28 +53,34 @@
                     }
                 </select>
             </div>
-
-            <div class="col-md-4">
+            <div class="col-md-6">
                 <label asp-for="Unit" class="form-label"></label>
                 <input asp-for="Unit" class="form-control" />
             </div>
+            <div class="col-md-6">
+                <label asp-for="Barcode" class="form-label"></label>
+                <input asp-for="Barcode" class="form-control" />
+            </div>
+        </div>
+
+        <div class="section-title">Giá và tồn kho</div>
+        <div class="row g-3">
             <div class="col-md-4">
                 <label asp-for="SellPrice" class="form-label"></label>
-                <input asp-for="SellPrice" class="form-control" type="number" step="100" />
+                <input asp-for="SellPrice" class="form-control" type="number" step="any" />
                 <span asp-validation-for="SellPrice" class="text-danger small"></span>
             </div>
             <div class="col-md-4">
                 <label asp-for="ImportPrice" class="form-label"></label>
-                <input asp-for="ImportPrice" class="form-control" type="number" step="100" />
+                <input asp-for="ImportPrice" class="form-control" type="number" step="any" />
                 <span asp-validation-for="ImportPrice" class="text-danger small"></span>
             </div>
-
             @if (isEdit)
             {
                 <div class="col-md-4">
                     <label class="form-label">Tồn kho hiện tại</label>
                     <input value="@Model.Stock" class="form-control" disabled />
-                    <div class="form-text">Tồn kho chỉ thay đổi qua Phiếu nhập / Bán hàng.</div>
+                    <div class="form-text">Chỉ đổi qua Phiếu nhập / Bán hàng.</div>
                 </div>
             }
             else
@@ -77,27 +90,43 @@
                     <input asp-for="Stock" class="form-control" type="number" />
                 </div>
             }
-
             <div class="col-md-4">
                 <label asp-for="ExpiryDate" class="form-label"></label>
                 <input asp-for="ExpiryDate" class="form-control" type="date" />
             </div>
-            <div class="col-md-4">
-                <label asp-for="Barcode" class="form-label"></label>
-                <input asp-for="Barcode" class="form-control" />
+        </div>
+
+        <div class="section-title">Hình ảnh</div>
+        <div class="row g-3">
+            <div class="col-12">
+                <label asp-for="ImageFile" class="form-label"></label>
+                @if (isEdit && !string.IsNullOrEmpty(Model.ImageUrl))
+                {
+                    <div class="mb-2">
+                        <img src="@(Config["ApiSettings:BaseUrl"])@Model.ImageUrl" alt="@Model.Name"
+                             style="max-height:140px; max-width:100%; border-radius:12px; border:1px solid #dee2e6;" />
+                    </div>
+                    <div class="form-check mb-2">
+                        <input asp-for="RemoveImage" class="form-check-input" />
+                        <label asp-for="RemoveImage" class="form-check-label"></label>
+                    </div>
+                }
+                <input asp-for="ImageFile" type="file" class="form-control" accept=".jpg,.jpeg,.png,.webp,.gif" id="imageInput" />
+                <div class="form-text">JPG, PNG, WEBP, GIF - tối đa 2MB.</div>
+                <img id="imagePreview" style="display:none; max-height:140px; max-width:100%; margin-top:8px; border-radius:12px; border:1px solid #dee2e6;" />
             </div>
 
             @if (isEdit)
             {
-                <div class="col-md-12 form-check mt-3">
+                <div class="col-12 form-check ms-1">
                     <input asp-for="IsActive" class="form-check-input" />
                     <label asp-for="IsActive" class="form-check-label"></label>
                 </div>
             }
         </div>
 
-        <div class="mt-4">
-            <button type="submit" class="btn btn-success">Lưu</button>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-success px-4"><i class="bi bi-check2 me-1"></i>Lưu</button>
             <a asp-action="Index" class="btn btn-outline-secondary">Huỷ</a>
         </div>
     </form>
@@ -105,4 +134,19 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.getElementById('imageInput').addEventListener('change', function () {
+            var preview = document.getElementById('imagePreview');
+            var file = this.files[0];
+            if (!file) { preview.style.display = 'none'; return; }
+            if (file.size > 2 * 1024 * 1024) {
+                alert('Ảnh không được vượt quá 2MB.');
+                this.value = '';
+                preview.style.display = 'none';
+                return;
+            }
+            preview.src = URL.createObjectURL(file);
+            preview.style.display = 'block';
+        });
+    </script>
 }

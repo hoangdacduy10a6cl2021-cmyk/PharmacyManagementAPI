@@ -9,17 +9,30 @@
     <div class="alert alert-danger">@ViewBag.Error</div>
 }
 
-<div class="stat-card">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h6 class="mb-0">Danh sách danh mục (@Model.Count)</h6>
-        @if (isAdmin)
-        {
-            <a asp-action="Create" class="btn btn-success btn-sm">+ Thêm danh mục</a>
-        }
+<div class="row g-3 mb-3">
+    <div class="col-6 col-xl-3">
+        <div class="stat-tile compact tile-blue">
+            <div class="tile-icon"><i class="bi bi-tags"></i></div>
+            <div><div class="tile-label">Tổng danh mục</div><div class="tile-value">@Model.Count</div></div>
+        </div>
     </div>
+    <div class="col-6 col-xl-3">
+        <div class="stat-tile compact tile-green">
+            <div class="tile-icon"><i class="bi bi-capsule"></i></div>
+            <div><div class="tile-label">Tổng số thuốc</div><div class="tile-value">@Model.Sum(c => c.MedicineCount)</div></div>
+        </div>
+    </div>
+    @if (isAdmin)
+    {
+        <div class="col-12 col-xl-6 d-flex align-items-center justify-content-xl-end">
+            <a asp-action="Create" class="btn btn-success"><i class="bi bi-plus-lg me-1"></i>Thêm danh mục</a>
+        </div>
+    }
+</div>
 
+<div class="stat-card">
     <div class="table-responsive">
-        <table class="table table-sm align-middle">
+        <table class="table align-middle">
             <thead>
                 <tr>
                     <th>Tên danh mục</th>
@@ -35,16 +48,21 @@
                 @foreach (var c in Model)
                 {
                     <tr>
-                        <td>@c.Name</td>
-                        <td>@c.Description</td>
-                        <td class="text-end">@c.MedicineCount</td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="avatar-circle" style="border-radius:12px;"><i class="bi bi-tag"></i></div>
+                                <span class="fw-semibold">@c.Name</span>
+                            </div>
+                        </td>
+                        <td class="text-muted">@(string.IsNullOrEmpty(c.Description) ? "-" : c.Description)</td>
+                        <td class="text-end"><span class="status-pill pill-blue">@c.MedicineCount thuốc</span></td>
                         @if (isAdmin)
                         {
                             <td class="text-end">
-                                <a asp-action="Edit" asp-route-id="@c.Id" class="btn btn-outline-secondary btn-sm">Sửa</a>
+                                <a asp-action="Edit" asp-route-id="@c.Id" class="act-btn" title="Sửa"><i class="bi bi-pencil"></i></a>
                                 <form asp-action="Delete" asp-route-id="@c.Id" method="post" class="d-inline"
                                       onsubmit="return confirm('Xác nhận xoá danh mục này?');">
-                                    <button type="submit" class="btn btn-outline-danger btn-sm">Xoá</button>
+                                    <button type="submit" class="act-btn danger" title="Xoá"><i class="bi bi-trash3"></i></button>
                                 </form>
                             </td>
                         }
@@ -52,7 +70,7 @@
                 }
                 @if (!Model.Any())
                 {
-                    <tr><td colspan="4" class="text-center text-muted py-3">Không có dữ liệu.</td></tr>
+                    <tr><td colspan="4"><div class="empty-state"><i class="bi bi-tags"></i>Chưa có danh mục nào.</div></td></tr>
                 }
             </tbody>
         </table>

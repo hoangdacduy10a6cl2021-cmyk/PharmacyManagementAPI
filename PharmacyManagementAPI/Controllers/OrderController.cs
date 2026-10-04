@@ -47,7 +47,7 @@ namespace PharmacyManagementAPI.Controllers
         public async Task<IActionResult> Create(CreateOrderDto dto)
         {
             var userId = GetCurrentUserId();
-            var (data, error) = await _service.CreateAsync(dto, userId);
+            var (data, error) = await _service.CreateAsync(dto, userId, User.IsInRole("Admin"));
             if (error != null) return BadRequest(new { message = error });
             return CreatedAtAction(nameof(GetById), new { id = data!.Id }, data);
         }

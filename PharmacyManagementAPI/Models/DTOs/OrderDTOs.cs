@@ -8,6 +8,7 @@ namespace PharmacyManagementAPI.Models.DTOs
         public int MedicineId { get; set; }
         public string? MedicineName { get; set; }
         public string? MedicineCode { get; set; }
+        public string? MedicineImageUrl { get; set; }
         public int Quantity { get; set; }
         public decimal UnitPrice { get; set; }
         public decimal Subtotal { get; set; }

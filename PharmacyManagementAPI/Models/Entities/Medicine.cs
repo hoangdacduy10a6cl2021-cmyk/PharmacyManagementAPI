@@ -40,6 +40,10 @@ namespace PharmacyManagementAPI.Models.Entities
 
         public bool IsActive { get; set; } = true;
 
+        // Đường dẫn ảnh tương đối, vd: /uploads/medicines/abc123.jpg
+        [MaxLength(300)]
+        public string? ImageUrl { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.Now;
 
         public ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();

@@ -38,7 +38,8 @@ namespace PharmacyManagementWeb.Controllers
                     name = m.Name,
                     unit = m.Unit,
                     sellPrice = m.SellPrice,
-                    stock = m.Stock
+                    stock = m.Stock,
+                    imageUrl = m.ImageUrl
                 });
 
             return Json(list);

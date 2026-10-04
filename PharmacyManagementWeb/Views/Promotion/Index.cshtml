@@ -9,17 +9,44 @@
     <div class="alert alert-danger">@ViewBag.Error</div>
 }
 
-<div class="stat-card">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h6 class="mb-0">Danh sách khuyến mãi (@Model.Count)</h6>
-        @if (isAdmin)
-        {
-            <a asp-action="Create" class="btn btn-success btn-sm">+ Tạo khuyến mãi</a>
-        }
+<div class="row g-3 mb-3">
+    <div class="col-6 col-xl-3">
+        <div class="stat-tile compact tile-blue">
+            <div class="tile-icon"><i class="bi bi-percent"></i></div>
+            <div><div class="tile-label">Tổng chương trình</div><div class="tile-value">@Model.Count</div></div>
+        </div>
     </div>
+    <div class="col-6 col-xl-3">
+        <div class="stat-tile compact tile-green">
+            <div class="tile-icon"><i class="bi bi-play-circle"></i></div>
+            <div><div class="tile-label">Đang diễn ra</div><div class="tile-value">@Model.Count(p => p.CurrentStatus == "Đang diễn ra")</div></div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="stat-tile compact tile-orange">
+            <div class="tile-icon"><i class="bi bi-hourglass-split"></i></div>
+            <div><div class="tile-label">Chưa bắt đầu</div><div class="tile-value">@Model.Count(p => p.CurrentStatus == "Chưa bắt đầu")</div></div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="stat-tile compact tile-red">
+            <div class="tile-icon"><i class="bi bi-stop-circle"></i></div>
+            <div><div class="tile-label">Đã kết thúc</div><div class="tile-value">@Model.Count(p => p.CurrentStatus == "Đã kết thúc")</div></div>
+        </div>
+    </div>
+</div>
 
+@if (isAdmin)
+{
+    <div class="stat-card mb-3 d-flex justify-content-between align-items-center">
+        <span class="text-muted">Quản lý các chương trình giảm giá của cửa hàng</span>
+        <a asp-action="Create" class="btn btn-success"><i class="bi bi-plus-lg me-1"></i>Tạo khuyến mãi</a>
+    </div>
+}
+
+<div class="stat-card">
     <div class="table-responsive">
-        <table class="table table-sm align-middle">
+        <table class="table align-middle">
             <thead>
                 <tr>
                     <th>Mã KM</th>
@@ -37,31 +64,27 @@
             <tbody>
                 @foreach (var p in Model)
                 {
+                    var pill = p.CurrentStatus switch
+                    {
+                        "Đang diễn ra" => "pill-green",
+                        "Chưa bắt đầu" => "pill-blue",
+                        "Đã kết thúc" => "pill-gray",
+                        _ => "pill-yellow"
+                    };
                     <tr>
-                        <td>@p.Code</td>
-                        <td>@p.Name</td>
-                        <td>@(p.DiscountType == "PhanTram" ? "Theo %" : "Theo số tiền")</td>
-                        <td class="text-end">@(p.DiscountType == "PhanTram" ? $"{p.DiscountValue}%" : $"{p.DiscountValue:N0}đ")</td>
+                        <td class="fw-semibold" style="color:var(--pharmacy-primary-dark);">@p.Code</td>
+                        <td class="fw-semibold">@p.Name</td>
+                        <td><span class="soft-tag">@(p.DiscountType == "PhanTram" ? "Theo %" : "Theo số tiền")</span></td>
+                        <td class="text-end fw-semibold">@(p.DiscountType == "PhanTram" ? $"{p.DiscountValue:0.##}%" : $"{p.DiscountValue:N0}đ")</td>
                         <td>@p.StartDate.ToString("dd/MM") - @p.EndDate.ToString("dd/MM/yyyy")</td>
-                        <td>
-                            @{
-                                var badgeClass = p.CurrentStatus switch
-                                {
-                                    "Đang diễn ra" => "bg-success",
-                                    "Chưa bắt đầu" => "bg-info text-dark",
-                                    "Đã kết thúc" => "bg-secondary",
-                                    _ => "bg-dark"
-                                };
-                            }
-                            <span class="badge @badgeClass">@p.CurrentStatus</span>
-                        </td>
+                        <td><span class="status-pill @pill">@p.CurrentStatus</span></td>
                         @if (isAdmin)
                         {
                             <td class="text-end">
-                                <a asp-action="Edit" asp-route-id="@p.Id" class="btn btn-outline-secondary btn-sm">Sửa</a>
+                                <a asp-action="Edit" asp-route-id="@p.Id" class="act-btn" title="Sửa"><i class="bi bi-pencil"></i></a>
                                 <form asp-action="Delete" asp-route-id="@p.Id" method="post" class="d-inline"
                                       onsubmit="return confirm('Xác nhận xoá khuyến mãi này?');">
-                                    <button type="submit" class="btn btn-outline-danger btn-sm">Xoá</button>
+                                    <button type="submit" class="act-btn danger" title="Xoá"><i class="bi bi-trash3"></i></button>
                                 </form>
                             </td>
                         }
@@ -69,7 +92,7 @@
                 }
                 @if (!Model.Any())
                 {
-                    <tr><td colspan="7" class="text-center text-muted py-3">Không có dữ liệu.</td></tr>
+                    <tr><td colspan="7"><div class="empty-state"><i class="bi bi-percent"></i>Chưa có chương trình khuyến mãi nào.</div></td></tr>
                 }
             </tbody>
         </table>

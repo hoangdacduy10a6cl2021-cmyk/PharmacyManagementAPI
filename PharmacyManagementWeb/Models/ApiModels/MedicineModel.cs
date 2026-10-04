@@ -36,6 +36,7 @@ namespace PharmacyManagementWeb.Models.ApiModels
         public int Stock { get; set; }
         public DateTime? ExpiryDate { get; set; }
         public string? Barcode { get; set; }
+        public string? ImageUrl { get; set; }
         public bool IsActive { get; set; }
     }
 
@@ -81,6 +82,15 @@ namespace PharmacyManagementWeb.Models.ApiModels
 
         [Display(Name = "Mã vạch")]
         public string? Barcode { get; set; }
+
+        [Display(Name = "Ảnh thuốc")]
+        public IFormFile? ImageFile { get; set; }
+
+        // Ảnh hiện tại (chỉ dùng để hiển thị ở form Sửa)
+        public string? ImageUrl { get; set; }
+
+        [Display(Name = "Xoá ảnh hiện tại")]
+        public bool RemoveImage { get; set; }
 
         [Display(Name = "Còn kinh doanh")]
         public bool IsActive { get; set; } = true;

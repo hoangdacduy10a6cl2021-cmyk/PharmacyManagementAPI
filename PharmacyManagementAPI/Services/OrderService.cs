@@ -9,7 +9,7 @@ namespace PharmacyManagementAPI.Services
     {
         Task<List<OrderDto>> GetAllAsync(int? customerId, DateTime? fromDate, DateTime? toDate);
         Task<OrderDto?> GetByIdAsync(int id);
-        Task<(OrderDto? data, string? error)> CreateAsync(CreateOrderDto dto, int userId);
+        Task<(OrderDto? data, string? error)> CreateAsync(CreateOrderDto dto, int userId, bool isAdmin);
     }
 
     public class OrderService : IOrderService
@@ -18,6 +18,9 @@ namespace PharmacyManagementAPI.Services
 
         // Khách chi tiêu từ mức này trở lên -> tự động nâng hạng VIP
         private const decimal VIP_THRESHOLD = 5_000_000;
+
+        // Nhân viên chỉ được giảm tối đa X% giá trị đơn, Admin không bị giới hạn (chỉnh số này nếu cần)
+        private const decimal MAX_STAFF_DISCOUNT_PERCENT = 10;
 
         public OrderService(ApplicationDbContext context)
         {
@@ -44,6 +47,7 @@ namespace PharmacyManagementAPI.Services
                 MedicineId = d.MedicineId,
                 MedicineName = d.Medicine?.Name,
                 MedicineCode = d.Medicine?.Code,
+                MedicineImageUrl = d.Medicine?.ImageUrl,
                 Quantity = d.Quantity,
                 UnitPrice = d.UnitPrice,
                 Subtotal = d.Subtotal
@@ -82,7 +86,7 @@ namespace PharmacyManagementAPI.Services
             return o == null ? null : ToDto(o);
         }
 
-        public async Task<(OrderDto? data, string? error)> CreateAsync(CreateOrderDto dto, int userId)
+        public async Task<(OrderDto? data, string? error)> CreateAsync(CreateOrderDto dto, int userId, bool isAdmin)
         {
             if (dto.CustomerId.HasValue)
             {
@@ -106,8 +110,24 @@ namespace PharmacyManagementAPI.Services
                 if (!medicine.IsActive)
                     return (null, $"Thuốc '{medicine.Name}' đã ngưng kinh doanh.");
 
+                if (medicine.ExpiryDate.HasValue && medicine.ExpiryDate.Value.Date < DateTime.Today)
+                    return (null, $"Thuốc '{medicine.Name}' đã hết hạn sử dụng ({medicine.ExpiryDate.Value:dd/MM/yyyy}), không thể bán.");
+
                 if (medicine.Stock < item.Quantity)
                     return (null, $"Thuốc '{medicine.Name}' không đủ tồn kho (còn {medicine.Stock}, cần {item.Quantity}).");
+            }
+
+            var totalAmount = dto.Details.Sum(d => d.Quantity * medicines.First(m => m.Id == d.MedicineId).SellPrice);
+
+            // Kiểm soát giảm giá
+            if (dto.DiscountAmount > totalAmount)
+                return (null, $"Giảm giá ({dto.DiscountAmount:N0}đ) không được vượt quá tạm tính ({totalAmount:N0}đ).");
+
+            if (!isAdmin)
+            {
+                var maxDiscount = totalAmount * MAX_STAFF_DISCOUNT_PERCENT / 100;
+                if (dto.DiscountAmount > maxDiscount)
+                    return (null, $"Nhân viên chỉ được giảm tối đa {MAX_STAFF_DISCOUNT_PERCENT}% ({maxDiscount:N0}đ) cho đơn này. Giảm nhiều hơn cần Admin thực hiện.");
             }
 
             using var transaction = await _context.Database.BeginTransactionAsync();
@@ -116,9 +136,7 @@ namespace PharmacyManagementAPI.Services
                 var lastId = await _context.Orders.CountAsync();
                 var code = $"HD{(lastId + 1):D4}"; // HD0001, HD0002...
 
-                var totalAmount = dto.Details.Sum(d => d.Quantity * medicines.First(m => m.Id == d.MedicineId).SellPrice);
                 var finalAmount = totalAmount - dto.DiscountAmount;
-                if (finalAmount < 0) finalAmount = 0;
 
                 var order = new Order
                 {

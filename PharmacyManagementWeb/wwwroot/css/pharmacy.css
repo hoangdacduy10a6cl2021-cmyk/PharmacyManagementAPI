@@ -1,46 +1,47 @@
 ﻿:root {
     --pharmacy-primary: #16a34a;
     --pharmacy-primary-dark: #15803d;
+    --pharmacy-primary-soft: #e8f7ee;
     --pharmacy-sidebar-bg: #0f2e1d;
-    --pharmacy-sidebar-hover: #16442c;
+    --pharmacy-sidebar-hover: rgba(255,255,255,0.10);
     --pharmacy-topbar-accent: #16a34a;
+    --pharmacy-radius: 16px;
 }
 
 /* Theme Nhân viên/Dược sĩ - xanh lá (mặc định) */
 body.theme-staff {
     --pharmacy-sidebar-bg: #0f2e1d;
-    --pharmacy-sidebar-hover: #16442c;
     --pharmacy-primary: #16a34a;
-    --pharmacy-topbar-accent: #16a34a;
+    --pharmacy-primary-dark: #15803d;
+    --pharmacy-primary-soft: #e8f7ee;
 }
 
 /* Theme Admin - xanh dương/tím đậm */
 body.theme-admin {
     --pharmacy-sidebar-bg: #1e1b4b;
-    --pharmacy-sidebar-hover: #2f2a75;
     --pharmacy-primary: #4f46e5;
-    --pharmacy-topbar-accent: #4f46e5;
+    --pharmacy-primary-dark: #4338ca;
+    --pharmacy-primary-soft: #eef2ff;
 }
-
-    body.theme-admin .pharmacy-topbar {
-        border-bottom: 3px solid var(--pharmacy-topbar-accent);
-    }
-
-    body.theme-admin .badge-role {
-        background-color: #eef2ff;
-        color: #4338ca;
-    }
 
 body.theme-staff .badge-role {
     background-color: #dcfce7;
     color: #15803d;
 }
 
-body {
-    background-color: #f3f5f4;
+body.theme-admin .badge-role {
+    background-color: #eef2ff;
+    color: #4338ca;
 }
 
-/* ===== Layout khi đã đăng nhập ===== */
+body {
+    background-color: #f4f7f6;
+    font-family: 'Be Vietnam Pro', 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: #1e293b;
+    font-size: 0.92rem;
+}
+
+/* ===== Layout ===== */
 .pharmacy-wrapper {
     display: flex;
     min-height: 100vh;
@@ -48,78 +49,182 @@ body {
 
 .pharmacy-sidebar {
     width: 250px;
-    background-color: var(--pharmacy-sidebar-bg);
+    background: var(--pharmacy-sidebar-bg);
     color: #fff;
     flex-shrink: 0;
-    padding: 1rem 0;
+    padding: 1.1rem 0.8rem;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
 }
 
     .pharmacy-sidebar .brand {
         display: flex;
         align-items: center;
-        gap: 0.5rem;
-        padding: 0.5rem 1.25rem 1.5rem;
-        font-weight: 700;
-        font-size: 1.1rem;
+        gap: 0.7rem;
+        padding: 0.3rem 0.5rem 1.2rem;
+        margin-bottom: 0.6rem;
         border-bottom: 1px solid rgba(255,255,255,0.1);
-        margin-bottom: 0.5rem;
     }
 
-    .pharmacy-sidebar .nav-link {
-        color: rgba(255,255,255,0.85);
-        padding: 0.65rem 1.25rem;
-        border-radius: 0;
-        display: flex;
-        align-items: center;
-        gap: 0.6rem;
+.brand-logo-box {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #22c55e, #0d9488);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    flex-shrink: 0;
+}
+
+body.theme-admin .brand-logo-box {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+}
+
+.brand-name {
+    font-weight: 700;
+    font-size: 1rem;
+    line-height: 1.15;
+}
+
+.brand-tagline {
+    font-size: 0.68rem;
+    color: rgba(255,255,255,0.55);
+}
+
+.pharmacy-sidebar .nav-link {
+    color: rgba(255,255,255,0.78);
+    padding: 0.62rem 0.9rem;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 2px;
+    font-weight: 500;
+    transition: background 0.15s;
+}
+
+    .pharmacy-sidebar .nav-link i {
+        font-size: 1.05rem;
+        width: 20px;
+        text-align: center;
     }
 
-        .pharmacy-sidebar .nav-link:hover,
-        .pharmacy-sidebar .nav-link.active {
-            background-color: var(--pharmacy-sidebar-hover);
-            color: #fff;
-        }
-
-    .pharmacy-sidebar .nav-section-title {
-        color: rgba(255,255,255,0.4);
-        font-size: 0.72rem;
-        text-transform: uppercase;
-        padding: 0.75rem 1.25rem 0.25rem;
-        letter-spacing: 0.05em;
+    .pharmacy-sidebar .nav-link:hover {
+        background: var(--pharmacy-sidebar-hover);
+        color: #fff;
     }
+
+    .pharmacy-sidebar .nav-link.active {
+        background: var(--pharmacy-primary);
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    }
+
+.pharmacy-sidebar .nav-section-title {
+    color: rgba(255,255,255,0.4);
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    padding: 1rem 0.9rem 0.3rem;
+    letter-spacing: 0.08em;
+    font-weight: 600;
+}
 
 .pharmacy-main {
     flex: 1;
     display: flex;
     flex-direction: column;
+    min-width: 0;
 }
 
 .pharmacy-topbar {
     background: #fff;
-    border-bottom: 1px solid #e5e7eb;
-    padding: 0.75rem 1.5rem;
+    border-bottom: 1px solid #e8edeb;
+    padding: 0.7rem 1.6rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 1rem;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+}
+
+.topbar-title {
+    font-weight: 700;
+    font-size: 1.05rem;
+    white-space: nowrap;
+}
+
+.topbar-search {
+    flex: 1;
+    max-width: 440px;
+    position: relative;
+}
+
+    .topbar-search i {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #94a3b8;
+    }
+
+    .topbar-search input {
+        width: 100%;
+        border: 1px solid #e2e8f0;
+        background: #f8fafc;
+        border-radius: 999px;
+        padding: 0.5rem 1rem 0.5rem 2.4rem;
+        outline: none;
+        transition: all 0.15s;
+    }
+
+        .topbar-search input:focus {
+            background: #fff;
+            border-color: var(--pharmacy-primary);
+            box-shadow: 0 0 0 3px var(--pharmacy-primary-soft);
+        }
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--pharmacy-primary), var(--pharmacy-primary-dark));
+    color: #fff;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
 }
 
 .pharmacy-content {
-    padding: 1.5rem;
+    padding: 1.6rem;
 }
 
-/* ===== Card thống kê Dashboard ===== */
+/* ===== Card chung ===== */
 .stat-card {
     background: #fff;
-    border-radius: 0.6rem;
-    padding: 1.1rem 1.3rem;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-    height: 100%;
+    border-radius: var(--pharmacy-radius);
+    padding: 1.2rem 1.4rem;
+    box-shadow: 0 1px 2px rgba(16,24,40,0.04), 0 4px 16px rgba(16,24,40,0.05);
+    border: 1px solid #eef2f0;
 }
 
+    .stat-card h6 {
+        font-weight: 700;
+        color: #0f172a;
+    }
+
+    /* Giữ lại class cũ cho các trang khác đang dùng */
     .stat-card .stat-icon {
         width: 42px;
         height: 42px;
-        border-radius: 0.5rem;
+        border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -154,6 +259,273 @@ body {
     background-color: #dc2626;
 }
 
+/* ===== Thẻ thống kê pastel (Dashboard) ===== */
+.stat-tile {
+    border-radius: var(--pharmacy-radius);
+    padding: 1.1rem 1.3rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    height: 100%;
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+
+    .stat-tile:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(16,24,40,0.08);
+    }
+
+.tile-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.tile-label {
+    font-size: 0.8rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.tile-value {
+    font-size: 1.55rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: #0f172a;
+}
+
+.tile-green {
+    background: #e8f7ee;
+}
+
+    .tile-green .tile-icon {
+        background: #c9eed8;
+        color: #16a34a;
+    }
+
+.tile-blue {
+    background: #e8f0fe;
+}
+
+    .tile-blue .tile-icon {
+        background: #cfe0fc;
+        color: #2563eb;
+    }
+
+.tile-orange {
+    background: #fff3e6;
+}
+
+    .tile-orange .tile-icon {
+        background: #ffe0bd;
+        color: #ea580c;
+    }
+
+.tile-red {
+    background: #fdecec;
+}
+
+    .tile-red .tile-icon {
+        background: #fad2d2;
+        color: #dc2626;
+    }
+
+/* ===== Biểu đồ cột doanh thu ===== */
+.bar-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.8rem;
+    height: 260px;
+    padding-top: 0.5rem;
+}
+
+.bar-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+}
+
+.bar-value {
+    font-size: 0.72rem;
+    color: #64748b;
+    font-weight: 600;
+    height: 18px;
+}
+
+.bar-track {
+    flex: 1;
+    width: 100%;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+}
+
+.bar-fill {
+    width: 70%;
+    max-width: 46px;
+    border-radius: 10px 10px 4px 4px;
+    background: linear-gradient(180deg, #4ade80, var(--pharmacy-primary));
+    transition: opacity 0.15s;
+}
+
+    .bar-fill.empty {
+        background: #e2e8f0;
+    }
+
+.bar-col:hover .bar-fill {
+    opacity: 0.8;
+}
+
+.bar-label {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-top: 0.5rem;
+}
+
+/* ===== Top thuốc bán chạy ===== */
+.top-item {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.6rem 0;
+}
+
+    .top-item + .top-item {
+        border-top: 1px solid #f1f5f4;
+    }
+
+.top-rank {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--pharmacy-primary-soft);
+    color: var(--pharmacy-primary-dark);
+    font-weight: 700;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.top-item:nth-child(1) .top-rank {
+    background: #fef3c7;
+    color: #b45309;
+}
+
+.top-bar {
+    height: 6px;
+    border-radius: 999px;
+    background: #eef2f0;
+    margin-top: 6px;
+    overflow: hidden;
+}
+
+    .top-bar > div {
+        height: 100%;
+        border-radius: 999px;
+        background: var(--pharmacy-primary);
+    }
+
+/* ===== Bảng, nút, form dùng chung cho mọi trang ===== */
+.stat-card .table {
+    --bs-table-bg: transparent;
+    margin-bottom: 0;
+}
+
+.table thead th {
+    background: #f8faf9;
+    color: #64748b;
+    font-size: 0.74rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 600;
+    border-bottom: 1px solid #e8edeb;
+    padding-top: 0.7rem;
+    padding-bottom: 0.7rem;
+}
+
+    .table thead th:first-child {
+        border-top-left-radius: 10px;
+    }
+
+    .table thead th:last-child {
+        border-top-right-radius: 10px;
+    }
+
+.table tbody td {
+    border-color: #f1f5f4;
+    padding-top: 0.6rem;
+    padding-bottom: 0.6rem;
+}
+
+.table tbody tr:hover > * {
+    background-color: #fafcfb;
+}
+
+.btn {
+    border-radius: 10px;
+    font-weight: 500;
+}
+
+.btn-success {
+    --bs-btn-bg: var(--pharmacy-primary);
+    --bs-btn-border-color: var(--pharmacy-primary);
+    --bs-btn-hover-bg: var(--pharmacy-primary-dark);
+    --bs-btn-hover-border-color: var(--pharmacy-primary-dark);
+    --bs-btn-active-bg: var(--pharmacy-primary-dark);
+    --bs-btn-active-border-color: var(--pharmacy-primary-dark);
+    --bs-btn-disabled-bg: var(--pharmacy-primary);
+    --bs-btn-disabled-border-color: var(--pharmacy-primary);
+}
+
+.form-control, .form-select {
+    border-radius: 10px;
+    border-color: #e2e8f0;
+}
+
+    .form-control:focus, .form-select:focus {
+        border-color: var(--pharmacy-primary);
+        box-shadow: 0 0 0 3px var(--pharmacy-primary-soft);
+    }
+
+.badge {
+    border-radius: 999px;
+    font-weight: 600;
+    padding: 0.4em 0.75em;
+}
+
+.alert {
+    border-radius: 12px;
+    border: 0;
+}
+
+@media (max-width: 991px) {
+    .pharmacy-sidebar {
+        width: 72px;
+        padding: 1rem 0.5rem;
+    }
+
+        .brand-name, .brand-tagline, .pharmacy-sidebar .nav-link span, .nav-section-title {
+            display: none;
+        }
+
+        .pharmacy-sidebar .nav-link {
+            justify-content: center;
+        }
+
+    .topbar-search {
+        display: none;
+    }
+}
+
 /* ===== Trang Login ===== */
 .pharmacy-login-page {
     min-height: 100vh;
@@ -181,3 +553,318 @@ body {
             font-size: 2.5rem;
             color: var(--pharmacy-primary);
         }
+/* ===== Các trang danh sách (Thuốc, Khách hàng, Đơn thuốc) ===== */
+.stat-tile.compact {
+    padding: 0.8rem 1rem;
+}
+
+    .stat-tile.compact .tile-icon {
+        width: 44px;
+        height: 44px;
+        font-size: 1.25rem;
+        border-radius: 12px;
+    }
+
+    .stat-tile.compact .tile-value {
+        font-size: 1.3rem;
+    }
+
+.list-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.search-box {
+    position: relative;
+    flex: 1;
+    min-width: 240px;
+}
+
+    .search-box > i {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #94a3b8;
+    }
+
+    .search-box input {
+        padding-left: 2.5rem;
+        border-radius: 999px;
+        background: #f8fafc;
+    }
+
+.filter-select {
+    min-width: 180px;
+    max-width: 220px;
+}
+
+.filter-chip {
+    margin: 0;
+    cursor: pointer;
+}
+
+    .filter-chip input {
+        display: none;
+    }
+
+    .filter-chip span {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 999px;
+        background: #fff;
+        padding: 0.42rem 0.9rem;
+        font-size: 0.84rem;
+        color: #475569;
+        transition: all 0.15s;
+    }
+
+    .filter-chip:hover span {
+        border-color: var(--pharmacy-primary);
+    }
+
+    .filter-chip input:checked + span {
+        border-color: var(--pharmacy-primary);
+        background: var(--pharmacy-primary-soft);
+        color: var(--pharmacy-primary-dark);
+    }
+
+.avatar-circle {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: var(--pharmacy-primary-soft);
+    color: var(--pharmacy-primary-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+}
+
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.28rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+    .status-pill::before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+    }
+
+.pill-green {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.pill-yellow {
+    background: #fef3c7;
+    color: #b45309;
+}
+
+.pill-red {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.pill-gray {
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+.pill-blue {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+.soft-tag {
+    background: #f1f5f9;
+    border-radius: 8px;
+    padding: 0.2rem 0.55rem;
+    font-size: 0.78rem;
+    color: #475569;
+    white-space: nowrap;
+}
+
+.act-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    color: #475569;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    text-decoration: none;
+    padding: 0;
+}
+
+    .act-btn:hover {
+        background: var(--pharmacy-primary-soft);
+        border-color: var(--pharmacy-primary);
+        color: var(--pharmacy-primary-dark);
+    }
+
+    .act-btn.danger:hover {
+        background: #fef2f2;
+        border-color: #fecaca;
+        color: #dc2626;
+    }
+
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #94a3b8;
+}
+
+    .empty-state i {
+        font-size: 2.6rem;
+        display: block;
+        margin-bottom: 0.5rem;
+    }
+
+.table-foot {
+    color: #64748b;
+    font-size: 0.82rem;
+    padding-top: 0.9rem;
+}
+/* ===== Form, chi tiết, in ấn ===== */
+.form-card {
+    max-width: 780px;
+}
+
+.form-head {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    margin-bottom: 1.4rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #eef2f0;
+}
+
+    .form-head .fh-icon {
+        width: 46px;
+        height: 46px;
+        border-radius: 14px;
+        flex-shrink: 0;
+        background: var(--pharmacy-primary-soft);
+        color: var(--pharmacy-primary-dark);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+    }
+
+    .form-head h5 {
+        margin: 0;
+        font-weight: 700;
+    }
+
+    .form-head .sub {
+        color: #64748b;
+        font-size: 0.85rem;
+    }
+
+.form-label {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #334155;
+}
+
+.section-title {
+    font-weight: 700;
+    font-size: 0.74rem;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: #64748b;
+    margin: 1.5rem 0 0.8rem;
+}
+
+.form-actions {
+    display: flex;
+    gap: 0.6rem;
+    margin-top: 1.6rem;
+    padding-top: 1.2rem;
+    border-top: 1px solid #eef2f0;
+}
+
+.doc-card {
+    max-width: 860px;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 1rem;
+    background: #f8faf9;
+    border-radius: 14px;
+    padding: 1rem 1.2rem;
+    margin-bottom: 1.2rem;
+}
+
+.info-label {
+    font-size: 0.72rem;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.info-value {
+    font-weight: 600;
+}
+
+.total-box {
+    background: #f8faf9;
+    border-radius: 14px;
+    padding: 1rem 1.2rem;
+}
+
+.error-page {
+    text-align: center;
+    padding: 4rem 1rem;
+}
+
+    .error-page .big-icon {
+        font-size: 4rem;
+        color: var(--pharmacy-primary);
+    }
+
+@media print {
+    .pharmacy-sidebar, .pharmacy-topbar, .no-print, .alert {
+        display: none !important;
+    }
+
+    body {
+        background: #fff;
+    }
+
+    .pharmacy-content {
+        padding: 0;
+    }
+
+    .stat-card {
+        box-shadow: none;
+        border: 0;
+    }
+}
+.brand-logo-svg {
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+    filter: drop-shadow(0 4px 10px rgba(0,0,0,0.30));
+}

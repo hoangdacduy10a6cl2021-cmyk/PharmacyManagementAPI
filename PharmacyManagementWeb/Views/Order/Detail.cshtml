@@ -1,68 +1,86 @@
 ﻿@model PharmacyManagementWeb.Models.ApiModels.OrderModel
+@inject IConfiguration Config
 @{
     ViewData["Title"] = "Hoá đơn " + Model.Code;
 }
 
-<div class="stat-card" style="max-width: 700px;">
+<div class="stat-card doc-card">
     <div class="d-flex justify-content-between align-items-start mb-3">
         <div>
-            <h5 class="mb-0">Hoá đơn #@Model.Code</h5>
+            <div class="text-muted small">Hoá đơn bán hàng - Tâm Thần Pharmacy</div>
+            <h4 class="fw-bold mb-0">#@Model.Code</h4>
             <div class="text-muted small">@Model.OrderDate.ToString("HH:mm dd/MM/yyyy")</div>
         </div>
-        <span class="badge bg-success fs-6">@Model.Status</span>
+        <span class="status-pill pill-green">@Model.Status</span>
     </div>
 
-    <div class="row mb-3">
-        <div class="col-6">
-            <div class="text-muted small">Khách hàng</div>
-            <div class="fw-semibold">@(Model.CustomerName ?? "Khách vãng lai")</div>
+    <div class="info-grid">
+        <div>
+            <div class="info-label">Khách hàng</div>
+            <div class="info-value">@(Model.CustomerName ?? "Khách vãng lai")</div>
         </div>
-        <div class="col-6">
-            <div class="text-muted small">Nhân viên bán</div>
-            <div class="fw-semibold">@Model.UserName</div>
+        <div>
+            <div class="info-label">Nhân viên bán</div>
+            <div class="info-value">@Model.UserName</div>
+        </div>
+        <div>
+            <div class="info-label">Thanh toán</div>
+            <div class="info-value">@Model.PaymentMethod</div>
         </div>
     </div>
 
-    <table class="table table-sm">
-        <thead>
-            <tr>
-                <th>Thuốc</th>
-                <th class="text-end">SL</th>
-                <th class="text-end">Đơn giá</th>
-                <th class="text-end">Thành tiền</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var d in Model.Details)
-            {
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
                 <tr>
-                    <td>@d.MedicineName <div class="text-muted small">@d.MedicineCode</div></td>
-                    <td class="text-end">@d.Quantity</td>
-                    <td class="text-end">@d.UnitPrice.ToString("N0")đ</td>
-                    <td class="text-end">@d.Subtotal.ToString("N0")đ</td>
+                    <th>Thuốc</th>
+                    <th class="text-end">SL</th>
+                    <th class="text-end">Đơn giá</th>
+                    <th class="text-end">Thành tiền</th>
                 </tr>
-            }
-        </tbody>
-    </table>
-
-    <div class="border-top pt-3">
-        <div class="d-flex justify-content-between">
-            <span>Tạm tính</span>
-            <span>@Model.TotalAmount.ToString("N0")đ</span>
-        </div>
-        <div class="d-flex justify-content-between">
-            <span>Giảm giá</span>
-            <span>-@Model.DiscountAmount.ToString("N0")đ</span>
-        </div>
-        <div class="d-flex justify-content-between fw-bold fs-5 mt-2">
-            <span>Tổng cộng</span>
-            <span class="text-success">@Model.FinalAmount.ToString("N0")đ</span>
-        </div>
-        <div class="text-muted small mt-1">Hình thức thanh toán: @Model.PaymentMethod</div>
+            </thead>
+            <tbody>
+                @foreach (var d in Model.Details)
+                {
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                @if (!string.IsNullOrEmpty(d.MedicineImageUrl))
+                                {
+                                    <img src="@(Config["ApiSettings:BaseUrl"])@d.MedicineImageUrl" alt="@d.MedicineName"
+                                         style="width:48px; height:48px; object-fit:cover; border-radius:8px;" />
+                                }
+                                else
+                                {
+                                    <div class="d-flex align-items-center justify-content-center bg-light text-muted"
+                                         style="width:48px; height:48px; border-radius:8px; font-size:10px; flex-shrink:0;">No img</div>
+                                }
+                                <div>
+                                    <div class="fw-semibold">@d.MedicineName</div>
+                                    <div class="text-muted small">@d.MedicineCode</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="text-end">@d.Quantity</td>
+                        <td class="text-end">@d.UnitPrice.ToString("N0")đ</td>
+                        <td class="text-end fw-semibold">@d.Subtotal.ToString("N0")đ</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
     </div>
 
-    <div class="mt-4">
-        <a asp-action="Index" class="btn btn-success">+ Tạo hoá đơn mới</a>
-        <button type="button" class="btn btn-outline-secondary" onclick="window.print()">In hoá đơn</button>
+    <div class="total-box">
+        <div class="d-flex justify-content-between"><span class="text-muted">Tạm tính</span><span>@Model.TotalAmount.ToString("N0")đ</span></div>
+        <div class="d-flex justify-content-between"><span class="text-muted">Giảm giá</span><span>-@Model.DiscountAmount.ToString("N0")đ</span></div>
+        <div class="d-flex justify-content-between align-items-center border-top mt-2 pt-2">
+            <span class="fw-bold fs-5">Tổng cộng</span>
+            <span class="fs-3 fw-bold" style="color:var(--pharmacy-primary);">@Model.FinalAmount.ToString("N0")đ</span>
+        </div>
+    </div>
+
+    <div class="form-actions no-print">
+        <a asp-action="Index" class="btn btn-success"><i class="bi bi-plus-lg me-1"></i>Tạo hoá đơn mới</a>
+        <button type="button" class="btn btn-outline-secondary" onclick="window.print()"><i class="bi bi-printer me-1"></i>In hoá đơn</button>
     </div>
 </div>

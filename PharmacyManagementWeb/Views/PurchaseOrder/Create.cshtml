@@ -1,74 +1,111 @@
-﻿@{
+﻿@inject IConfiguration Config
+@{
     ViewData["Title"] = "Tạo phiếu nhập";
     var suppliers = ViewBag.Suppliers as List<PharmacyManagementWeb.Models.ApiModels.SupplierModel> ?? new();
 }
 
+<style>
+    .pos-search { position: relative; }
+    .pos-search > i { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #94a3b8; }
+    .pos-search input { padding: 0.8rem 1rem 0.8rem 2.8rem; border-radius: 14px; }
+    .search-dropdown {
+        position: absolute; left: 0; right: 0; top: calc(100% + 6px); background: #fff;
+        border: 1px solid #e8edeb; border-radius: 14px; box-shadow: 0 12px 30px rgba(16,24,40,0.12);
+        max-height: 320px; overflow-y: auto; z-index: 1000; display: none;
+    }
+    .search-item { display: flex; align-items: center; gap: 0.8rem; width: 100%; padding: 0.6rem 0.9rem; border: 0; background: transparent; text-align: left; border-bottom: 1px solid #f1f5f4; }
+    .search-item:hover { background: var(--pharmacy-primary-soft); }
+    .btn-del { border: 0; background: #fef2f2; color: #dc2626; width: 34px; height: 34px; border-radius: 10px; }
+    .cart-empty { text-align: center; padding: 2.5rem 1rem; color: #94a3b8; }
+    .cart-empty i { font-size: 2.4rem; display: block; margin-bottom: 0.4rem; }
+    .pos-side { position: sticky; top: 90px; }
+    .total-row { display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed #dbe4e1; margin-top: 0.8rem; padding-top: 0.9rem; }
+    .total-row .total-value { font-size: 1.6rem; font-weight: 700; color: var(--pharmacy-primary); }
+    .btn-checkout {
+        width: 100%; border: 0; border-radius: 14px; padding: 0.9rem; font-size: 1.05rem; font-weight: 700; color: #fff;
+        background: linear-gradient(90deg, var(--pharmacy-primary), var(--pharmacy-primary-dark));
+        display: flex; align-items: center; justify-content: center; gap: 0.6rem;
+    }
+    .btn-checkout:disabled { background: #cbd5e1; cursor: not-allowed; }
+</style>
+
 <div class="row g-3">
-    <div class="col-lg-7">
+    <div class="col-xl-8">
         <div class="stat-card mb-3">
-            <label class="form-label small mb-1">Tìm thuốc để nhập</label>
-            <div class="position-relative">
-                <input type="text" id="medicineSearch" class="form-control" placeholder="Nhập tên hoặc mã thuốc..." autocomplete="off" />
-                <div id="searchResults" class="list-group position-absolute w-100 shadow" style="z-index: 1000; max-height: 260px; overflow-y: auto; display:none;"></div>
+            <div class="pos-search">
+                <i class="bi bi-search"></i>
+                <input type="text" id="medicineSearch" class="form-control" placeholder="Tìm thuốc cần nhập theo tên hoặc mã..." autocomplete="off" />
+                <div id="searchResults" class="search-dropdown"></div>
             </div>
         </div>
 
         <div class="stat-card">
-            <h6 class="mb-3">Danh sách thuốc nhập</h6>
-            <table class="table table-sm align-middle">
-                <thead>
-                    <tr>
-                        <th>Tên thuốc</th>
-                        <th style="width:100px;">Số lượng</th>
-                        <th style="width:140px;">Giá nhập</th>
-                        <th class="text-end">Thành tiền</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody id="cartBody">
-                    <tr id="emptyCartRow"><td colspan="5" class="text-center text-muted py-3">Chưa có thuốc nào.</td></tr>
-                </tbody>
-            </table>
+            <h6 class="mb-3"><i class="bi bi-box-seam me-1"></i> Danh sách thuốc nhập</h6>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Tên thuốc</th>
+                            <th style="width:110px;">Số lượng</th>
+                            <th style="width:150px;">Giá nhập</th>
+                            <th class="text-end">Thành tiền</th>
+                            <th style="width:50px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="cartBody"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
-    <div class="col-lg-5">
-        <div class="stat-card">
-            <h6 class="mb-3">Thông tin phiếu nhập</h6>
-
-            <div class="mb-3">
-                <label class="form-label small mb-1">Nhà cung cấp</label>
-                <select id="supplierSelect" class="form-select">
+    <div class="col-xl-4">
+        <div class="pos-side">
+            <div class="stat-card">
+                <label class="form-label"><i class="bi bi-truck me-1"></i> Nhà cung cấp</label>
+                <select id="supplierSelect" class="form-select mb-3">
                     <option value="">-- Chọn nhà cung cấp --</option>
                     @foreach (var s in suppliers)
                     {
                         <option value="@s.Id">@s.Name</option>
                     }
                 </select>
-            </div>
 
-            <div class="d-flex justify-content-between mb-3 fw-bold fs-5">
-                <span>Tổng tiền nhập</span>
-                <span id="totalAmountText" class="text-success">0đ</span>
-            </div>
+                <div class="total-row">
+                    <span class="fw-bold">Tổng tiền nhập</span>
+                    <span class="total-value" id="totalAmountText">0đ</span>
+                </div>
 
-            <form id="createForm" asp-action="Create" method="post">
-                @Html.AntiForgeryToken()
-                <input type="hidden" name="supplierId" id="hiddenSupplierId" />
-                <input type="hidden" name="cartJson" id="hiddenCartJson" />
-                <button type="submit" id="createBtn" class="btn btn-success w-100 py-2" disabled>Tạo phiếu nhập</button>
-            </form>
+                <form id="createForm" asp-action="Create" method="post" class="mt-3">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="supplierId" id="hiddenSupplierId" />
+                    <input type="hidden" name="cartJson" id="hiddenCartJson" />
+                    <button type="submit" id="createBtn" class="btn-checkout" disabled><i class="bi bi-check2-circle"></i> Tạo phiếu nhập</button>
+                </form>
+                <a asp-action="Index" class="btn btn-outline-secondary w-100 mt-2">Quay lại danh sách</a>
+            </div>
         </div>
     </div>
 </div>
 
 @section Scripts {
 <script>
-    let cart = []; // { medicineId, code, name, importPrice, quantity }
+    const apiBase = '@Config["ApiSettings:BaseUrl"]';
+
+    let cart = [];            // { medicineId, code, name, importPrice, quantity, imageUrl }
+    let lastResults = [];
 
     const searchInput = document.getElementById('medicineSearch');
     const searchResults = document.getElementById('searchResults');
     let searchTimeout;
+
+    function esc(s) {
+        return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+    function money(n) { return Number(n).toLocaleString('vi-VN') + 'đ'; }
+    function thumb(url, size) {
+        if (url) return `<img src="${apiBase}${url}" style="width:${size}px;height:${size}px;object-fit:cover;border-radius:8px;flex-shrink:0;" />`;
+        return `<div class="d-flex align-items-center justify-content-center bg-light text-muted" style="width:${size}px;height:${size}px;border-radius:8px;font-size:10px;flex-shrink:0;">No img</div>`;
+    }
 
     searchInput.addEventListener('input', function () {
         clearTimeout(searchTimeout);
@@ -77,47 +114,47 @@
 
         searchTimeout = setTimeout(async () => {
             const res = await fetch('/Order/SearchMedicine?term=' + encodeURIComponent(term));
-            const data = await res.json();
-            renderSearchResults(data);
+            lastResults = await res.json();
+            renderSearchResults(lastResults);
         }, 250);
     });
 
     function renderSearchResults(items) {
         if (!items.length) {
-            searchResults.innerHTML = '<div class="list-group-item text-muted small">Không tìm thấy thuốc.</div>';
+            searchResults.innerHTML = '<div class="p-3 text-muted small">Không tìm thấy thuốc.</div>';
             searchResults.style.display = 'block';
             return;
         }
-        searchResults.innerHTML = items.map(m => `
-            <button type="button" class="list-group-item list-group-item-action"
-                    onclick='addToCart(${JSON.stringify(m)})'>
-                ${m.name} <span class="text-muted small">(${m.code}) - Tồn hiện tại: ${m.stock}</span>
+        searchResults.innerHTML = items.map((m, idx) => `
+            <button type="button" class="search-item" onclick="addFromResults(${idx})">
+                ${thumb(m.imageUrl, 44)}
+                <div class="flex-grow-1">
+                    <div class="fw-semibold">${esc(m.name)}</div>
+                    <div class="text-muted small">${esc(m.code)} · Tồn hiện tại: ${m.stock}</div>
+                </div>
             </button>
         `).join('');
         searchResults.style.display = 'block';
     }
 
+    function addFromResults(idx) { addToCart(lastResults[idx]); }
+
     document.addEventListener('click', function (e) {
-        if (!searchResults.contains(e.target) && e.target !== searchInput) {
-            searchResults.style.display = 'none';
-        }
+        if (!searchResults.contains(e.target) && e.target !== searchInput) searchResults.style.display = 'none';
     });
 
     function addToCart(medicine) {
         if (cart.find(i => i.medicineId === medicine.id)) {
             alert('Thuốc này đã có trong phiếu nhập.');
         } else {
-            cart.push({ medicineId: medicine.id, code: medicine.code, name: medicine.name, importPrice: 0, quantity: 1 });
+            cart.push({ medicineId: medicine.id, code: medicine.code, name: medicine.name, importPrice: 0, quantity: 1, imageUrl: medicine.imageUrl });
         }
         searchInput.value = '';
         searchResults.style.display = 'none';
         renderCart();
     }
 
-    function removeFromCart(medicineId) {
-        cart = cart.filter(i => i.medicineId !== medicineId);
-        renderCart();
-    }
+    function removeFromCart(medicineId) { cart = cart.filter(i => i.medicineId !== medicineId); renderCart(); }
 
     function updateQuantity(medicineId, value) {
         const item = cart.find(i => i.medicineId === medicineId);
@@ -134,17 +171,20 @@
     function renderCart() {
         const body = document.getElementById('cartBody');
         if (cart.length === 0) {
-            body.innerHTML = '<tr id="emptyCartRow"><td colspan="5" class="text-center text-muted py-3">Chưa có thuốc nào.</td></tr>';
+            body.innerHTML = '<tr><td colspan="5"><div class="cart-empty"><i class="bi bi-basket"></i>Chưa có thuốc nào trong phiếu nhập.</div></td></tr>';
         } else {
             body.innerHTML = cart.map(i => `
                 <tr>
-                    <td>${i.name} <div class="text-muted small">${i.code}</div></td>
-                    <td><input type="number" class="form-control form-control-sm" value="${i.quantity}" min="1"
-                               onchange="updateQuantity(${i.medicineId}, this.value)" /></td>
-                    <td><input type="number" class="form-control form-control-sm" value="${i.importPrice}" min="0" step="100"
-                               onchange="updateImportPrice(${i.medicineId}, this.value)" /></td>
-                    <td class="text-end">${(i.importPrice * i.quantity).toLocaleString('vi-VN')}đ</td>
-                    <td><button type="button" class="btn btn-sm btn-outline-danger" onclick="removeFromCart(${i.medicineId})">&times;</button></td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            ${thumb(i.imageUrl, 44)}
+                            <div><div class="fw-semibold">${esc(i.name)}</div><div class="text-muted small">${esc(i.code)}</div></div>
+                        </div>
+                    </td>
+                    <td><input type="number" class="form-control form-control-sm" value="${i.quantity}" min="1" onchange="updateQuantity(${i.medicineId}, this.value)" /></td>
+                    <td><input type="number" class="form-control form-control-sm" value="${i.importPrice}" min="0" step="any" onchange="updateImportPrice(${i.medicineId}, this.value)" /></td>
+                    <td class="text-end fw-semibold">${money(i.importPrice * i.quantity)}</td>
+                    <td class="text-end"><button type="button" class="btn-del" onclick="removeFromCart(${i.medicineId})"><i class="bi bi-trash3"></i></button></td>
                 </tr>
             `).join('');
         }
@@ -153,7 +193,7 @@
 
     function updateSummary() {
         const total = cart.reduce((sum, i) => sum + i.importPrice * i.quantity, 0);
-        document.getElementById('totalAmountText').textContent = total.toLocaleString('vi-VN') + 'đ';
+        document.getElementById('totalAmountText').textContent = money(total);
         const supplierId = document.getElementById('supplierSelect').value;
         document.getElementById('createBtn').disabled = cart.length === 0 || !supplierId;
     }
@@ -167,5 +207,7 @@
             medicineId: i.medicineId, quantity: i.quantity, importPrice: i.importPrice
         })));
     });
+
+    renderCart();
 </script>
 }

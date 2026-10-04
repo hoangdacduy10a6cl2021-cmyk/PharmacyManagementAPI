@@ -1,6 +1,13 @@
 ﻿@model List<PharmacyManagementWeb.Models.ApiModels.PrescriptionModel>
 @{
     ViewData["Title"] = "Đơn thuốc";
+
+    int totalCount = Model.Count;
+    int usingCount = Model.Count(p => p.Status != "Đã giao");
+    int deliveredCount = Model.Count(p => p.Status == "Đã giao");
+    int todayCount = Model.Count(p => p.PrescriptionDate.Date == DateTime.Today);
+
+    bool hasFilter = !string.IsNullOrEmpty(ViewBag.Search as string) || !string.IsNullOrEmpty(ViewBag.Status as string);
 }
 
 @if (ViewBag.Error != null)
@@ -8,39 +15,64 @@
     <div class="alert alert-danger">@ViewBag.Error</div>
 }
 
+<div class="row g-3 mb-3">
+    <div class="col-6 col-xl-3">
+        <div class="stat-tile compact tile-blue">
+            <div class="tile-icon"><i class="bi bi-journal-medical"></i></div>
+            <div><div class="tile-label">Tổng đơn thuốc</div><div class="tile-value">@totalCount</div></div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="stat-tile compact tile-orange">
+            <div class="tile-icon"><i class="bi bi-hourglass-split"></i></div>
+            <div><div class="tile-label">Đang sử dụng</div><div class="tile-value">@usingCount</div></div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="stat-tile compact tile-green">
+            <div class="tile-icon"><i class="bi bi-check2-circle"></i></div>
+            <div><div class="tile-label">Đã giao</div><div class="tile-value">@deliveredCount</div></div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="stat-tile compact tile-red">
+            <div class="tile-icon"><i class="bi bi-calendar-check"></i></div>
+            <div><div class="tile-label">Kê hôm nay</div><div class="tile-value">@todayCount</div></div>
+        </div>
+    </div>
+</div>
+
 <div class="stat-card mb-3">
-    <form method="get" class="row g-2 align-items-end">
-        <div class="col-md-5">
-            <label class="form-label small mb-1">Tìm mã đơn, tên bệnh nhân</label>
-            <input type="text" name="search" value="@ViewBag.Search" class="form-control" />
+    <form method="get" class="list-toolbar">
+        <div class="search-box">
+            <i class="bi bi-search"></i>
+            <input type="text" name="search" value="@ViewBag.Search" class="form-control" placeholder="Tìm theo mã đơn, tên bệnh nhân rồi nhấn Enter..." />
         </div>
-        <div class="col-md-3">
-            <label class="form-label small mb-1">Trạng thái</label>
-            <select name="status" class="form-select">
-                <option value="">-- Tất cả --</option>
-                <option value="Đang sử dụng" selected="@(ViewBag.Status == "Đang sử dụng")">Đang sử dụng</option>
-                <option value="Đã giao" selected="@(ViewBag.Status == "Đã giao")">Đã giao</option>
-            </select>
-        </div>
-        <div class="col-md-1">
-            <button type="submit" class="btn btn-success w-100">Lọc</button>
-        </div>
+
+        <select name="status" class="form-select filter-select" onchange="this.form.submit()">
+            <option value="">Tất cả trạng thái</option>
+            <option value="Đang sử dụng" selected="@(ViewBag.Status == "Đang sử dụng")">Đang sử dụng</option>
+            <option value="Đã giao" selected="@(ViewBag.Status == "Đã giao")">Đã giao</option>
+        </select>
+
+        @if (hasFilter)
+        {
+            <a asp-action="Index" class="btn btn-outline-secondary btn-sm"><i class="bi bi-x-circle me-1"></i>Xoá lọc</a>
+        }
+
+        <a asp-action="Create" class="btn btn-success ms-auto"><i class="bi bi-plus-lg me-1"></i>Tạo đơn thuốc</a>
     </form>
 </div>
 
 <div class="stat-card">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h6 class="mb-0">Danh sách đơn thuốc (@Model.Count)</h6>
-        <a asp-action="Create" class="btn btn-success btn-sm">+ Tạo đơn thuốc</a>
-    </div>
-
     <div class="table-responsive">
-        <table class="table table-sm align-middle">
+        <table class="table align-middle">
             <thead>
                 <tr>
                     <th>Mã đơn</th>
                     <th>Bệnh nhân</th>
                     <th>Bác sĩ</th>
+                    <th>Chẩn đoán</th>
                     <th>Ngày kê</th>
                     <th>Trạng thái</th>
                     <th class="text-end">Thao tác</th>
@@ -49,31 +81,52 @@
             <tbody>
                 @foreach (var p in Model)
                 {
+                    var initial = string.IsNullOrWhiteSpace(p.PatientName) ? "?" : p.PatientName.Trim().Split(' ').Last().Substring(0, 1).ToUpper();
+
                     <tr>
-                        <td>@p.Code</td>
-                        <td>@p.PatientName</td>
-                        <td>@p.DoctorName</td>
+                        <td class="fw-semibold" style="color:var(--pharmacy-primary-dark);">@p.Code</td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="avatar-circle">@initial</div>
+                                <div>
+                                    <div class="fw-semibold">@p.PatientName</div>
+                                    @if (p.Age.HasValue || !string.IsNullOrEmpty(p.Gender))
+                                    {
+                                        <div class="text-muted small">@(p.Age.HasValue ? p.Age + " tuổi" : "")@(p.Age.HasValue && !string.IsNullOrEmpty(p.Gender) ? " · " : "")@p.Gender</div>
+                                    }
+                                </div>
+                            </div>
+                        </td>
+                        <td>@(string.IsNullOrEmpty(p.DoctorName) ? "-" : p.DoctorName)</td>
+                        <td class="text-muted" style="max-width:220px;">
+                            <div class="text-truncate" title="@p.Diagnosis">@(string.IsNullOrEmpty(p.Diagnosis) ? "-" : p.Diagnosis)</div>
+                        </td>
                         <td>@p.PrescriptionDate.ToString("dd/MM/yyyy")</td>
                         <td>
                             @if (p.Status == "Đã giao")
                             {
-                                <span class="badge bg-success">Đã giao</span>
+                                <span class="status-pill pill-green">Đã giao</span>
                             }
                             else
                             {
-                                <span class="badge bg-warning text-dark">Đang sử dụng</span>
+                                <span class="status-pill pill-yellow">Đang sử dụng</span>
                             }
                         </td>
                         <td class="text-end">
-                            <a asp-action="Detail" asp-route-id="@p.Id" class="btn btn-outline-secondary btn-sm">Xem</a>
+                            <a asp-action="Detail" asp-route-id="@p.Id" class="act-btn" title="Xem chi tiết"><i class="bi bi-eye"></i></a>
                         </td>
                     </tr>
                 }
                 @if (!Model.Any())
                 {
-                    <tr><td colspan="6" class="text-center text-muted py-3">Không có dữ liệu.</td></tr>
+                    <tr>
+                        <td colspan="7">
+                            <div class="empty-state"><i class="bi bi-journal-medical"></i>Không tìm thấy đơn thuốc nào.</div>
+                        </td>
+                    </tr>
                 }
             </tbody>
         </table>
     </div>
+    <div class="table-foot">Hiển thị @Model.Count đơn thuốc</div>
 </div>

@@ -8,45 +8,265 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Đăng nhập - Tâm Thần Pharmacy</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/pharmacy.css" />
-</head>
-<body class="pharmacy-login-page">
-    <div class="pharmacy-login-card">
-        <div class="brand-logo">
-            <div class="icon">💊</div>
-            <h4 class="mt-2 mb-0">Tâm Thần Pharmacy</h4>
-            <div class="text-muted small">Vì sức khỏe cộng đồng</div>
-        </div>
+    <style>
+        * { box-sizing: border-box; }
 
-        @if (!ViewData.ModelState.IsValid)
-        {
-            <div class="alert alert-danger py-2" role="alert">
-                <div asp-validation-summary="ModelOnly"></div>
-            </div>
+        body.login-page {
+            margin: 0;
+            min-height: 100vh;
+            font-family: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            /* Lớp trên cùng: ảnh nền (tuỳ chọn). Không có ảnh thì tự dùng nền gradient bên dưới */
+            background:
+                url('/images/login-bg.jpg') center / cover no-repeat,
+                radial-gradient(circle at 15% 20%, rgba(52, 211, 153, 0.35), transparent 45%),
+                radial-gradient(circle at 85% 80%, rgba(45, 212, 191, 0.30), transparent 45%),
+                linear-gradient(135deg, #064e3b 0%, #0f766e 55%, #115e59 100%);
         }
 
-        <form asp-controller="Account" asp-action="Login" method="post">
-            @Html.AntiForgeryToken()
+        .login-shell {
+            width: 100%;
+            max-width: 1150px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            align-items: center;
+        }
 
-            <div class="mb-3">
-                <label asp-for="Username" class="form-label"></label>
-                <input asp-for="Username" class="form-control" placeholder="Tên đăng nhập / Số điện thoại" autofocus />
-                <span asp-validation-for="Username" class="text-danger small"></span>
+        /* ===== Bên trái ===== */
+        .login-hero { text-align: center; }
+
+        .hero-logo { width: 96px; height: 96px; filter: drop-shadow(0 8px 20px rgba(0,0,0,0.25)); }
+
+        .hero-title { font-size: 2.6rem; font-weight: 700; margin: 1rem 0 0.2rem; line-height: 1.15; }
+        .hero-title span { color: #34d399; }
+        .hero-tagline { font-size: 1.2rem; font-weight: 400; opacity: 0.95; margin-bottom: 2.2rem; }
+
+        .feature-list { display: inline-block; text-align: left; margin-bottom: 2rem; }
+
+        .feature-item { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.1rem; }
+
+        .feature-icon {
+            width: 52px; height: 52px; border-radius: 50%;
+            background: rgba(255,255,255,0.16);
+            border: 1px solid rgba(255,255,255,0.25);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem; flex-shrink: 0;
+        }
+
+        .feature-title { font-weight: 600; }
+        .feature-desc { font-size: 0.82rem; opacity: 0.8; }
+
+        .hero-slogan {
+            font-family: 'Segoe Script', 'Brush Script MT', cursive;
+            font-style: italic;
+            font-size: 1.25rem;
+            opacity: 0.9;
+        }
+
+        /* ===== Thẻ đăng nhập ===== */
+        .login-card {
+            background: rgba(255,255,255,0.97);
+            color: #1e293b;
+            border-radius: 28px;
+            padding: 2.4rem 2.4rem 1.6rem;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.30);
+            max-width: 470px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .card-logo { width: 62px; height: 62px; display: block; margin: 0 auto; }
+        .card-title { text-align: center; font-weight: 700; font-size: 1.6rem; color: #0f766e; margin: 0.6rem 0 0.3rem; }
+
+        .card-sub {
+            display: flex; align-items: center; gap: 0.8rem;
+            color: #0f766e; font-size: 0.9rem; justify-content: center; margin-bottom: 1.8rem;
+        }
+        .card-sub::before, .card-sub::after { content: ""; height: 1px; width: 38px; background: #99d8c8; }
+
+        .field-label { font-weight: 600; font-size: 0.92rem; margin-bottom: 0.45rem; display: flex; align-items: center; gap: 0.5rem; }
+        .field-label i { color: #0f766e; }
+
+        .input-icon { position: relative; margin-bottom: 0.4rem; }
+        .input-icon > i.lead-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #94a3b8; }
+
+        .field-input {
+            width: 100%;
+            border: 1px solid #dbe4e1;
+            border-radius: 12px;
+            padding: 0.8rem 2.6rem 0.8rem 2.6rem;
+            font-size: 0.95rem;
+            background: #fff;
+            outline: none;
+            transition: all 0.15s;
+        }
+        .field-input:focus { border-color: #10b981; box-shadow: 0 0 0 4px rgba(16,185,129,0.15); }
+        .field-input.input-validation-error { border-color: #ef4444; }
+
+        .toggle-pw {
+            position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+            border: 0; background: transparent; color: #64748b; padding: 0.4rem 0.6rem; cursor: pointer;
+        }
+
+        .field-block { margin-bottom: 1.2rem; }
+        .field-error { color: #dc2626; font-size: 0.8rem; }
+
+        .btn-login {
+            width: 100%;
+            border: 0;
+            border-radius: 12px;
+            padding: 0.9rem;
+            font-weight: 600;
+            font-size: 1.05rem;
+            color: #fff;
+            background: linear-gradient(90deg, #10b981, #0f766e);
+            box-shadow: 0 8px 20px rgba(16,185,129,0.35);
+            display: flex; align-items: center; justify-content: center; gap: 0.6rem;
+            transition: transform 0.15s, box-shadow 0.15s;
+            margin-top: 0.4rem;
+        }
+        .btn-login:hover { transform: translateY(-1px); box-shadow: 0 12px 26px rgba(16,185,129,0.4); }
+
+        .card-footer-note {
+            text-align: center; color: #64748b; font-size: 0.82rem;
+            border-top: 1px solid #eef2f0; margin-top: 1.6rem; padding-top: 1.1rem;
+        }
+        .card-footer-note i { color: #0f766e; margin-right: 0.4rem; font-size: 1rem; }
+
+        .login-alert {
+            background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca;
+            border-radius: 12px; padding: 0.65rem 0.9rem; font-size: 0.88rem; margin-bottom: 1.2rem;
+        }
+
+        @@media (max-width: 991px) {
+            .login-shell { grid-template-columns: 1fr; }
+            .login-hero { display: none; }
+        }
+    </style>
+</head>
+<body class="login-page">
+    <div class="login-shell">
+
+        <!-- Bên trái -->
+        <section class="login-hero">
+            <svg class="hero-logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="gHero" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0" stop-color="#34d399" />
+                        <stop offset="1" stop-color="#0d9488" />
+                    </linearGradient>
+                </defs>
+                <rect x="35" y="4" width="30" height="92" rx="10" fill="url(#gHero)" />
+                <rect x="4" y="35" width="92" height="30" rx="10" fill="url(#gHero)" />
+                <path d="M36 72 C36 46 54 30 76 28 C76 52 62 72 36 72 Z" fill="#fff" />
+                <path d="M38 70 C46 58 56 49 68 40" stroke="#0d9488" stroke-width="2.2" fill="none" stroke-linecap="round" />
+            </svg>
+
+            <h1 class="hero-title">Tâm Thần <span>Pharmacy</span></h1>
+            <div class="hero-tagline">Vì sức khỏe cộng đồng</div>
+
+            <div class="feature-list">
+                <div class="feature-item">
+                    <div class="feature-icon"><i class="bi bi-shield-check"></i></div>
+                    <div>
+                        <div class="feature-title">Thuốc chính hãng</div>
+                        <div class="feature-desc">Đảm bảo chất lượng, nguồn gốc rõ ràng</div>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon"><i class="bi bi-heart-pulse"></i></div>
+                    <div>
+                        <div class="feature-title">Tư vấn tận tâm</div>
+                        <div class="feature-desc">Đội ngũ dược sĩ chuyên môn cao</div>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon"><i class="bi bi-truck"></i></div>
+                    <div>
+                        <div class="feature-title">Dịch vụ tiện lợi</div>
+                        <div class="feature-desc">Nhanh chóng - Chính xác - An toàn</div>
+                    </div>
+                </div>
             </div>
 
-            <div class="mb-3">
-                <label asp-for="Password" class="form-label"></label>
-                <input asp-for="Password" class="form-control" placeholder="Mật khẩu" />
-                <span asp-validation-for="Password" class="text-danger small"></span>
-            </div>
+            <div class="hero-slogan">Sức khỏe của bạn<br />là sứ mệnh của chúng tôi</div>
+        </section>
 
-            <button type="submit" class="btn btn-success w-100 py-2 mt-2">Đăng nhập</button>
-        </form>
+        <!-- Thẻ đăng nhập -->
+        <section class="login-card">
+            <svg class="card-logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="gCard" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0" stop-color="#34d399" />
+                        <stop offset="1" stop-color="#0d9488" />
+                    </linearGradient>
+                </defs>
+                <rect x="35" y="4" width="30" height="92" rx="10" fill="url(#gCard)" />
+                <rect x="4" y="35" width="92" height="30" rx="10" fill="url(#gCard)" />
+                <path d="M36 72 C36 46 54 30 76 28 C76 52 62 72 36 72 Z" fill="#fff" />
+                <path d="M38 70 C46 58 56 49 68 40" stroke="#0d9488" stroke-width="2.2" fill="none" stroke-linecap="round" />
+            </svg>
+
+            <div class="card-title">Tâm Thần Pharmacy</div>
+            <div class="card-sub">Vì sức khỏe cộng đồng</div>
+
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="login-alert" role="alert">
+                    <div asp-validation-summary="ModelOnly"></div>
+                </div>
+            }
+
+            <form asp-controller="Account" asp-action="Login" method="post">
+                @Html.AntiForgeryToken()
+
+                <div class="field-block">
+                    <label asp-for="Username" class="field-label"><i class="bi bi-person-fill"></i> Tên đăng nhập</label>
+                    <div class="input-icon">
+                        <i class="bi bi-person lead-icon"></i>
+                        <input asp-for="Username" class="field-input" placeholder="Nhập tên đăng nhập..." autofocus autocomplete="username" />
+                    </div>
+                    <span asp-validation-for="Username" class="field-error"></span>
+                </div>
+
+                <div class="field-block">
+                    <label asp-for="Password" class="field-label"><i class="bi bi-lock-fill"></i> Mật khẩu</label>
+                    <div class="input-icon">
+                        <i class="bi bi-lock lead-icon"></i>
+                        <input asp-for="Password" class="field-input" placeholder="Nhập mật khẩu..." autocomplete="current-password" />
+                        <button type="button" class="toggle-pw" id="togglePw" title="Hiện / ẩn mật khẩu"><i class="bi bi-eye-slash"></i></button>
+                    </div>
+                    <span asp-validation-for="Password" class="field-error"></span>
+                </div>
+
+                <button type="submit" class="btn-login"><i class="bi bi-arrow-right"></i> Đăng nhập</button>
+            </form>
+
+            <div class="card-footer-note">
+                <i class="bi bi-headset"></i>Cần hỗ trợ? Liên hệ quản trị viên hệ thống
+            </div>
+        </section>
     </div>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
     <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+    <script>
+        document.getElementById('togglePw').addEventListener('click', function () {
+            var input = document.getElementById('Password');
+            var show = input.type === 'password';
+            input.type = show ? 'text' : 'password';
+            this.querySelector('i').className = show ? 'bi bi-eye' : 'bi bi-eye-slash';
+        });
+    </script>
 </body>
 </html>

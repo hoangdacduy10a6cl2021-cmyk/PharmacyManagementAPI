@@ -1,16 +1,41 @@
 ﻿@model PharmacyManagementWeb.Models.ApiModels.PrescriptionFormViewModel
+@inject IConfiguration Config
 @{
     ViewData["Title"] = "Tạo đơn thuốc";
 }
 
-<div class="stat-card mb-3" style="max-width: 800px;">
-    <h6 class="mb-3">@ViewData["Title"]</h6>
+<style>
+    .pos-search { position: relative; }
+    .pos-search > i { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #94a3b8; }
+    .pos-search input { padding: 0.8rem 1rem 0.8rem 2.8rem; border-radius: 14px; }
+    .search-dropdown {
+        position: absolute; left: 0; right: 0; top: calc(100% + 6px); background: #fff;
+        border: 1px solid #e8edeb; border-radius: 14px; box-shadow: 0 12px 30px rgba(16,24,40,0.12);
+        max-height: 300px; overflow-y: auto; z-index: 1000; display: none;
+    }
+    .search-item { display: flex; align-items: center; gap: 0.8rem; width: 100%; padding: 0.6rem 0.9rem; border: 0; background: transparent; text-align: left; border-bottom: 1px solid #f1f5f4; }
+    .search-item:hover { background: var(--pharmacy-primary-soft); }
+    .btn-del { border: 0; background: #fef2f2; color: #dc2626; width: 34px; height: 34px; border-radius: 10px; }
+    .cart-empty { text-align: center; padding: 2rem 1rem; color: #94a3b8; }
+    .cart-empty i { font-size: 2.2rem; display: block; margin-bottom: 0.4rem; }
+</style>
+
+<div class="stat-card form-card" style="max-width:900px;">
+    <div class="form-head">
+        <div class="fh-icon"><i class="bi bi-journal-medical"></i></div>
+        <div>
+            <h5>@ViewData["Title"]</h5>
+            <div class="sub">Ghi lại đơn thuốc của bệnh nhân do bác sĩ kê</div>
+        </div>
+    </div>
+
     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
     <form id="prescriptionForm" asp-action="Create" method="post">
         @Html.AntiForgeryToken()
 
-        <div class="row g-3 mb-3">
+        <div class="section-title" style="margin-top:0;">Thông tin bệnh nhân</div>
+        <div class="row g-3">
             <div class="col-md-6">
                 <label asp-for="PatientName" class="form-label"></label>
                 <input asp-for="PatientName" class="form-control" autofocus />
@@ -36,49 +61,62 @@
                 <label asp-for="Diagnosis" class="form-label"></label>
                 <input asp-for="Diagnosis" class="form-control" />
             </div>
-            <div class="col-md-12">
+            <div class="col-12">
                 <label asp-for="Note" class="form-label"></label>
                 <input asp-for="Note" class="form-control" placeholder="Ví dụ: Uống sau ăn, nhiều nước" />
             </div>
         </div>
 
-        <hr />
-        <h6 class="mb-2">Danh sách thuốc</h6>
+        <div class="section-title">Danh sách thuốc</div>
 
-        <div class="position-relative mb-2">
-            <input type="text" id="medicineSearch" class="form-control" placeholder="Tìm tên hoặc mã thuốc để thêm..." autocomplete="off" />
-            <div id="searchResults" class="list-group position-absolute w-100 shadow" style="z-index: 1000; max-height: 240px; overflow-y: auto; display:none;"></div>
+        <div class="pos-search mb-3">
+            <i class="bi bi-search"></i>
+            <input type="text" id="medicineSearch" class="form-control" placeholder="Tìm tên hoặc mã thuốc để thêm vào đơn..." autocomplete="off" />
+            <div id="searchResults" class="search-dropdown"></div>
         </div>
 
-        <table class="table table-sm align-middle">
-            <thead>
-                <tr>
-                    <th>Tên thuốc</th>
-                    <th>Liều dùng</th>
-                    <th style="width:100px;">Số lượng</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody id="detailsBody">
-                <tr id="emptyRow"><td colspan="4" class="text-center text-muted py-2">Chưa thêm thuốc nào.</td></tr>
-            </tbody>
-        </table>
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
+                    <tr>
+                        <th>Tên thuốc</th>
+                        <th>Liều dùng</th>
+                        <th style="width:110px;">Số lượng</th>
+                        <th style="width:50px;"></th>
+                    </tr>
+                </thead>
+                <tbody id="detailsBody"></tbody>
+            </table>
+        </div>
 
         <input type="hidden" name="detailsJson" id="hiddenDetailsJson" />
 
-        <button type="submit" class="btn btn-success mt-3">Lưu đơn thuốc</button>
-        <a asp-action="Index" class="btn btn-outline-secondary mt-3">Huỷ</a>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-success px-4"><i class="bi bi-check2 me-1"></i>Lưu đơn thuốc</button>
+            <a asp-action="Index" class="btn btn-outline-secondary">Huỷ</a>
+        </div>
     </form>
 </div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script>
-        let details = []; // { medicineId, code, name, dosage, quantity }
+        const apiBase = '@Config["ApiSettings:BaseUrl"]';
+
+        let details = [];          // { medicineId, code, name, dosage, quantity, imageUrl }
+        let lastResults = [];
 
         const searchInput = document.getElementById('medicineSearch');
         const searchResults = document.getElementById('searchResults');
         let searchTimeout;
+
+        function esc(s) {
+            return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        }
+        function thumb(url, size) {
+            if (url) return `<img src="${apiBase}${url}" style="width:${size}px;height:${size}px;object-fit:cover;border-radius:8px;flex-shrink:0;" />`;
+            return `<div class="d-flex align-items-center justify-content-center bg-light text-muted" style="width:${size}px;height:${size}px;border-radius:8px;font-size:10px;flex-shrink:0;">No img</div>`;
+        }
 
         searchInput.addEventListener('input', function () {
             clearTimeout(searchTimeout);
@@ -87,49 +125,44 @@
 
             searchTimeout = setTimeout(async () => {
                 const res = await fetch('/Order/SearchMedicine?term=' + encodeURIComponent(term));
-                const data = await res.json();
-                renderSearchResults(data);
+                lastResults = await res.json();
+                renderSearchResults(lastResults);
             }, 250);
         });
 
         function renderSearchResults(items) {
             if (!items.length) {
-                searchResults.innerHTML = '<div class="list-group-item text-muted small">Không tìm thấy thuốc.</div>';
+                searchResults.innerHTML = '<div class="p-3 text-muted small">Không tìm thấy thuốc.</div>';
                 searchResults.style.display = 'block';
                 return;
             }
-            searchResults.innerHTML = items.map(m => `
-                <button type="button" class="list-group-item list-group-item-action"
-                        onclick='addDetail(${JSON.stringify(m)})'>
-                    ${m.name} <span class="text-muted small">(${m.code})</span>
+            searchResults.innerHTML = items.map((m, idx) => `
+                <button type="button" class="search-item" onclick="addFromResults(${idx})">
+                    ${thumb(m.imageUrl, 40)}
+                    <div><div class="fw-semibold">${esc(m.name)}</div><div class="text-muted small">${esc(m.code)}</div></div>
                 </button>
             `).join('');
             searchResults.style.display = 'block';
         }
 
+        function addFromResults(idx) { addDetail(lastResults[idx]); }
+
         document.addEventListener('click', function (e) {
-            if (!searchResults.contains(e.target) && e.target !== searchInput) {
-                searchResults.style.display = 'none';
-            }
+            if (!searchResults.contains(e.target) && e.target !== searchInput) searchResults.style.display = 'none';
         });
 
         function addDetail(medicine) {
             if (details.find(d => d.medicineId === medicine.id)) {
                 alert('Thuốc này đã có trong đơn.');
-                searchInput.value = '';
-                searchResults.style.display = 'none';
-                return;
+            } else {
+                details.push({ medicineId: medicine.id, code: medicine.code, name: medicine.name, dosage: '', quantity: 1, imageUrl: medicine.imageUrl });
             }
-            details.push({ medicineId: medicine.id, code: medicine.code, name: medicine.name, dosage: '', quantity: 1 });
             searchInput.value = '';
             searchResults.style.display = 'none';
             renderDetails();
         }
 
-        function removeDetail(medicineId) {
-            details = details.filter(d => d.medicineId !== medicineId);
-            renderDetails();
-        }
+        function removeDetail(medicineId) { details = details.filter(d => d.medicineId !== medicineId); renderDetails(); }
 
         function updateDosage(medicineId, value) {
             const d = details.find(x => x.medicineId === medicineId);
@@ -138,31 +171,38 @@
 
         function updateQuantity(medicineId, value) {
             const d = details.find(x => x.medicineId === medicineId);
-            if (d) d.quantity = parseInt(value) || 1;
+            if (d) d.quantity = Math.max(1, parseInt(value) || 1);
         }
 
         function renderDetails() {
             const body = document.getElementById('detailsBody');
             if (details.length === 0) {
-                body.innerHTML = '<tr id="emptyRow"><td colspan="4" class="text-center text-muted py-2">Chưa thêm thuốc nào.</td></tr>';
+                body.innerHTML = '<tr><td colspan="4"><div class="cart-empty"><i class="bi bi-capsule"></i>Chưa thêm thuốc nào vào đơn.</div></td></tr>';
                 return;
             }
             body.innerHTML = details.map(d => `
                 <tr>
-                    <td>${d.name} <div class="text-muted small">${d.code}</div></td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            ${thumb(d.imageUrl, 44)}
+                            <div><div class="fw-semibold">${esc(d.name)}</div><div class="text-muted small">${esc(d.code)}</div></div>
+                        </div>
+                    </td>
                     <td><input type="text" class="form-control form-control-sm" placeholder="VD: 3 lần/ngày - 7 ngày"
-                               value="${d.dosage}" onchange="updateDosage(${d.medicineId}, this.value)" /></td>
+                               value="${esc(d.dosage)}" onchange="updateDosage(${d.medicineId}, this.value)" /></td>
                     <td><input type="number" class="form-control form-control-sm" value="${d.quantity}" min="1"
                                onchange="updateQuantity(${d.medicineId}, this.value)" /></td>
-                    <td><button type="button" class="btn btn-sm btn-outline-danger" onclick="removeDetail(${d.medicineId})">&times;</button></td>
+                    <td class="text-end"><button type="button" class="btn-del" onclick="removeDetail(${d.medicineId})"><i class="bi bi-trash3"></i></button></td>
                 </tr>
             `).join('');
         }
 
-        document.getElementById('prescriptionForm').addEventListener('submit', function (e) {
+        document.getElementById('prescriptionForm').addEventListener('submit', function () {
             document.getElementById('hiddenDetailsJson').value = JSON.stringify(details.map(d => ({
                 medicineId: d.medicineId, dosage: d.dosage, quantity: d.quantity
             })));
         });
+
+        renderDetails();
     </script>
 }

@@ -3,75 +3,85 @@
     ViewData["Title"] = "Đơn thuốc #" + Model.Code;
 }
 
-<div class="stat-card" style="max-width: 700px;">
+<div class="stat-card doc-card">
     <div class="d-flex justify-content-between align-items-start mb-3">
         <div>
-            <h5 class="mb-0">Chi tiết đơn thuốc #@Model.Code</h5>
+            <div class="text-muted small">Đơn thuốc</div>
+            <h4 class="fw-bold mb-0">#@Model.Code</h4>
             <div class="text-muted small">Ngày kê: @Model.PrescriptionDate.ToString("dd/MM/yyyy")</div>
         </div>
         @if (Model.Status == "Đã giao")
         {
-            <span class="badge bg-success fs-6">Đã giao</span>
+            <span class="status-pill pill-green">Đã giao</span>
         }
         else
         {
-            <span class="badge bg-warning text-dark fs-6">Đang sử dụng</span>
+            <span class="status-pill pill-yellow">Đang sử dụng</span>
         }
     </div>
 
-    <div class="row mb-3">
-        <div class="col-md-4">
-            <div class="text-muted small">Bệnh nhân</div>
-            <div class="fw-semibold">@Model.PatientName @(Model.Age.HasValue ? $"({Model.Age} tuổi)" : "")</div>
+    <div class="info-grid">
+        <div>
+            <div class="info-label">Bệnh nhân</div>
+            <div class="info-value">@Model.PatientName @(Model.Age.HasValue ? $"({Model.Age} tuổi)" : "")</div>
         </div>
-        <div class="col-md-4">
-            <div class="text-muted small">Giới tính</div>
-            <div class="fw-semibold">@(Model.Gender ?? "-")</div>
+        <div>
+            <div class="info-label">Giới tính</div>
+            <div class="info-value">@(Model.Gender ?? "-")</div>
         </div>
-        <div class="col-md-4">
-            <div class="text-muted small">Bác sĩ</div>
-            <div class="fw-semibold">@(Model.DoctorName ?? "-")</div>
+        <div>
+            <div class="info-label">Bác sĩ kê đơn</div>
+            <div class="info-value">@(Model.DoctorName ?? "-")</div>
         </div>
-        <div class="col-md-12 mt-2">
-            <div class="text-muted small">Chẩn đoán</div>
-            <div class="fw-semibold">@(Model.Diagnosis ?? "-")</div>
+        <div style="grid-column: 1 / -1;">
+            <div class="info-label">Chẩn đoán</div>
+            <div class="info-value">@(Model.Diagnosis ?? "-")</div>
         </div>
     </div>
 
-    <table class="table table-sm">
-        <thead>
-            <tr>
-                <th>Tên thuốc</th>
-                <th>Liều dùng</th>
-                <th class="text-end">Số lượng</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var d in Model.Details)
-            {
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
                 <tr>
-                    <td>@d.MedicineName <div class="text-muted small">@d.MedicineCode</div></td>
-                    <td>@d.Dosage</td>
-                    <td class="text-end">@d.Quantity</td>
+                    <th style="width:44px;">STT</th>
+                    <th>Tên thuốc</th>
+                    <th>Liều dùng</th>
+                    <th class="text-end">Số lượng</th>
                 </tr>
-            }
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @{ int stt = 0; }
+                @foreach (var d in Model.Details)
+                {
+                    stt++;
+                    <tr>
+                        <td class="text-muted">@stt</td>
+                        <td>
+                            <div class="fw-semibold">@d.MedicineName</div>
+                            <div class="text-muted small">@d.MedicineCode</div>
+                        </td>
+                        <td>@(string.IsNullOrEmpty(d.Dosage) ? "-" : d.Dosage)</td>
+                        <td class="text-end fw-semibold">@d.Quantity</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 
     @if (!string.IsNullOrWhiteSpace(Model.Note))
     {
-        <div class="alert alert-light border small">
-            <strong>Lưu ý:</strong> @Model.Note
+        <div class="total-box mt-2">
+            <i class="bi bi-info-circle me-1"></i><strong>Lưu ý:</strong> @Model.Note
         </div>
     }
 
-    <div class="mt-3 d-flex gap-2">
+    <div class="form-actions no-print">
         @if (Model.Status != "Đã giao")
         {
             <form asp-action="UpdateStatus" asp-route-id="@Model.Id" method="post">
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="status" value="Đã giao" />
-                <button type="submit" class="btn btn-success">✔ Đã giao</button>
+                <button type="submit" class="btn btn-success"><i class="bi bi-check2-circle me-1"></i>Đánh dấu đã giao</button>
             </form>
         }
         else
@@ -82,7 +92,7 @@
                 <button type="submit" class="btn btn-outline-secondary">Chuyển lại "Đang sử dụng"</button>
             </form>
         }
-        <button type="button" class="btn btn-outline-secondary" onclick="window.print()">In đơn thuốc</button>
+        <button type="button" class="btn btn-outline-secondary" onclick="window.print()"><i class="bi bi-printer me-1"></i>In đơn thuốc</button>
         <a asp-action="Index" class="btn btn-outline-secondary">Quay lại danh sách</a>
     </div>
 </div>

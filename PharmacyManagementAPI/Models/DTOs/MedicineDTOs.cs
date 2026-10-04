@@ -17,6 +17,8 @@ namespace PharmacyManagementAPI.Models.DTOs
         public int Stock { get; set; }
         public DateTime? ExpiryDate { get; set; }
         public string? Barcode { get; set; }
+
+        public string? ImageUrl { get; set; }
         public bool IsActive { get; set; }
     }
 

@@ -16,10 +16,12 @@ namespace PharmacyManagementAPI.Services
     public class PrescriptionService : IPrescriptionService
     {
         private readonly ApplicationDbContext _context;
+        private readonly ILogger<PrescriptionService> _logger;
 
-        public PrescriptionService(ApplicationDbContext context)
+        public PrescriptionService(ApplicationDbContext context, ILogger<PrescriptionService> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         private static PrescriptionDto ToDto(Prescription p) => new PrescriptionDto
@@ -78,54 +80,85 @@ namespace PharmacyManagementAPI.Services
             var medicineIds = dto.Details.Select(d => d.MedicineId).Distinct().ToList();
             var validCount = await _context.Medicines.CountAsync(m => medicineIds.Contains(m.Id));
             if (validCount != medicineIds.Count)
+            {
+                _logger.LogWarning("Tạo đơn thuốc cho '{Patient}' thất bại: có thuốc không tồn tại (MedicineIds: {Ids})",
+                    dto.PatientName, string.Join(",", medicineIds));
                 return (null, "Có thuốc trong đơn không tồn tại.");
-
-            var lastId = await _context.Prescriptions.CountAsync();
-            var code = $"RX{(lastId + 1):D4}"; // RX0001, RX0002...
-
-            var prescription = new Prescription
-            {
-                Code = code,
-                PatientName = dto.PatientName,
-                Age = dto.Age,
-                Gender = dto.Gender,
-                DoctorName = dto.DoctorName,
-                Diagnosis = dto.Diagnosis,
-                Note = dto.Note,
-                PrescriptionDate = DateTime.Now,
-                Status = "Đang sử dụng"
-            };
-
-            _context.Prescriptions.Add(prescription);
-            await _context.SaveChangesAsync();
-
-            foreach (var item in dto.Details)
-            {
-                _context.PrescriptionDetails.Add(new PrescriptionDetail
-                {
-                    PrescriptionId = prescription.Id,
-                    MedicineId = item.MedicineId,
-                    Dosage = item.Dosage,
-                    Quantity = item.Quantity
-                });
             }
 
-            await _context.SaveChangesAsync();
+            // Đơn thuốc + các dòng chi tiết phải được lưu cùng nhau, lỗi giữa chừng thì huỷ hết
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                var lastId = await _context.Prescriptions.CountAsync();
+                var code = $"RX{(lastId + 1):D4}"; // RX0001, RX0002...
 
-            var result = await GetByIdAsync(prescription.Id);
-            return (result, null);
+                var prescription = new Prescription
+                {
+                    Code = code,
+                    PatientName = dto.PatientName,
+                    Age = dto.Age,
+                    Gender = dto.Gender,
+                    DoctorName = dto.DoctorName,
+                    Diagnosis = dto.Diagnosis,
+                    Note = dto.Note,
+                    PrescriptionDate = DateTime.Now,
+                    Status = "Đang sử dụng"
+                };
+
+                _context.Prescriptions.Add(prescription);
+                await _context.SaveChangesAsync();
+
+                foreach (var item in dto.Details)
+                {
+                    _context.PrescriptionDetails.Add(new PrescriptionDetail
+                    {
+                        PrescriptionId = prescription.Id,
+                        MedicineId = item.MedicineId,
+                        Dosage = item.Dosage,
+                        Quantity = item.Quantity
+                    });
+                }
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                _logger.LogInformation("Đã tạo đơn thuốc {Code} cho bệnh nhân '{Patient}' gồm {Count} loại thuốc",
+                    code, dto.PatientName, dto.Details.Count);
+
+                var result = await GetByIdAsync(prescription.Id);
+                return (result, null);
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                _logger.LogError(ex, "Lỗi khi tạo đơn thuốc cho bệnh nhân '{Patient}', đã rollback", dto.PatientName);
+                return (null, "Có lỗi xảy ra khi tạo đơn thuốc.");
+            }
         }
 
         public async Task<(PrescriptionDto? data, string? error)> UpdateStatusAsync(int id, UpdatePrescriptionStatusDto dto)
         {
             var prescription = await _context.Prescriptions.FindAsync(id);
-            if (prescription == null) return (null, "Không tìm thấy đơn thuốc.");
+            if (prescription == null)
+            {
+                _logger.LogWarning("Đổi trạng thái đơn thuốc thất bại: không tìm thấy đơn Id={Id}", id);
+                return (null, "Không tìm thấy đơn thuốc.");
+            }
 
             if (dto.Status != "Đang sử dụng" && dto.Status != "Đã giao")
+            {
+                _logger.LogWarning("Đổi trạng thái đơn thuốc {Code} thất bại: trạng thái '{Status}' không hợp lệ",
+                    prescription.Code, dto.Status);
                 return (null, "Trạng thái không hợp lệ. Chỉ chấp nhận 'Đang sử dụng' hoặc 'Đã giao'.");
+            }
 
+            var oldStatus = prescription.Status;
             prescription.Status = dto.Status;
             await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Đơn thuốc {Code} đổi trạng thái: '{Old}' -> '{New}'",
+                prescription.Code, oldStatus, dto.Status);
 
             var result = await GetByIdAsync(id);
             return (result, null);

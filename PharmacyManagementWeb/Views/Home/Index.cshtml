@@ -1,6 +1,18 @@
 ﻿@model PharmacyManagementWeb.Models.ApiModels.DashboardModel
 @{
     ViewData["Title"] = "Trang chủ";
+    var fullName = User.FindFirst("FullName")?.Value ?? User.Identity?.Name ?? "";
+
+    var days = Model.RevenueLast7Days;
+    var maxRevenue = days.Any() ? days.Max(d => d.Revenue) : 0;
+    if (maxRevenue <= 0) maxRevenue = 1;
+
+    var maxSold = Model.TopSellingMedicines.Any() ? Model.TopSellingMedicines.Max(m => m.QuantitySold) : 1;
+    if (maxSold <= 0) maxSold = 1;
+
+    string Short(decimal v) => v >= 1_000_000 ? (v / 1_000_000).ToString("0.#") + "tr"
+                             : v >= 1_000 ? (v / 1_000).ToString("0.#") + "k"
+                             : v.ToString("0");
 }
 
 @if (ViewBag.Error != null)
@@ -8,89 +20,100 @@
     <div class="alert alert-danger">@ViewBag.Error</div>
 }
 
+<div class="mb-4">
+    <h4 class="fw-bold mb-1">Xin chào, @fullName 👋</h4>
+    <div class="text-muted">Hôm nay, @DateTime.Now.ToString("dd/MM/yyyy") - chúc bạn một ngày bán hàng thuận lợi.</div>
+</div>
+
 <div class="row g-3 mb-4">
-    <div class="col-md-3">
-        <div class="stat-card">
-            <div class="stat-icon bg-icon-green">💰</div>
-            <div class="stat-value">@Model.TodayRevenue.ToString("N0")đ</div>
-            <div class="stat-label">Doanh thu hôm nay</div>
+    <div class="col-md-6 col-xl-3">
+        <div class="stat-tile tile-green">
+            <div class="tile-icon"><i class="bi bi-cash-coin"></i></div>
+            <div>
+                <div class="tile-label">Doanh thu hôm nay</div>
+                <div class="tile-value">@Model.TodayRevenue.ToString("N0")đ</div>
+            </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="stat-card">
-            <div class="stat-icon bg-icon-blue">🧾</div>
-            <div class="stat-value">@Model.TodayOrders</div>
-            <div class="stat-label">Đơn hàng hôm nay</div>
+    <div class="col-md-6 col-xl-3">
+        <div class="stat-tile tile-blue">
+            <div class="tile-icon"><i class="bi bi-receipt"></i></div>
+            <div>
+                <div class="tile-label">Đơn hàng hôm nay</div>
+                <div class="tile-value">@Model.TodayOrders</div>
+            </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="stat-card">
-            <div class="stat-icon bg-icon-orange">📉</div>
-            <div class="stat-value">@Model.LowStockCount</div>
-            <div class="stat-label">Sản phẩm sắp hết</div>
+    <div class="col-md-6 col-xl-3">
+        <div class="stat-tile tile-orange">
+            <div class="tile-icon"><i class="bi bi-box-seam"></i></div>
+            <div>
+                <div class="tile-label">Sản phẩm sắp hết</div>
+                <div class="tile-value">@Model.LowStockCount</div>
+            </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="stat-card">
-            <div class="stat-icon bg-icon-red">⏰</div>
-            <div class="stat-value">@Model.ExpiringSoonCount</div>
-            <div class="stat-label">Sản phẩm sắp hết hạn</div>
+    <div class="col-md-6 col-xl-3">
+        <div class="stat-tile tile-red">
+            <div class="tile-icon"><i class="bi bi-alarm"></i></div>
+            <div>
+                <div class="tile-label">Sản phẩm sắp hết hạn</div>
+                <div class="tile-value">@Model.ExpiringSoonCount</div>
+            </div>
         </div>
     </div>
 </div>
 
 <div class="row g-3">
-    <div class="col-md-7">
-        <div class="stat-card">
-            <h6 class="mb-3">Doanh thu 7 ngày gần đây</h6>
-            <table class="table table-sm">
-                <thead>
-                    <tr>
-                        <th>Ngày</th>
-                        <th class="text-end">Doanh thu</th>
-                        <th class="text-end">Số đơn</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var day in Model.RevenueLast7Days)
-                    {
-                        <tr>
-                            <td>@day.Date.ToString("dd/MM")</td>
-                            <td class="text-end">@day.Revenue.ToString("N0")đ</td>
-                            <td class="text-end">@day.OrderCount</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+    <div class="col-lg-7">
+        <div class="stat-card h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="mb-0">Doanh thu 7 ngày gần đây</h6>
+                <span class="text-muted small">Đơn vị: nghìn (k) / triệu (tr) đồng</span>
+            </div>
+
+            <div class="bar-chart">
+                @foreach (var d in days)
+                {
+                    var pct = d.Revenue <= 0 ? 3 : Math.Max(6, (int)Math.Round((double)(d.Revenue / maxRevenue) * 100));
+                    <div class="bar-col" title="@d.Date.ToString("dd/MM/yyyy"): @d.Revenue.ToString("N0")đ - @d.OrderCount đơn">
+                        <div class="bar-value">@(d.Revenue > 0 ? Short(d.Revenue) : "")</div>
+                        <div class="bar-track">
+                            <div class="bar-fill @(d.Revenue <= 0 ? "empty" : "")" style="height:@(pct)%"></div>
+                        </div>
+                        <div class="bar-label">@d.Date.ToString("dd/MM")</div>
+                    </div>
+                }
+            </div>
         </div>
     </div>
 
-    <div class="col-md-5">
-        <div class="stat-card">
-            <h6 class="mb-3">Top thuốc bán chạy</h6>
+    <div class="col-lg-5">
+        <div class="stat-card h-100">
+            <h6 class="mb-2">Top thuốc bán chạy</h6>
+
             @if (!Model.TopSellingMedicines.Any())
             {
-                <div class="text-muted small">Chưa có dữ liệu bán hàng.</div>
+                <div class="text-muted small py-3">Chưa có dữ liệu bán hàng.</div>
             }
             else
             {
-                <table class="table table-sm">
-                    <thead>
-                        <tr>
-                            <th>Tên thuốc</th>
-                            <th class="text-end">Đã bán</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var m in Model.TopSellingMedicines)
-                        {
-                            <tr>
-                                <td>@m.MedicineName</td>
-                                <td class="text-end">@m.QuantitySold</td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
+                int rank = 0;
+                @foreach (var m in Model.TopSellingMedicines)
+                {
+                    rank++;
+                    var width = (int)Math.Round((double)m.QuantitySold / maxSold * 100);
+                    <div class="top-item">
+                        <div class="top-rank">@rank</div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between">
+                                <span class="fw-semibold">@m.MedicineName</span>
+                                <span class="text-muted">@m.QuantitySold</span>
+                            </div>
+                            <div class="top-bar"><div style="width:@(width)%"></div></div>
+                        </div>
+                    </div>
+                }
             }
         </div>
     </div>

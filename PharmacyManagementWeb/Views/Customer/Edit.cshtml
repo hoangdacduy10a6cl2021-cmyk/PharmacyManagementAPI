@@ -3,42 +3,55 @@
     ViewData["Title"] = "Sửa khách hàng";
 }
 
-<div class="stat-card" style="max-width: 600px;">
-    <h6 class="mb-3">@ViewData["Title"]</h6>
-    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+<div class="stat-card form-card" style="max-width:620px;">
+    <div class="form-head">
+        <div class="fh-icon"><i class="bi bi-person-gear"></i></div>
+        <div>
+            <h5>@ViewData["Title"]</h5>
+            @if (ViewBag.TotalSpent != null)
+            {
+                <div class="sub">Tổng chi tiêu đã ghi nhận: <strong>@(((decimal)ViewBag.TotalSpent).ToString("N0"))đ</strong></div>
+            }
+            else
+            {
+                <div class="sub">Cập nhật thông tin khách hàng</div>
+            }
+        </div>
+    </div>
 
-    @if (ViewBag.TotalSpent != null)
-    {
-        <div class="alert alert-light border small">Tổng chi tiêu đã ghi nhận: <strong>@(((decimal)ViewBag.TotalSpent).ToString("N0"))đ</strong></div>
-    }
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
     <form asp-action="Edit" asp-route-id="@Model.Id" method="post">
         @Html.AntiForgeryToken()
         <input type="hidden" asp-for="Id" />
 
-        <div class="mb-3">
-            <label asp-for="Name" class="form-label"></label>
-            <input asp-for="Name" class="form-control" />
-            <span asp-validation-for="Name" class="text-danger small"></span>
-        </div>
-        <div class="mb-3">
-            <label asp-for="Phone" class="form-label"></label>
-            <input asp-for="Phone" class="form-control" />
-        </div>
-        <div class="mb-3">
-            <label asp-for="Address" class="form-label"></label>
-            <input asp-for="Address" class="form-control" />
-        </div>
-        <div class="mb-3">
-            <label asp-for="CustomerType" class="form-label"></label>
-            <select asp-for="CustomerType" class="form-select">
-                <option value="Thường">Thường</option>
-                <option value="VIP">VIP</option>
-            </select>
+        <div class="row g-3">
+            <div class="col-12">
+                <label asp-for="Name" class="form-label"></label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger small"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Phone" class="form-label"></label>
+                <input asp-for="Phone" class="form-control" />
+            </div>
+            <div class="col-md-6">
+                <label asp-for="CustomerType" class="form-label"></label>
+                <select asp-for="CustomerType" class="form-select">
+                    <option value="Thường">Thường (Thành viên)</option>
+                    <option value="VIP">VIP</option>
+                </select>
+            </div>
+            <div class="col-12">
+                <label asp-for="Address" class="form-label"></label>
+                <input asp-for="Address" class="form-control" />
+            </div>
         </div>
 
-        <button type="submit" class="btn btn-success">Lưu</button>
-        <a asp-action="Index" class="btn btn-outline-secondary">Huỷ</a>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-success px-4"><i class="bi bi-check2 me-1"></i>Lưu</button>
+            <a asp-action="Index" class="btn btn-outline-secondary">Huỷ</a>
+        </div>
     </form>
 </div>
 

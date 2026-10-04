@@ -3,58 +3,69 @@
     ViewData["Title"] = "Phiếu nhập " + Model.Code;
 }
 
-<div class="stat-card" style="max-width: 700px;">
+<div class="stat-card doc-card">
     <div class="d-flex justify-content-between align-items-start mb-3">
         <div>
-            <h5 class="mb-0">Phiếu nhập #@Model.Code</h5>
+            <div class="text-muted small">Phiếu nhập hàng</div>
+            <h4 class="fw-bold mb-0">#@Model.Code</h4>
             <div class="text-muted small">@Model.ImportDate.ToString("HH:mm dd/MM/yyyy")</div>
         </div>
-        <span class="badge bg-success fs-6">@Model.Status</span>
+        <span class="status-pill pill-green">@Model.Status</span>
     </div>
 
-    <div class="row mb-3">
-        <div class="col-6">
-            <div class="text-muted small">Nhà cung cấp</div>
-            <div class="fw-semibold">@Model.SupplierName</div>
+    <div class="info-grid">
+        <div>
+            <div class="info-label">Nhà cung cấp</div>
+            <div class="info-value">@Model.SupplierName</div>
         </div>
-        <div class="col-6">
-            <div class="text-muted small">Người nhập</div>
-            <div class="fw-semibold">@Model.UserName</div>
+        <div>
+            <div class="info-label">Người nhập</div>
+            <div class="info-value">@Model.UserName</div>
         </div>
     </div>
 
-    <table class="table table-sm">
-        <thead>
-            <tr>
-                <th>Thuốc</th>
-                <th class="text-end">SL</th>
-                <th class="text-end">Giá nhập</th>
-                <th class="text-end">Thành tiền</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var d in Model.Details)
-            {
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
                 <tr>
-                    <td>@d.MedicineName <div class="text-muted small">@d.MedicineCode</div></td>
-                    <td class="text-end">@d.Quantity</td>
-                    <td class="text-end">@d.ImportPrice.ToString("N0")đ</td>
-                    <td class="text-end">@d.Subtotal.ToString("N0")đ</td>
+                    <th style="width:44px;">STT</th>
+                    <th>Thuốc</th>
+                    <th class="text-end">SL</th>
+                    <th class="text-end">Giá nhập</th>
+                    <th class="text-end">Thành tiền</th>
                 </tr>
-            }
-        </tbody>
-    </table>
-
-    <div class="border-top pt-3 d-flex justify-content-between fw-bold fs-5">
-        <span>Tổng tiền nhập</span>
-        <span class="text-success">@Model.TotalAmount.ToString("N0")đ</span>
+            </thead>
+            <tbody>
+                @{ int stt = 0; }
+                @foreach (var d in Model.Details)
+                {
+                    stt++;
+                    <tr>
+                        <td class="text-muted">@stt</td>
+                        <td>
+                            <div class="fw-semibold">@d.MedicineName</div>
+                            <div class="text-muted small">@d.MedicineCode</div>
+                        </td>
+                        <td class="text-end">@d.Quantity</td>
+                        <td class="text-end">@d.ImportPrice.ToString("N0")đ</td>
+                        <td class="text-end fw-semibold">@d.Subtotal.ToString("N0")đ</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
     </div>
 
-    <div class="mt-4">
+    <div class="total-box d-flex justify-content-between align-items-center">
+        <span class="fw-bold">Tổng tiền nhập</span>
+        <span class="fs-4 fw-bold" style="color:var(--pharmacy-primary);">@Model.TotalAmount.ToString("N0")đ</span>
+    </div>
+
+    <div class="form-actions no-print">
         @if (User.IsInRole("Admin"))
         {
-            <a asp-action="Create" class="btn btn-success">+ Tạo phiếu nhập mới</a>
+            <a asp-action="Create" class="btn btn-success"><i class="bi bi-plus-lg me-1"></i>Tạo phiếu nhập mới</a>
         }
+        <button type="button" class="btn btn-outline-secondary" onclick="window.print()"><i class="bi bi-printer me-1"></i>In phiếu</button>
         <a asp-action="Index" class="btn btn-outline-secondary">Quay lại danh sách</a>
     </div>
 </div>

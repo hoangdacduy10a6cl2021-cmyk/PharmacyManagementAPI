@@ -9,6 +9,7 @@ namespace PharmacyManagementAPI.Services
     {
         Task<AuthResponseDto?> RegisterAsync(RegisterDto dto);
         Task<AuthResponseDto?> LoginAsync(LoginDto dto);
+        Task<bool> AnyUserExistsAsync();
     }
 
     public class AuthService : IAuthService
@@ -20,6 +21,11 @@ namespace PharmacyManagementAPI.Services
         {
             _context = context;
             _tokenService = tokenService;
+        }
+
+        public async Task<bool> AnyUserExistsAsync()
+        {
+            return await _context.Users.AnyAsync();
         }
 
         public async Task<AuthResponseDto?> RegisterAsync(RegisterDto dto)

@@ -79,7 +79,12 @@ namespace PharmacyManagementWeb.Controllers
                 await LoadDropdowns(vm);
                 return View(vm);
             }
-
+            if (vm.ImageFile != null && vm.ImageFile.Length > 0 && result.Data != null)
+            {
+                var imgResult = await _apiClient.PostFileAsync<MedicineModel>($"/api/Medicine/{result.Data.Id}/image", vm.ImageFile);
+                if (!imgResult.Success)
+                    TempData["ErrorMessage"] = $"Đã thêm thuốc nhưng chưa lưu được ảnh: {imgResult.ErrorMessage}";
+            }
             TempData["SuccessMessage"] = $"Đã thêm thuốc '{vm.Name}' thành công.";
             return RedirectToAction(nameof(Index));
         }
@@ -104,11 +109,13 @@ namespace PharmacyManagementWeb.Controllers
                 Stock = m.Stock,
                 ExpiryDate = m.ExpiryDate,
                 Barcode = m.Barcode,
+                ImageUrl = m.ImageUrl,
                 IsActive = m.IsActive
             };
 
             await LoadDropdowns(vm);
             return View(vm);
+            await RestoreImageUrl(vm, id);
         }
 
         [HttpPost]
@@ -142,7 +149,16 @@ namespace PharmacyManagementWeb.Controllers
                 await LoadDropdowns(vm);
                 return View(vm);
             }
-
+            if (vm.ImageFile != null && vm.ImageFile.Length > 0)
+            {
+                var imgResult = await _apiClient.PostFileAsync<MedicineModel>($"/api/Medicine/{id}/image", vm.ImageFile);
+                if (!imgResult.Success)
+                    TempData["ErrorMessage"] = $"Đã cập nhật thuốc nhưng chưa lưu được ảnh: {imgResult.ErrorMessage}";
+            }
+            else if (vm.RemoveImage)
+            {
+                await _apiClient.DeleteAsync($"/api/Medicine/{id}/image");
+            }
             TempData["SuccessMessage"] = $"Đã cập nhật thuốc '{vm.Name}' thành công.";
             return RedirectToAction(nameof(Index));
         }
@@ -158,7 +174,11 @@ namespace PharmacyManagementWeb.Controllers
 
             return RedirectToAction(nameof(Index));
         }
-
+        private async Task RestoreImageUrl(MedicineFormViewModel vm, int id)
+        {
+            var current = await _apiClient.GetAsync<MedicineModel>($"/api/Medicine/{id}");
+            vm.ImageUrl = current.Data?.ImageUrl;
+        }
         private async Task LoadDropdowns(MedicineFormViewModel vm)
         {
             var categoriesResult = await _apiClient.GetAsync<List<CategoryModel>>("/api/Category");

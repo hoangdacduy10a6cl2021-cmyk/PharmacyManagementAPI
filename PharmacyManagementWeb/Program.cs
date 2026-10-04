@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using PharmacyManagementWeb.Services;
-
+// Tạo sẵn thư mục wwwroot/uploads/medicines TRƯỚC khi build để UseStaticFiles nhận wwwroot
+Directory.CreateDirectory(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "medicines"));
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
@@ -34,6 +35,7 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseStaticFiles();
 app.UseStaticFiles();
 
 app.UseRouting();
