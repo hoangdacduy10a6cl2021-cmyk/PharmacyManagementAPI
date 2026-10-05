@@ -51,5 +51,18 @@ namespace PharmacyManagementAPI.Controllers
             if (error != null) return BadRequest(new { message = error });
             return CreatedAtAction(nameof(GetById), new { id = data!.Id }, data);
         }
+
+        // POST /api/Order/5/cancel - hủy hoá đơn (hoàn tiền, trả thuốc về kho)
+        [HttpPost("{id}/cancel")]
+        public async Task<IActionResult> Cancel(int id)
+        {
+            var (data, error) = await _service.CancelAsync(id);
+            if (error != null)
+            {
+                if (error == "Không tìm thấy hoá đơn.") return NotFound(new { message = error });
+                return BadRequest(new { message = error });
+            }
+            return Ok(data);
+        }
     }
 }

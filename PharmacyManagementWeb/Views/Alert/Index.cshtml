@@ -1,0 +1,127 @@
+﻿@model PharmacyManagementWeb.Models.ApiModels.AlertsModel
+@inject IConfiguration Config
+@{
+    ViewData["Title"] = "Cảnh báo";
+    bool isAdmin = User.IsInRole("Admin");
+
+    var sections = new[]
+    {
+        new { Title = "Đã hết hạn", Desc = "Thuốc đã quá hạn sử dụng, cần ngừng bán và xử lý.", Icon = "bi-x-octagon", Pill = "pill-red", Items = Model.Expired, Kind = "expired" },
+        new { Title = "Sắp hết hạn", Desc = "Hạn sử dụng còn dưới 90 ngày.", Icon = "bi-alarm", Pill = "pill-yellow", Items = Model.ExpiringSoon, Kind = "expiring" },
+        new { Title = "Sắp hết hàng", Desc = "Tồn kho từ 20 trở xuống.", Icon = "bi-box-seam", Pill = "pill-orange", Items = Model.LowStock, Kind = "low" }
+    };
+}
+
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-danger">@ViewBag.Error</div>
+}
+
+<div class="row g-3 mb-3">
+    <div class="col-md-4">
+        <div class="stat-tile compact tile-red">
+            <div class="tile-icon"><i class="bi bi-x-octagon"></i></div>
+            <div><div class="tile-label">Đã hết hạn</div><div class="tile-value">@Model.ExpiredCount</div></div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-tile compact tile-orange">
+            <div class="tile-icon"><i class="bi bi-alarm"></i></div>
+            <div><div class="tile-label">Sắp hết hạn</div><div class="tile-value">@Model.ExpiringSoonCount</div></div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-tile compact tile-blue">
+            <div class="tile-icon"><i class="bi bi-box-seam"></i></div>
+            <div><div class="tile-label">Sắp hết hàng</div><div class="tile-value">@Model.LowStockCount</div></div>
+        </div>
+    </div>
+</div>
+
+@foreach (var s in sections)
+{
+    <div class="stat-card mb-3">
+        <div class="d-flex align-items-center gap-2 mb-1">
+            <span class="status-pill @s.Pill"><i class="bi @s.Icon"></i> @s.Title (@s.Items.Count)</span>
+        </div>
+        <div class="text-muted small mb-3">@s.Desc</div>
+
+        @if (!s.Items.Any())
+        {
+            <div class="empty-state" style="padding:1.2rem;"><i class="bi bi-check2-circle"></i>Không có thuốc nào.</div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th style="width:64px;">Ảnh</th>
+                            <th>Thuốc</th>
+                            <th class="text-end">Tồn kho</th>
+                            <th>HSD</th>
+                            <th>Còn lại</th>
+                            @if (isAdmin)
+                            {
+                                <th class="text-end">Thao tác</th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var m in s.Items)
+                        {
+                            <tr>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(m.ImageUrl))
+                                    {
+                                        <img src="@(Config["ApiSettings:BaseUrl"])@m.ImageUrl" alt="@m.Name" style="width:44px;height:44px;object-fit:cover;border-radius:10px;" />
+                                    }
+                                    else
+                                    {
+                                        <div class="d-flex align-items-center justify-content-center bg-light text-muted" style="width:44px;height:44px;border-radius:10px;font-size:10px;">No img</div>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="fw-semibold">@m.Name</div>
+                                    <div class="text-muted small">@m.Code</div>
+                                </td>
+                                <td class="text-end fw-semibold @(m.Stock <= 20 ? "text-danger" : "")">@m.Stock @m.Unit</td>
+                                <td>@(m.ExpiryDate?.ToString("dd/MM/yyyy") ?? "-")</td>
+                                <td>
+                                    @if (m.DaysToExpire.HasValue)
+                                    {
+                                        if (m.DaysToExpire.Value < 0)
+                                        {
+                                            <span class="text-danger fw-semibold">Quá hạn @(-m.DaysToExpire.Value) ngày</span>
+                                        }
+                                        else
+                                        {
+                                            <span>@m.DaysToExpire.Value ngày</span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                @if (isAdmin)
+                                {
+                                    <td class="text-end">
+                                        @if (s.Kind == "low")
+                                        {
+                                            <a asp-controller="PurchaseOrder" asp-action="Create" class="btn btn-success btn-sm"><i class="bi bi-box-seam me-1"></i>Nhập thêm</a>
+                                        }
+                                        else
+                                        {
+                                            <a asp-controller="Medicine" asp-action="Edit" asp-route-id="@m.Id" class="act-btn" title="Xem / sửa thuốc"><i class="bi bi-pencil"></i></a>
+                                        }
+                                    </td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+}

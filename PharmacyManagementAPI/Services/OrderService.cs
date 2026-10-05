@@ -10,11 +10,14 @@ namespace PharmacyManagementAPI.Services
         Task<List<OrderDto>> GetAllAsync(int? customerId, DateTime? fromDate, DateTime? toDate);
         Task<OrderDto?> GetByIdAsync(int id);
         Task<(OrderDto? data, string? error)> CreateAsync(CreateOrderDto dto, int userId, bool isAdmin);
+        Task<(OrderDto? data, string? error)> CancelAsync(int id);
     }
 
     public class OrderService : IOrderService
     {
         private readonly ApplicationDbContext _context;
+
+        private const string CANCELLED = "Đã hủy";
 
         // Khách chi tiêu từ mức này trở lên -> tự động nâng hạng VIP
         private const decimal VIP_THRESHOLD = 5_000_000;
@@ -193,6 +196,46 @@ namespace PharmacyManagementAPI.Services
             {
                 await transaction.RollbackAsync();
                 return (null, "Có lỗi xảy ra khi tạo hoá đơn.");
+            }
+        }
+
+        // Hủy hoá đơn = hoàn tiền: trả thuốc về kho, trừ lại chi tiêu của khách, đổi trạng thái "Đã hủy"
+        public async Task<(OrderDto? data, string? error)> CancelAsync(int id)
+        {
+            var order = await _context.Orders
+                .Include(o => o.OrderDetails)
+                .FirstOrDefaultAsync(o => o.Id == id);
+
+            if (order == null) return (null, "Không tìm thấy hoá đơn.");
+            if (order.Status == CANCELLED) return (null, "Hoá đơn này đã được hủy trước đó.");
+
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                foreach (var detail in order.OrderDetails)
+                {
+                    var medicine = await _context.Medicines.FindAsync(detail.MedicineId);
+                    if (medicine != null) medicine.Stock += detail.Quantity;
+                }
+
+                if (order.CustomerId.HasValue)
+                {
+                    var customer = await _context.Customers.FindAsync(order.CustomerId.Value);
+                    if (customer != null)
+                        customer.TotalSpent = Math.Max(0, customer.TotalSpent - order.FinalAmount);
+                }
+
+                order.Status = CANCELLED;
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return (await GetByIdAsync(id), null);
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                return (null, "Có lỗi xảy ra khi hủy hoá đơn.");
             }
         }
     }

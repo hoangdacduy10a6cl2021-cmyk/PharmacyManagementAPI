@@ -868,3 +868,162 @@ body.theme-admin .brand-logo-box {
     flex-shrink: 0;
     filter: drop-shadow(0 4px 10px rgba(0,0,0,0.30));
 }
+/* ===== Chuông thông báo ===== */
+.bell-btn {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    color: #475569;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+}
+
+    .bell-btn:hover {
+        background: var(--pharmacy-primary-soft);
+        color: var(--pharmacy-primary-dark);
+    }
+
+.bell-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: #dc2626;
+    color: #fff;
+    font-size: 0.68rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.bell-menu {
+    width: 330px;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid #eef2f0;
+}
+
+.bell-head {
+    padding: 0.8rem 1rem;
+    font-weight: 700;
+    border-bottom: 1px solid #eef2f0;
+}
+
+.bell-empty {
+    padding: 1.4rem 1rem;
+    text-align: center;
+    color: #64748b;
+    font-size: 0.88rem;
+}
+
+    .bell-empty i {
+        display: block;
+        font-size: 1.8rem;
+        color: var(--pharmacy-primary);
+        margin-bottom: 0.3rem;
+    }
+
+.bell-item {
+    display: flex;
+    gap: 0.8rem;
+    align-items: center;
+    padding: 0.7rem 1rem;
+    text-decoration: none;
+    color: #1e293b;
+    border-bottom: 1px solid #f1f5f4;
+}
+
+    .bell-item:hover {
+        background: #f8faf9;
+    }
+
+    .bell-item small {
+        display: block;
+        color: #64748b;
+        font-size: 0.76rem;
+    }
+
+.bell-dot {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+}
+
+.bell-foot {
+    display: block;
+    text-align: center;
+    padding: 0.7rem;
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-decoration: none;
+    color: var(--pharmacy-primary-dark);
+}
+
+    .bell-foot:hover {
+        background: var(--pharmacy-primary-soft);
+    }
+
+.pill-orange {
+    background: #ffedd5;
+    color: #c2410c;
+}
+
+/* ===== Tab báo cáo ===== */
+.report-tabs {
+    list-style: none;
+    display: flex;
+    gap: 0.5rem;
+    padding: 0;
+    margin: 0 0 1rem;
+    flex-wrap: wrap;
+}
+
+    .report-tabs a {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        padding: 0.55rem 1.1rem;
+        border-radius: 999px;
+        background: #fff;
+        border: 1.5px solid #e2e8f0;
+        color: #475569;
+        font-weight: 600;
+        font-size: 0.88rem;
+        text-decoration: none;
+        transition: all 0.15s;
+    }
+
+        .report-tabs a:hover {
+            border-color: var(--pharmacy-primary);
+            color: var(--pharmacy-primary-dark);
+        }
+
+        .report-tabs a.active {
+            background: var(--pharmacy-primary);
+            border-color: var(--pharmacy-primary);
+            color: #fff;
+        }
+
+/* ===== Hoá đơn đã hủy ===== */
+.row-cancelled td {
+    color: #94a3b8;
+}
+
+.row-cancelled .amt {
+    text-decoration: line-through;
+}

@@ -1,0 +1,101 @@
+﻿@model PharmacyManagementWeb.Models.ApiModels.ProfileModel
+@{
+    ViewData["Title"] = "Tài khoản cá nhân";
+    bool isAdmin = Model.Role == "Admin";
+    var initial = string.IsNullOrWhiteSpace(Model.FullName) ? "?" : Model.FullName.Trim().Split(' ').Last().Substring(0, 1).ToUpper();
+}
+
+<div class="row g-3">
+    <div class="col-lg-4">
+        <div class="stat-card text-center">
+            <div class="user-avatar mx-auto mb-3" style="width:84px;height:84px;font-size:2rem;">@initial</div>
+            <h5 class="fw-bold mb-1">@Model.FullName</h5>
+            <div class="text-muted mb-2">@@@Model.Username</div>
+            <span class="status-pill @(isAdmin ? "pill-blue" : "pill-green")">@(isAdmin ? "Quản trị viên" : "Nhân viên bán hàng / Dược sĩ")</span>
+
+            <div class="info-grid mt-4 text-start" style="grid-template-columns:1fr;">
+                <div>
+                    <div class="info-label">Email</div>
+                    <div class="info-value">@(string.IsNullOrEmpty(Model.Email) ? "-" : Model.Email)</div>
+                </div>
+                <div>
+                    <div class="info-label">Số điện thoại</div>
+                    <div class="info-value">@(string.IsNullOrEmpty(Model.Phone) ? "-" : Model.Phone)</div>
+                </div>
+                <div>
+                    <div class="info-label">Ngày tạo tài khoản</div>
+                    <div class="info-value">@Model.CreatedAt.ToString("dd/MM/yyyy")</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="stat-card mb-3">
+            <div class="form-head">
+                <div class="fh-icon"><i class="bi bi-person-gear"></i></div>
+                <div>
+                    <h5>Thông tin cá nhân</h5>
+                    <div class="sub">Cập nhật họ tên và thông tin liên hệ</div>
+                </div>
+            </div>
+
+            <form asp-action="UpdateProfile" method="post">
+                @Html.AntiForgeryToken()
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label">Họ và tên</label>
+                        <input type="text" name="fullName" value="@Model.FullName" class="form-control" required maxlength="100" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Email</label>
+                        <input type="email" name="email" value="@Model.Email" class="form-control" maxlength="100" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Số điện thoại</label>
+                        <input type="text" name="phone" value="@Model.Phone" class="form-control" maxlength="20" />
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Tên đăng nhập</label>
+                        <input type="text" value="@Model.Username" class="form-control" disabled />
+                        <div class="form-text">Tên đăng nhập không thể thay đổi.</div>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-success px-4"><i class="bi bi-check2 me-1"></i>Lưu thay đổi</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="stat-card">
+            <div class="form-head">
+                <div class="fh-icon"><i class="bi bi-shield-lock"></i></div>
+                <div>
+                    <h5>Đổi mật khẩu</h5>
+                    <div class="sub">Dùng mật khẩu mạnh, ít nhất 6 ký tự</div>
+                </div>
+            </div>
+
+            <form asp-action="ChangePassword" method="post">
+                @Html.AntiForgeryToken()
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label">Mật khẩu hiện tại</label>
+                        <input type="password" name="currentPassword" class="form-control" required autocomplete="current-password" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Mật khẩu mới</label>
+                        <input type="password" name="newPassword" class="form-control" required minlength="6" autocomplete="new-password" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Nhập lại mật khẩu mới</label>
+                        <input type="password" name="confirmPassword" class="form-control" required minlength="6" autocomplete="new-password" />
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-success px-4"><i class="bi bi-key me-1"></i>Đổi mật khẩu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

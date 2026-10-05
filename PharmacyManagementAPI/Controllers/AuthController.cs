@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using PharmacyManagementAPI.Models.DTOs;
 using PharmacyManagementAPI.Services;
+using System.Security.Claims;
 
 namespace PharmacyManagementAPI.Controllers
 {
@@ -17,6 +18,8 @@ namespace PharmacyManagementAPI.Controllers
             _authService = authService;
             _logger = logger;
         }
+
+        private int GetCurrentUserId() => int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
 
         // Cho phép gọi không cần token, nhưng bên trong tự kiểm tra:
         // - Hệ thống CHƯA có tài khoản nào  -> cho tạo tài khoản đầu tiên (bắt buộc role Admin)
@@ -69,6 +72,36 @@ namespace PharmacyManagementAPI.Controllers
                 return Unauthorized(new { message = "Sai username hoặc password." });
             }
             return Ok(result);
+        }
+
+        // GET /api/Auth/me - thông tin tài khoản đang đăng nhập
+        [HttpGet("me")]
+        [Authorize]
+        public async Task<IActionResult> GetMe()
+        {
+            var profile = await _authService.GetProfileAsync(GetCurrentUserId());
+            if (profile == null) return NotFound(new { message = "Không tìm thấy tài khoản." });
+            return Ok(profile);
+        }
+
+        // PUT /api/Auth/me - sửa họ tên, email, số điện thoại
+        [HttpPut("me")]
+        [Authorize]
+        public async Task<IActionResult> UpdateMe(UpdateProfileDto dto)
+        {
+            var (data, error) = await _authService.UpdateProfileAsync(GetCurrentUserId(), dto);
+            if (error != null) return BadRequest(new { message = error });
+            return Ok(data);
+        }
+
+        // POST /api/Auth/change-password - đổi mật khẩu
+        [HttpPost("change-password")]
+        [Authorize]
+        public async Task<IActionResult> ChangePassword(ChangePasswordDto dto)
+        {
+            var (success, error) = await _authService.ChangePasswordAsync(GetCurrentUserId(), dto);
+            if (!success) return BadRequest(new { message = error });
+            return Ok(new { message = "Đổi mật khẩu thành công." });
         }
     }
 }

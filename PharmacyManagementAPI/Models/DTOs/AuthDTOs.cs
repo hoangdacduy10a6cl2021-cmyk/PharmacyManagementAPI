@@ -39,4 +39,36 @@ namespace PharmacyManagementAPI.Models.DTOs
         public string FullName { get; set; } = string.Empty;
         public string Role { get; set; } = string.Empty;
     }
+
+    public class ProfileDto
+    {
+        public int Id { get; set; }
+        public string Username { get; set; } = string.Empty;
+        public string FullName { get; set; } = string.Empty;
+        public string? Email { get; set; }
+        public string? Phone { get; set; }
+        public string Role { get; set; } = string.Empty;
+        public DateTime CreatedAt { get; set; }
+    }
+
+    public class UpdateProfileDto
+    {
+        [Required, MaxLength(100)]
+        public string FullName { get; set; } = string.Empty;
+
+        [MaxLength(100)]
+        public string? Email { get; set; }
+
+        [MaxLength(20)]
+        public string? Phone { get; set; }
+    }
+
+    public class ChangePasswordDto
+    {
+        [Required]
+        public string CurrentPassword { get; set; } = string.Empty;
+
+        [Required, MinLength(6, ErrorMessage = "Mật khẩu mới phải có ít nhất 6 ký tự")]
+        public string NewPassword { get; set; } = string.Empty;
+    }
 }

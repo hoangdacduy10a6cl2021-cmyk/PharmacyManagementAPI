@@ -2,6 +2,7 @@
 @inject IConfiguration Config
 @{
     ViewData["Title"] = "Hoá đơn " + Model.Code;
+    bool cancelled = Model.Status == "Đã hủy";
 }
 
 <div class="stat-card doc-card">
@@ -11,8 +12,20 @@
             <h4 class="fw-bold mb-0">#@Model.Code</h4>
             <div class="text-muted small">@Model.OrderDate.ToString("HH:mm dd/MM/yyyy")</div>
         </div>
-        <span class="status-pill pill-green">@Model.Status</span>
+        @if (cancelled)
+        {
+            <span class="status-pill pill-red">Đã hủy</span>
+        }
+        else
+        {
+            <span class="status-pill pill-green">@Model.Status</span>
+        }
     </div>
+
+    @if (cancelled)
+    {
+        <div class="alert alert-danger"><i class="bi bi-info-circle me-1"></i>Hoá đơn này đã bị hủy. Thuốc đã được hoàn lại kho và không tính vào doanh thu.</div>
+    }
 
     <div class="info-grid">
         <div>
@@ -75,12 +88,28 @@
         <div class="d-flex justify-content-between"><span class="text-muted">Giảm giá</span><span>-@Model.DiscountAmount.ToString("N0")đ</span></div>
         <div class="d-flex justify-content-between align-items-center border-top mt-2 pt-2">
             <span class="fw-bold fs-5">Tổng cộng</span>
-            <span class="fs-3 fw-bold" style="color:var(--pharmacy-primary);">@Model.FinalAmount.ToString("N0")đ</span>
+            <span class="fs-3 fw-bold" style="color:@(cancelled ? "#94a3b8" : "var(--pharmacy-primary)");@(cancelled ? "text-decoration:line-through;" : "")">@Model.FinalAmount.ToString("N0")đ</span>
         </div>
     </div>
 
     <div class="form-actions no-print">
         <a asp-action="Index" class="btn btn-success"><i class="bi bi-plus-lg me-1"></i>Tạo hoá đơn mới</a>
         <button type="button" class="btn btn-outline-secondary" onclick="window.print()"><i class="bi bi-printer me-1"></i>In hoá đơn</button>
+        <a asp-action="History" class="btn btn-outline-secondary">Danh sách hoá đơn</a>
+
+        @if (!cancelled)
+        {
+            <form asp-action="Cancel" asp-route-id="@Model.Id" method="post" class="ms-auto"
+                  onsubmit="return confirm('Hủy hoá đơn @Model.Code? Thuốc sẽ được hoàn lại kho và hoá đơn không còn tính vào doanh thu.');">
+                <button type="submit" class="btn btn-outline-danger"><i class="bi bi-arrow-counterclockwise me-1"></i>Hủy hoá đơn / Hoàn tiền</button>
+            </form>
+        }
     </div>
 </div>
+
+@if (ViewBag.AutoPrint == true)
+{
+    @section Scripts {
+        <script>window.addEventListener('load', function () { window.print(); });</script>
+    }
+}

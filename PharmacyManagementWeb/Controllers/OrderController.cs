@@ -9,6 +9,7 @@ namespace PharmacyManagementWeb.Controllers
     [Authorize]
     public class OrderController : Controller
     {
+        private const string CANCELLED = "Đã hủy";
         private readonly IApiClient _apiClient;
 
         public OrderController(IApiClient apiClient)
@@ -22,6 +23,48 @@ namespace PharmacyManagementWeb.Controllers
             var customersResult = await _apiClient.GetAsync<List<CustomerModel>>("/api/Customer");
             ViewBag.Customers = customersResult.Data ?? new List<CustomerModel>();
             return View();
+        }
+
+        // GET /Order/History - danh sách hoá đơn
+        public async Task<IActionResult> History(DateTime? fromDate, DateTime? toDate, string? search, string? status)
+        {
+            var from = (fromDate ?? DateTime.Today.AddDays(-29)).Date;
+            var to = (toDate ?? DateTime.Today).Date;
+            var toEnd = to.AddDays(1).AddSeconds(-1);
+
+            var fromText = Uri.EscapeDataString(from.ToString("yyyy-MM-dd'T'HH:mm:ss"));
+            var toText = Uri.EscapeDataString(toEnd.ToString("yyyy-MM-dd'T'HH:mm:ss"));
+
+            var result = await _apiClient.GetAsync<List<OrderModel>>($"/api/Order?fromDate={fromText}&toDate={toText}");
+            var all = result.Data ?? new List<OrderModel>();
+
+            if (!result.Success) ViewBag.Error = result.ErrorMessage;
+
+            // Số liệu tổng quan của cả khoảng ngày (trước khi lọc theo từ khoá / trạng thái)
+            ViewBag.TotalCount = all.Count;
+            ViewBag.CompletedCount = all.Count(o => o.Status != CANCELLED);
+            ViewBag.CancelledCount = all.Count(o => o.Status == CANCELLED);
+            ViewBag.Revenue = all.Where(o => o.Status != CANCELLED).Sum(o => o.FinalAmount);
+
+            IEnumerable<OrderModel> filtered = all;
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var s = search.Trim().ToLower();
+                filtered = filtered.Where(o => o.Code.ToLower().Contains(s)
+                    || (o.CustomerName ?? "").ToLower().Contains(s)
+                    || (o.UserName ?? "").ToLower().Contains(s));
+            }
+
+            if (status == "cancelled") filtered = filtered.Where(o => o.Status == CANCELLED);
+            else if (status == "completed") filtered = filtered.Where(o => o.Status != CANCELLED);
+
+            ViewBag.FromDate = from;
+            ViewBag.ToDate = to;
+            ViewBag.Search = search;
+            ViewBag.Status = status;
+
+            return View(filtered.ToList());
         }
 
         // GET /Order/SearchMedicine?term=... - AJAX tìm thuốc để thêm vào giỏ hàng
@@ -100,12 +143,31 @@ namespace PharmacyManagementWeb.Controllers
             return RedirectToAction(nameof(Detail), new { id = result.Data.Id });
         }
 
-        // GET /Order/Detail/5 - xem hoá đơn (sau khi bán / tra cứu lại)
-        public async Task<IActionResult> Detail(int id)
+        // GET /Order/Detail/5 - xem hoá đơn (?print=true để mở sẵn hộp thoại in)
+        public async Task<IActionResult> Detail(int id, bool print = false)
         {
             var result = await _apiClient.GetAsync<OrderModel>($"/api/Order/{id}");
             if (!result.Success || result.Data == null) return NotFound();
+
+            ViewBag.AutoPrint = print;
             return View(result.Data);
+        }
+
+        // POST /Order/Cancel/5 - hủy hoá đơn (hoàn tiền)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Cancel(int id, string? returnTo)
+        {
+            var result = await _apiClient.PostAsync<OrderModel>($"/api/Order/{id}/cancel", new { });
+
+            if (!result.Success)
+                TempData["ErrorMessage"] = result.ErrorMessage ?? "Không thể hủy hoá đơn.";
+            else
+                TempData["SuccessMessage"] = $"Đã hủy hoá đơn {result.Data?.Code}. Thuốc đã được hoàn lại kho.";
+
+            return returnTo == "history"
+                ? RedirectToAction(nameof(History))
+                : RedirectToAction(nameof(Detail), new { id });
         }
     }
 }

@@ -1,0 +1,127 @@
+﻿@model List<PharmacyManagementWeb.Models.ApiModels.OrderModel>
+@{
+    ViewData["Title"] = "Hoá đơn";
+    DateTime from = ViewBag.FromDate;
+    DateTime to = ViewBag.ToDate;
+    string? search = ViewBag.Search as string;
+    string? status = ViewBag.Status as string;
+    bool hasFilter = !string.IsNullOrEmpty(search) || !string.IsNullOrEmpty(status);
+}
+
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-danger">@ViewBag.Error</div>
+}
+
+<div class="row g-3 mb-3">
+    <div class="col-6 col-xl-3">
+        <div class="stat-tile compact tile-blue">
+            <div class="tile-icon"><i class="bi bi-receipt"></i></div>
+            <div><div class="tile-label">Tổng hoá đơn</div><div class="tile-value">@ViewBag.TotalCount</div></div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="stat-tile compact tile-green">
+            <div class="tile-icon"><i class="bi bi-check2-circle"></i></div>
+            <div><div class="tile-label">Hoàn thành</div><div class="tile-value">@ViewBag.CompletedCount</div></div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="stat-tile compact tile-red">
+            <div class="tile-icon"><i class="bi bi-x-circle"></i></div>
+            <div><div class="tile-label">Đã hủy</div><div class="tile-value">@ViewBag.CancelledCount</div></div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="stat-tile compact tile-orange">
+            <div class="tile-icon"><i class="bi bi-cash-coin"></i></div>
+            <div><div class="tile-label">Doanh thu</div><div class="tile-value">@(((decimal)ViewBag.Revenue).ToString("N0"))đ</div></div>
+        </div>
+    </div>
+</div>
+
+<div class="stat-card mb-3">
+    <form method="get" class="list-toolbar">
+        <div>
+            <label class="form-label small mb-1">Từ ngày</label>
+            <input type="date" name="fromDate" value="@from.ToString("yyyy-MM-dd")" class="form-control" />
+        </div>
+        <div>
+            <label class="form-label small mb-1">Đến ngày</label>
+            <input type="date" name="toDate" value="@to.ToString("yyyy-MM-dd")" class="form-control" />
+        </div>
+        <div class="search-box align-self-end">
+            <i class="bi bi-search"></i>
+            <input type="text" name="search" value="@search" class="form-control" placeholder="Tìm theo mã HĐ, khách hàng, nhân viên..." />
+        </div>
+        <select name="status" class="form-select filter-select align-self-end" onchange="this.form.submit()">
+            <option value="">Tất cả trạng thái</option>
+            <option value="completed" selected="@(status == "completed")">Hoàn thành</option>
+            <option value="cancelled" selected="@(status == "cancelled")">Đã hủy</option>
+        </select>
+        <button type="submit" class="btn btn-success align-self-end"><i class="bi bi-funnel me-1"></i>Lọc</button>
+        @if (hasFilter)
+        {
+            <a asp-action="History" class="btn btn-outline-secondary btn-sm align-self-end"><i class="bi bi-x-circle me-1"></i>Xoá lọc</a>
+        }
+    </form>
+</div>
+
+<div class="stat-card">
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>Mã HĐ</th>
+                    <th>Thời gian</th>
+                    <th>Khách hàng</th>
+                    <th>Nhân viên</th>
+                    <th>Thanh toán</th>
+                    <th class="text-end">Tổng tiền</th>
+                    <th>Trạng thái</th>
+                    <th class="text-end">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var o in Model)
+                {
+                    bool cancelled = o.Status == "Đã hủy";
+                    <tr class="@(cancelled ? "row-cancelled" : "")">
+                        <td><a asp-action="Detail" asp-route-id="@o.Id" class="fw-semibold text-decoration-none" style="color:var(--pharmacy-primary-dark);">@o.Code</a></td>
+                        <td>@o.OrderDate.ToString("HH:mm dd/MM/yyyy")</td>
+                        <td>@(o.CustomerName ?? "Khách vãng lai")</td>
+                        <td>@o.UserName</td>
+                        <td><span class="soft-tag">@o.PaymentMethod</span></td>
+                        <td class="text-end fw-semibold amt">@o.FinalAmount.ToString("N0")đ</td>
+                        <td>
+                            @if (cancelled)
+                            {
+                                <span class="status-pill pill-red">Đã hủy</span>
+                            }
+                            else
+                            {
+                                <span class="status-pill pill-green">Hoàn thành</span>
+                            }
+                        </td>
+                        <td class="text-end">
+                            <a asp-action="Detail" asp-route-id="@o.Id" class="act-btn" title="Xem chi tiết"><i class="bi bi-eye"></i></a>
+                            <a asp-action="Detail" asp-route-id="@o.Id" asp-route-print="true" class="act-btn" title="In hoá đơn"><i class="bi bi-printer"></i></a>
+                            @if (!cancelled)
+                            {
+                                <form asp-action="Cancel" asp-route-id="@o.Id" asp-route-returnTo="history" method="post" class="d-inline"
+                                      onsubmit="return confirm('Hủy hoá đơn @o.Code? Thuốc sẽ được hoàn lại kho và hoá đơn không còn tính vào doanh thu.');">
+                                    <button type="submit" class="act-btn danger" title="Hủy hoá đơn"><i class="bi bi-arrow-counterclockwise"></i></button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="8"><div class="empty-state"><i class="bi bi-receipt"></i>Không có hoá đơn nào trong khoảng thời gian này.</div></td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <div class="table-foot">Hiển thị @Model.Count hoá đơn</div>
+</div>

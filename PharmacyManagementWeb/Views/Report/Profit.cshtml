@@ -1,0 +1,164 @@
+﻿@model PharmacyManagementWeb.Models.ApiModels.ProfitReportModel
+@{
+    ViewData["Title"] = "Báo cáo lợi nhuận";
+
+    var today = DateTime.Today;
+    var monthStart = new DateTime(today.Year, today.Month, 1);
+
+    var days = Model.Daily;
+    var maxProfit = days.Any() ? days.Max(d => d.Profit) : 0;
+    if (maxProfit <= 0) maxProfit = 1;
+    bool showChart = days.Count > 0 && days.Count <= 31;
+    bool showValues = days.Count <= 12;
+
+    string Short(decimal v) => v >= 1_000_000 ? (v / 1_000_000).ToString("0.#") + "tr"
+                             : v >= 1_000 ? (v / 1_000).ToString("0.#") + "k"
+                             : v.ToString("0");
+}
+
+<partial name="_ReportTabs" />
+
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-danger">@ViewBag.Error</div>
+}
+
+<div class="stat-card mb-3">
+    <form method="get" class="list-toolbar">
+        <div>
+            <label class="form-label small mb-1">Từ ngày</label>
+            <input type="date" name="fromDate" value="@Model.FromDate.ToString("yyyy-MM-dd")" class="form-control" />
+        </div>
+        <div>
+            <label class="form-label small mb-1">Đến ngày</label>
+            <input type="date" name="toDate" value="@Model.ToDate.ToString("yyyy-MM-dd")" class="form-control" />
+        </div>
+        <div class="align-self-end">
+            <button type="submit" class="btn btn-success"><i class="bi bi-graph-up-arrow me-1"></i>Xem báo cáo</button>
+        </div>
+
+        <div class="ms-auto d-flex gap-2 align-self-end">
+            <a href="@Url.Action("Profit", "Report", new { fromDate = today.ToString("yyyy-MM-dd"), toDate = today.ToString("yyyy-MM-dd") })" class="btn btn-outline-secondary btn-sm">Hôm nay</a>
+            <a href="@Url.Action("Profit", "Report", new { fromDate = today.AddDays(-6).ToString("yyyy-MM-dd"), toDate = today.ToString("yyyy-MM-dd") })" class="btn btn-outline-secondary btn-sm">7 ngày</a>
+            <a href="@Url.Action("Profit", "Report", new { fromDate = monthStart.ToString("yyyy-MM-dd"), toDate = today.ToString("yyyy-MM-dd") })" class="btn btn-outline-secondary btn-sm">Tháng này</a>
+        </div>
+    </form>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-6 col-xl-3">
+        <div class="stat-tile tile-blue">
+            <div class="tile-icon"><i class="bi bi-cash-coin"></i></div>
+            <div><div class="tile-label">Doanh thu</div><div class="tile-value">@Model.TotalRevenue.ToString("N0")đ</div></div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="stat-tile tile-orange">
+            <div class="tile-icon"><i class="bi bi-box-seam"></i></div>
+            <div><div class="tile-label">Giá vốn</div><div class="tile-value">@Model.TotalCost.ToString("N0")đ</div></div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="stat-tile tile-green">
+            <div class="tile-icon"><i class="bi bi-graph-up-arrow"></i></div>
+            <div><div class="tile-label">Lợi nhuận</div><div class="tile-value">@Model.TotalProfit.ToString("N0")đ</div></div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="stat-tile tile-red">
+            <div class="tile-icon"><i class="bi bi-percent"></i></div>
+            <div><div class="tile-label">Biên lợi nhuận</div><div class="tile-value">@Model.ProfitMargin.ToString("0.#")%</div></div>
+        </div>
+    </div>
+</div>
+
+@if (showChart)
+{
+    <div class="stat-card mb-3">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="mb-0">Lợi nhuận theo ngày</h6>
+            <span class="text-muted small">Đơn vị: nghìn (k) / triệu (tr) đồng</span>
+        </div>
+        <div class="bar-chart" style="gap:@(days.Count > 14 ? "0.3rem" : "0.8rem");">
+            @foreach (var d in days)
+            {
+                var positive = Math.Max(d.Profit, 0);
+                var pct = positive <= 0 ? 3 : Math.Max(6, (int)Math.Round((double)(positive / maxProfit) * 100));
+                <div class="bar-col" title="@d.Date.ToString("dd/MM/yyyy"): lãi @d.Profit.ToString("N0")đ (doanh thu @d.Revenue.ToString("N0")đ)">
+                    <div class="bar-value">@(showValues && d.Profit != 0 ? Short(d.Profit) : "")</div>
+                    <div class="bar-track">
+                        <div class="bar-fill @(positive <= 0 ? "empty" : "")" style="height:@(pct)%"></div>
+                    </div>
+                    <div class="bar-label">@d.Date.ToString("dd/MM")</div>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+<div class="row g-3">
+    <div class="col-xl-7">
+        <div class="stat-card h-100">
+            <h6 class="mb-3">Chi tiết theo ngày</h6>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Ngày</th>
+                            <th class="text-end">Doanh thu</th>
+                            <th class="text-end">Giá vốn</th>
+                            <th class="text-end">Lợi nhuận</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var d in days)
+                        {
+                            <tr>
+                                <td>@d.Date.ToString("dd/MM/yyyy")</td>
+                                <td class="text-end">@d.Revenue.ToString("N0")đ</td>
+                                <td class="text-end text-muted">@d.Cost.ToString("N0")đ</td>
+                                <td class="text-end fw-semibold @(d.Profit < 0 ? "text-danger" : "")">@d.Profit.ToString("N0")đ</td>
+                            </tr>
+                        }
+                        @if (!days.Any())
+                        {
+                            <tr><td colspan="4"><div class="empty-state"><i class="bi bi-graph-up-arrow"></i>Không có dữ liệu.</div></td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-5">
+        <div class="stat-card h-100">
+            <h6 class="mb-3">Top thuốc lãi nhiều nhất</h6>
+            @if (!Model.TopMedicines.Any())
+            {
+                <div class="text-muted small py-3">Chưa có dữ liệu bán hàng.</div>
+            }
+            else
+            {
+                int rank = 0;
+                foreach (var m in Model.TopMedicines)
+                {
+                    rank++;
+                    <div class="top-item">
+                        <div class="top-rank">@rank</div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between">
+                                <span class="fw-semibold">@m.MedicineName</span>
+                                <span class="fw-semibold" style="color:var(--pharmacy-primary-dark);">+@m.Profit.ToString("N0")đ</span>
+                            </div>
+                            <div class="text-muted small">Đã bán @m.QuantitySold · Doanh thu @m.Revenue.ToString("N0")đ</div>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</div>
+
+<div class="text-muted small mt-3">
+    <i class="bi bi-info-circle me-1"></i>Giá vốn được tính theo giá nhập hiện tại của từng thuốc. Hoá đơn đã hủy không được tính.
+</div>

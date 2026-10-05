@@ -1,0 +1,131 @@
+﻿@model PharmacyManagementWeb.Models.ApiModels.PaymentReportModel
+@{
+    ViewData["Title"] = "Thanh toán";
+
+    var today = DateTime.Today;
+    var monthStart = new DateTime(today.Year, today.Month, 1);
+
+    string IconOf(string method) => method switch
+    {
+        "Tiền mặt" => "bi-cash-coin",
+        "Chuyển khoản" => "bi-bank",
+        "Thẻ" => "bi-credit-card-2-front",
+        "Ví điện tử" => "bi-wallet2",
+        _ => "bi-cash"
+    };
+
+    var tileClasses = new[] { "tile-green", "tile-blue", "tile-orange", "tile-red" };
+    var barColors = new[] { "#16a34a", "#2563eb", "#ea580c", "#dc2626", "#7c3aed" };
+}
+
+<partial name="_ReportTabs" />
+
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-danger">@ViewBag.Error</div>
+}
+
+<div class="stat-card mb-3">
+    <form method="get" class="list-toolbar">
+        <div>
+            <label class="form-label small mb-1">Từ ngày</label>
+            <input type="date" name="fromDate" value="@Model.FromDate.ToString("yyyy-MM-dd")" class="form-control" />
+        </div>
+        <div>
+            <label class="form-label small mb-1">Đến ngày</label>
+            <input type="date" name="toDate" value="@Model.ToDate.ToString("yyyy-MM-dd")" class="form-control" />
+        </div>
+        <div class="align-self-end">
+            <button type="submit" class="btn btn-success"><i class="bi bi-wallet2 me-1"></i>Xem thống kê</button>
+        </div>
+
+        <div class="ms-auto d-flex gap-2 align-self-end">
+            <a href="@Url.Action("Payments", "Report", new { fromDate = today.ToString("yyyy-MM-dd"), toDate = today.ToString("yyyy-MM-dd") })" class="btn btn-outline-secondary btn-sm">Hôm nay</a>
+            <a href="@Url.Action("Payments", "Report", new { fromDate = today.AddDays(-6).ToString("yyyy-MM-dd"), toDate = today.ToString("yyyy-MM-dd") })" class="btn btn-outline-secondary btn-sm">7 ngày</a>
+            <a href="@Url.Action("Payments", "Report", new { fromDate = monthStart.ToString("yyyy-MM-dd"), toDate = today.ToString("yyyy-MM-dd") })" class="btn btn-outline-secondary btn-sm">Tháng này</a>
+        </div>
+    </form>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-6">
+        <div class="stat-tile tile-green">
+            <div class="tile-icon"><i class="bi bi-cash-coin"></i></div>
+            <div><div class="tile-label">Tổng thu</div><div class="tile-value">@Model.TotalAmount.ToString("N0")đ</div></div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="stat-tile tile-blue">
+            <div class="tile-icon"><i class="bi bi-receipt"></i></div>
+            <div><div class="tile-label">Tổng số đơn</div><div class="tile-value">@Model.TotalOrders</div></div>
+        </div>
+    </div>
+</div>
+
+@if (!Model.Methods.Any())
+{
+    <div class="stat-card"><div class="empty-state"><i class="bi bi-wallet2"></i>Không có giao dịch nào trong khoảng thời gian này.</div></div>
+}
+else
+{
+    <div class="row g-3 mb-3">
+        @for (int i = 0; i < Model.Methods.Count; i++)
+        {
+            var m = Model.Methods[i];
+            <div class="col-6 col-xl-3">
+                <div class="stat-tile compact @tileClasses[i % tileClasses.Length]">
+                    <div class="tile-icon"><i class="bi @IconOf(m.Method)"></i></div>
+                    <div>
+                        <div class="tile-label">@m.Method</div>
+                        <div class="tile-value">@m.Amount.ToString("N0")đ</div>
+                        <div class="tile-label">@m.OrderCount đơn · @m.Percent.ToString("0.#")%</div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="stat-card mb-3">
+        <h6 class="mb-3">Tỷ trọng các phương thức thanh toán</h6>
+        <div class="d-flex" style="height:18px; border-radius:999px; overflow:hidden; background:#eef2f0;">
+            @for (int i = 0; i < Model.Methods.Count; i++)
+            {
+                var m = Model.Methods[i];
+                <div title="@m.Method: @m.Percent.ToString("0.#")%" style="width:@(m.Percent.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))%; background:@barColors[i % barColors.Length];"></div>
+            }
+        </div>
+        <div class="d-flex flex-wrap gap-3 mt-3 small">
+            @for (int i = 0; i < Model.Methods.Count; i++)
+            {
+                <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:@barColors[i % barColors.Length];margin-right:6px;"></span>@Model.Methods[i].Method (@Model.Methods[i].Percent.ToString("0.#")%)</span>
+            }
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <h6 class="mb-3">Chi tiết theo phương thức</h6>
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
+                    <tr>
+                        <th>Phương thức</th>
+                        <th class="text-end">Số đơn</th>
+                        <th class="text-end">Số tiền</th>
+                        <th class="text-end">Tỷ trọng</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var m in Model.Methods)
+                    {
+                        <tr>
+                            <td><i class="bi @IconOf(m.Method) me-2"></i><span class="fw-semibold">@m.Method</span></td>
+                            <td class="text-end">@m.OrderCount</td>
+                            <td class="text-end fw-semibold">@m.Amount.ToString("N0")đ</td>
+                            <td class="text-end">@m.Percent.ToString("0.#")%</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}

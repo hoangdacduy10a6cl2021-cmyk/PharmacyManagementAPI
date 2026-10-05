@@ -1,0 +1,10 @@
+﻿@{
+    var act = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+    var qs = Context.Request.QueryString.Value;
+}
+
+<ul class="report-tabs no-print">
+    <li><a href="@Url.Action("Index", "Report")@qs" class="@(act == "Index" ? "active" : "")"><i class="bi bi-bar-chart-line"></i> Doanh thu</a></li>
+    <li><a href="@Url.Action("Profit", "Report")@qs" class="@(act == "Profit" ? "active" : "")"><i class="bi bi-graph-up-arrow"></i> Lợi nhuận</a></li>
+    <li><a href="@Url.Action("Payments", "Report")@qs" class="@(act == "Payments" ? "active" : "")"><i class="bi bi-wallet2"></i> Thanh toán</a></li>
+</ul>

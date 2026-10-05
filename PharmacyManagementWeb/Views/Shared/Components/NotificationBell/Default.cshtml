@@ -1,0 +1,58 @@
+﻿@model PharmacyManagementWeb.Models.ApiModels.AlertsModel
+@{
+    int total = Model.LowStockCount + Model.ExpiringSoonCount + Model.ExpiredCount;
+}
+
+<div class="dropdown">
+    <button type="button" class="bell-btn" data-bs-toggle="dropdown" aria-expanded="false" title="Thông báo">
+        <i class="bi bi-bell"></i>
+        @if (total > 0)
+        {
+            <span class="bell-badge">@(total > 99 ? "99+" : total.ToString())</span>
+        }
+    </button>
+
+    <div class="dropdown-menu dropdown-menu-end bell-menu p-0 shadow">
+        <div class="bell-head">Thông báo</div>
+
+        @if (total == 0)
+        {
+            <div class="bell-empty"><i class="bi bi-check2-circle"></i>Kho hàng đang ổn, không có cảnh báo.</div>
+        }
+        else
+        {
+            @if (Model.ExpiredCount > 0)
+            {
+                <a class="bell-item" asp-controller="Alert" asp-action="Index">
+                    <span class="bell-dot pill-red"><i class="bi bi-x-octagon"></i></span>
+                    <span>
+                        <strong>@Model.ExpiredCount thuốc đã hết hạn</strong>
+                        <small>@string.Join(", ", Model.Expired.Take(2).Select(m => m.Name))@(Model.ExpiredCount > 2 ? "..." : "")</small>
+                    </span>
+                </a>
+            }
+            @if (Model.ExpiringSoonCount > 0)
+            {
+                <a class="bell-item" asp-controller="Alert" asp-action="Index">
+                    <span class="bell-dot pill-yellow"><i class="bi bi-alarm"></i></span>
+                    <span>
+                        <strong>@Model.ExpiringSoonCount thuốc sắp hết hạn</strong>
+                        <small>@string.Join(", ", Model.ExpiringSoon.Take(2).Select(m => m.Name))@(Model.ExpiringSoonCount > 2 ? "..." : "")</small>
+                    </span>
+                </a>
+            }
+            @if (Model.LowStockCount > 0)
+            {
+                <a class="bell-item" asp-controller="Alert" asp-action="Index">
+                    <span class="bell-dot pill-orange"><i class="bi bi-box-seam"></i></span>
+                    <span>
+                        <strong>@Model.LowStockCount thuốc sắp hết hàng</strong>
+                        <small>@string.Join(", ", Model.LowStock.Take(2).Select(m => m.Name))@(Model.LowStockCount > 2 ? "..." : "")</small>
+                    </span>
+                </a>
+            }
+        }
+
+        <a class="bell-foot" asp-controller="Alert" asp-action="Index">Xem tất cả cảnh báo</a>
+    </div>
+</div>
