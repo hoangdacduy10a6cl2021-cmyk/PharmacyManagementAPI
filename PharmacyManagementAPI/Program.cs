@@ -4,6 +4,7 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using PharmacyManagementAPI.Data;
+using PharmacyManagementAPI.Filters;
 using PharmacyManagementAPI.Services;
 using System.Text;
 
@@ -25,6 +26,8 @@ builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IPrescriptionService, PrescriptionService>();
 builder.Services.AddScoped<IPromotionService, PromotionService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IAuditService, AuditService>();
 
 // JWT Auth
 var jwtSettings = builder.Configuration.GetSection("Jwt");
@@ -51,7 +54,11 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 
-builder.Services.AddControllers();
+// Bộ lọc ghi nhật ký hệ thống cho mọi thao tác thay đổi dữ liệu
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<AuditLogFilter>();
+});
 builder.Services.AddEndpointsApiExplorer();
 
 // Swagger có nút Authorize để nhập JWT token
