@@ -1,0 +1,150 @@
+﻿@model List<PharmacyManagementWeb.Models.ApiModels.MedicineModel>
+@inject IConfiguration Config
+@{
+    ViewData["Title"] = "Tạo phiếu kiểm kê";
+}
+
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-danger">@ViewBag.Error</div>
+}
+
+<form id="checkForm" asp-action="Create" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="itemsJson" id="itemsJson" />
+
+    <div class="stat-card mb-3">
+        <div class="list-toolbar">
+            <div class="search-box">
+                <i class="bi bi-search"></i>
+                <input type="text" id="filterInput" class="form-control" placeholder="Lọc nhanh theo tên hoặc mã thuốc..." autocomplete="off" />
+            </div>
+            <label class="filter-chip">
+                <input type="checkbox" id="onlyDiff" />
+                <span><i class="bi bi-exclamation-diamond"></i> Chỉ hiện thuốc chênh lệch</span>
+            </label>
+            <div class="ms-auto text-muted small">Đã đếm <strong id="countedText">0</strong> / @Model.Count thuốc · Chênh lệch <strong id="diffText">0</strong></div>
+        </div>
+        <div class="form-text mt-2"><i class="bi bi-info-circle me-1"></i>Chỉ nhập số đếm thực tế cho những thuốc bạn đã kiểm. Dòng để trống sẽ được bỏ qua, tồn kho của chúng không bị đổi.</div>
+    </div>
+
+    <div class="stat-card mb-3">
+        <div class="table-responsive">
+            <table class="table align-middle" id="checkTable">
+                <thead>
+                    <tr>
+                        <th style="width:64px;">Ảnh</th>
+                        <th>Thuốc</th>
+                        <th class="text-center">Tồn hệ thống</th>
+                        <th class="text-center" style="width:150px;">Đếm thực tế</th>
+                        <th class="text-center" style="width:110px;">Chênh lệch</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var m in Model)
+                    {
+                        <tr data-search="@((m.Name + " " + m.Code).ToLower())">
+                            <td>
+                                @if (!string.IsNullOrEmpty(m.ImageUrl))
+                                {
+                                    <img src="@(Config["ApiSettings:BaseUrl"])@m.ImageUrl" alt="@m.Name" style="width:44px;height:44px;object-fit:cover;border-radius:10px;" />
+                                }
+                                else
+                                {
+                                    <div class="d-flex align-items-center justify-content-center bg-light text-muted" style="width:44px;height:44px;border-radius:10px;font-size:10px;">No img</div>
+                                }
+                            </td>
+                            <td>
+                                <div class="fw-semibold">@m.Name</div>
+                                <div class="text-muted small">@m.Code · @m.Unit</div>
+                            </td>
+                            <td class="text-center fw-semibold">@m.Stock</td>
+                            <td class="text-center">
+                                <input type="number" min="0" class="form-control form-control-sm text-center actual-input"
+                                       data-id="@m.Id" data-system="@m.Stock" placeholder="-" />
+                            </td>
+                            <td class="text-center diff-cell text-muted">-</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <label class="form-label">Ghi chú phiếu kiểm kê</label>
+        <textarea name="note" class="form-control" rows="2" placeholder="Ví dụ: Kiểm kê cuối tháng 10, kệ A và B"></textarea>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-success px-4"><i class="bi bi-check2-circle me-1"></i>Lưu phiếu và cập nhật tồn kho</button>
+            <a asp-action="Index" class="btn btn-outline-secondary">Huỷ</a>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    <script>
+        const inputs = document.querySelectorAll('.actual-input');
+        const onlyDiff = document.getElementById('onlyDiff');
+        const filterInput = document.getElementById('filterInput');
+
+        function applyRowState() {
+            const term = filterInput.value.trim().toLowerCase();
+            document.querySelectorAll('#checkTable tbody tr').forEach(function (row) {
+                const matchText = !term || row.dataset.search.indexOf(term) !== -1;
+                const inp = row.querySelector('.actual-input');
+                const hasDiff = inp.value !== '' && (parseInt(inp.value) || 0) !== parseInt(inp.dataset.system);
+                row.style.display = (matchText && (!onlyDiff.checked || hasDiff)) ? '' : 'none';
+            });
+        }
+
+        function recalc() {
+            let counted = 0, diffs = 0;
+            inputs.forEach(function (inp) {
+                const cell = inp.closest('tr').querySelector('.diff-cell');
+                if (inp.value === '') { cell.textContent = '-'; cell.className = 'text-center diff-cell text-muted'; return; }
+
+                counted++;
+                const diff = (parseInt(inp.value) || 0) - parseInt(inp.dataset.system);
+                if (diff === 0) {
+                    cell.textContent = '0';
+                    cell.className = 'text-center diff-cell text-success fw-semibold';
+                } else {
+                    diffs++;
+                    cell.textContent = (diff > 0 ? '+' : '') + diff;
+                    cell.className = 'text-center diff-cell fw-bold ' + (diff > 0 ? 'text-primary' : 'text-danger');
+                }
+            });
+            document.getElementById('countedText').textContent = counted;
+            document.getElementById('diffText').textContent = diffs;
+            applyRowState();
+        }
+
+        inputs.forEach(function (inp) { inp.addEventListener('input', recalc); });
+        filterInput.addEventListener('input', applyRowState);
+        onlyDiff.addEventListener('change', applyRowState);
+
+        document.getElementById('checkForm').addEventListener('submit', function (e) {
+            const items = [];
+            let diffs = 0;
+            inputs.forEach(function (inp) {
+                if (inp.value === '') return;
+                const actual = parseInt(inp.value) || 0;
+                if (actual !== parseInt(inp.dataset.system)) diffs++;
+                items.push({ medicineId: parseInt(inp.dataset.id), actualQty: actual });
+            });
+
+            if (items.length === 0) {
+                e.preventDefault();
+                alert('Vui lòng nhập số đếm thực tế của ít nhất 1 thuốc.');
+                return;
+            }
+
+            if (!confirm('Lưu phiếu kiểm kê với ' + items.length + ' thuốc, trong đó ' + diffs + ' thuốc chênh lệch?\nTồn kho của các thuốc chênh lệch sẽ được điều chỉnh theo số đếm thực tế.')) {
+                e.preventDefault();
+                return;
+            }
+
+            document.getElementById('itemsJson').value = JSON.stringify(items);
+        });
+    </script>
+}

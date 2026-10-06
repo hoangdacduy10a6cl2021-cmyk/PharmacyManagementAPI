@@ -1,0 +1,119 @@
+﻿@model List<PharmacyManagementWeb.Models.ApiModels.AuditLogModel>
+@{
+    ViewData["Title"] = "Nhật ký hệ thống";
+    DateTime from = ViewBag.FromDate;
+    DateTime to = ViewBag.ToDate;
+    string? search = ViewBag.Search as string;
+    string? status = ViewBag.Status as string;
+    bool hasFilter = !string.IsNullOrEmpty(search) || !string.IsNullOrEmpty(status);
+
+    string PillOf(string a) =>
+        a.Contains("thất bại") ? "pill-red"
+        : a.StartsWith("Đăng nhập") ? "pill-blue"
+        : a.StartsWith("Thêm") ? "pill-green"
+        : (a.StartsWith("Xoá") || a.StartsWith("Hủy")) ? "pill-red"
+        : "pill-yellow";
+}
+
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-danger">@ViewBag.Error</div>
+}
+
+<div class="row g-3 mb-3">
+    <div class="col-6 col-xl-3">
+        <div class="stat-tile compact tile-blue">
+            <div class="tile-icon"><i class="bi bi-clock-history"></i></div>
+            <div><div class="tile-label">Tổng thao tác</div><div class="tile-value">@Model.Count</div></div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="stat-tile compact tile-green">
+            <div class="tile-icon"><i class="bi bi-box-arrow-in-right"></i></div>
+            <div><div class="tile-label">Lượt đăng nhập</div><div class="tile-value">@Model.Count(a => a.Action == "Đăng nhập")</div></div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="stat-tile compact tile-red">
+            <div class="tile-icon"><i class="bi bi-exclamation-octagon"></i></div>
+            <div><div class="tile-label">Thất bại</div><div class="tile-value">@Model.Count(a => !a.IsSuccess)</div></div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="stat-tile compact tile-orange">
+            <div class="tile-icon"><i class="bi bi-people"></i></div>
+            <div><div class="tile-label">Người dùng hoạt động</div><div class="tile-value">@Model.Where(a => a.UserId.HasValue).Select(a => a.UserId).Distinct().Count()</div></div>
+        </div>
+    </div>
+</div>
+
+<div class="stat-card mb-3">
+    <form method="get" class="list-toolbar">
+        <div>
+            <label class="form-label small mb-1">Từ ngày</label>
+            <input type="date" name="fromDate" value="@from.ToString("yyyy-MM-dd")" class="form-control" />
+        </div>
+        <div>
+            <label class="form-label small mb-1">Đến ngày</label>
+            <input type="date" name="toDate" value="@to.ToString("yyyy-MM-dd")" class="form-control" />
+        </div>
+        <div class="search-box align-self-end">
+            <i class="bi bi-search"></i>
+            <input type="text" name="search" value="@search" class="form-control" placeholder="Tìm theo người dùng, hành động, nội dung..." />
+        </div>
+        <select name="status" class="form-select filter-select align-self-end" onchange="this.form.submit()">
+            <option value="">Tất cả kết quả</option>
+            <option value="success" selected="@(status == "success")">Thành công</option>
+            <option value="failed" selected="@(status == "failed")">Thất bại</option>
+        </select>
+        <button type="submit" class="btn btn-success align-self-end"><i class="bi bi-funnel me-1"></i>Lọc</button>
+        @if (hasFilter)
+        {
+            <a asp-action="Index" class="btn btn-outline-secondary btn-sm align-self-end"><i class="bi bi-x-circle me-1"></i>Xoá lọc</a>
+        }
+    </form>
+</div>
+
+<div class="stat-card">
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>Thời gian</th>
+                    <th>Người dùng</th>
+                    <th>Hành động</th>
+                    <th>Nội dung</th>
+                    <th>Địa chỉ IP</th>
+                    <th>Kết quả</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var a in Model)
+                {
+                    <tr>
+                        <td class="text-nowrap">@a.CreatedAt.ToString("HH:mm:ss dd/MM/yyyy")</td>
+                        <td class="fw-semibold">@a.Username</td>
+                        <td><span class="status-pill @PillOf(a.Action)">@a.Action</span></td>
+                        <td>@a.Description</td>
+                        <td class="text-muted small">@a.IpAddress</td>
+                        <td>
+                            @if (a.IsSuccess)
+                            {
+                                <i class="bi bi-check-circle-fill text-success" title="Thành công"></i>
+                            }
+                            else
+                            {
+                                <i class="bi bi-x-circle-fill text-danger" title="Thất bại"></i>
+                            }
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="6"><div class="empty-state"><i class="bi bi-clock-history"></i>Chưa có nhật ký nào trong khoảng thời gian này.</div></td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <div class="table-foot">Hiển thị tối đa 500 thao tác mới nhất. Nhật ký chỉ ghi các thao tác thay đổi dữ liệu và đăng nhập, không ghi mật khẩu.</div>
+</div>

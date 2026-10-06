@@ -1,0 +1,90 @@
+﻿@{
+    ViewData["Title"] = "Phân quyền";
+
+    var groups = new[]
+    {
+        new { Title = "Bán hàng và chăm sóc khách", Rows = new[]
+        {
+            ("Xem trang chủ, thống kê trong ngày", true, true),
+            ("Bán hàng, tạo hoá đơn", true, true),
+            ("Giảm giá trên hoá đơn", true, true),
+            ("Xem, in, hủy hoá đơn (hoàn tiền)", true, true),
+            ("Tạo phiếu đổi trả / trả hàng (chờ Admin duyệt)", true, true),
+            ("Tạo và xem đơn thuốc", true, true),
+            ("Xem, thêm, sửa khách hàng", true, true),
+            ("Xoá khách hàng", false, true),
+        }},
+        new { Title = "Thuốc và kho", Rows = new[]
+        {
+            ("Tra cứu thuốc, xem tồn kho, hạn dùng", true, true),
+            ("Xem cảnh báo và thông báo hết hàng, hết hạn", true, true),
+            ("Thêm, sửa, xoá thuốc, đổi ảnh thuốc", false, true),
+            ("Quản lý danh mục, nhà cung cấp", false, true),
+            ("Tạo và xem phiếu nhập hàng", false, true),
+            ("Quản lý khuyến mãi", false, true),
+            ("Duyệt hoặc từ chối phiếu trả hàng", false, true),
+            ("Kiểm kê kho và điều chỉnh tồn kho", false, true),
+        }},
+        new { Title = "Báo cáo và quản trị hệ thống", Rows = new[]
+        {
+            ("Báo cáo doanh thu, lợi nhuận, thanh toán", false, true),
+            ("Quản lý nhân viên, khoá / mở khoá tài khoản", false, true),
+            ("Phân quyền (gán vai trò)", false, true),
+            ("Xem nhật ký hệ thống", false, true),
+        }},
+        new { Title = "Tài khoản cá nhân", Rows = new[]
+        {
+            ("Sửa thông tin và đổi mật khẩu của chính mình", true, true),
+        }}
+    };
+}
+
+<div class="stat-card mb-3">
+    <div class="d-flex align-items-center gap-3">
+        <div class="fh-icon" style="width:46px;height:46px;border-radius:14px;background:var(--pharmacy-primary-soft);color:var(--pharmacy-primary-dark);display:flex;align-items:center;justify-content:center;font-size:1.3rem;"><i class="bi bi-shield-lock"></i></div>
+        <div>
+            <h6 class="mb-1">Hệ thống có 2 vai trò</h6>
+            <div class="text-muted small">
+                <span class="status-pill pill-blue">Quản trị viên</span> có toàn quyền.
+                <span class="status-pill pill-green ms-1">Nhân viên / Dược sĩ</span> chỉ làm các việc bán hàng và tra cứu.
+                Để đổi vai trò của một người, vào <a asp-action="Index">Nhân viên</a> rồi bấm nút sửa.
+            </div>
+        </div>
+    </div>
+</div>
+
+@foreach (var g in groups)
+{
+    <div class="stat-card mb-3">
+        <h6 class="mb-3">@g.Title</h6>
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Chức năng</th>
+                        <th class="text-center" style="width:190px;">Nhân viên / Dược sĩ</th>
+                        <th class="text-center" style="width:150px;">Quản trị viên</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var r in g.Rows)
+                    {
+                        <tr>
+                            <td>@r.Item1</td>
+                            <td class="text-center">
+                                @if (r.Item2) { <i class="bi bi-check-circle-fill text-success fs-5"></i> }
+                                else { <i class="bi bi-x-circle-fill text-danger fs-5" style="opacity:.45;"></i> }
+                            </td>
+                            <td class="text-center">
+                                @if (r.Item3) { <i class="bi bi-check-circle-fill text-success fs-5"></i> }
+                                else { <i class="bi bi-x-circle-fill text-danger fs-5" style="opacity:.45;"></i> }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+<div class="text-muted small"><i class="bi bi-info-circle me-1"></i>Nhân viên chỉ được giảm giá tối đa 10% giá trị mỗi hoá đơn, Admin không bị giới hạn.</div>

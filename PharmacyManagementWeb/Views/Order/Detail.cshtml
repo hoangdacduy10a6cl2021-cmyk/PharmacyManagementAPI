@@ -96,6 +96,10 @@
         <a asp-action="Index" class="btn btn-success"><i class="bi bi-plus-lg me-1"></i>Tạo hoá đơn mới</a>
         <button type="button" class="btn btn-outline-secondary" onclick="window.print()"><i class="bi bi-printer me-1"></i>In hoá đơn</button>
         <a asp-action="History" class="btn btn-outline-secondary">Danh sách hoá đơn</a>
+                @if (!cancelled)
+        {
+            <a asp-controller="Return" asp-action="Create" asp-route-code="@Model.Code" class="btn btn-outline-secondary"><i class="bi bi-arrow-return-left me-1"></i>Trả hàng</a>
+        }
 
         @if (!cancelled)
         {

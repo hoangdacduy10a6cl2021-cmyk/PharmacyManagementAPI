@@ -28,6 +28,8 @@ builder.Services.AddScoped<IPromotionService, PromotionService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAuditService, AuditService>();
+builder.Services.AddScoped<IReturnService, ReturnService>();
+builder.Services.AddScoped<IStockCheckService, StockCheckService>();
 
 // JWT Auth
 var jwtSettings = builder.Configuration.GetSection("Jwt");

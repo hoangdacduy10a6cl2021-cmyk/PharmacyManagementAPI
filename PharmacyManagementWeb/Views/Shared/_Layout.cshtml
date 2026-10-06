@@ -49,6 +49,7 @@
                 <a class="nav-link @Active("Home")" asp-controller="Home" asp-action="Index"><i class="bi bi-house-door"></i><span>Trang chủ</span></a>
                 <a class="nav-link @Active("Order", "Index", "Create")" asp-controller="Order" asp-action="Index"><i class="bi bi-cart3"></i><span>Bán hàng</span></a>
                 <a class="nav-link @Active("Order", "History", "Detail")" asp-controller="Order" asp-action="History"><i class="bi bi-receipt"></i><span>Hoá đơn</span></a>
+                <a class="nav-link @Active("Return")" asp-controller="Return" asp-action="Index"><i class="bi bi-arrow-return-left"></i><span>Đổi trả</span></a>
                 <a class="nav-link @Active("Prescription")" asp-controller="Prescription" asp-action="Index"><i class="bi bi-journal-medical"></i><span>Đơn thuốc</span></a>
                 <a class="nav-link @Active("Customer")" asp-controller="Customer" asp-action="Index"><i class="bi bi-people"></i><span>Khách hàng</span></a>
                 <a class="nav-link @Active("Medicine")" asp-controller="Medicine" asp-action="Index"><i class="bi bi-capsule"></i><span>Thuốc / Kho</span></a>
@@ -60,7 +61,11 @@
                     <a class="nav-link @Active("Category")" asp-controller="Category" asp-action="Index"><i class="bi bi-tags"></i><span>Danh mục</span></a>
                     <a class="nav-link @Active("Supplier")" asp-controller="Supplier" asp-action="Index"><i class="bi bi-truck"></i><span>Nhà cung cấp</span></a>
                     <a class="nav-link @Active("PurchaseOrder")" asp-controller="PurchaseOrder" asp-action="Index"><i class="bi bi-box-seam"></i><span>Nhập hàng</span></a>
+                    <a class="nav-link @Active("StockCheck")" asp-controller="StockCheck" asp-action="Index"><i class="bi bi-clipboard-check"></i><span>Kiểm kê kho</span></a>
                     <a class="nav-link @Active("Promotion")" asp-controller="Promotion" asp-action="Index"><i class="bi bi-percent"></i><span>Khuyến mãi</span></a>
+                    <a class="nav-link @Active("User", "Index", "Create", "Edit")" asp-controller="User" asp-action="Index"><i class="bi bi-person-badge"></i><span>Nhân viên</span></a>
+                    <a class="nav-link @Active("User", "Permissions")" asp-controller="User" asp-action="Permissions"><i class="bi bi-shield-lock"></i><span>Phân quyền</span></a>
+                    <a class="nav-link @Active("AuditLog")" asp-controller="AuditLog" asp-action="Index"><i class="bi bi-clock-history"></i><span>Nhật ký</span></a>
 
                     <div class="nav-section-title">Báo cáo</div>
                     <a class="nav-link @Active("Report", "Index")" asp-controller="Report" asp-action="Index"><i class="bi bi-bar-chart-line"></i><span>Doanh thu</span></a>

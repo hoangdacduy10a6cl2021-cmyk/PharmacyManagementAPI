@@ -1,0 +1,134 @@
+﻿@model PharmacyManagementWeb.Models.ApiModels.ReturnOrderModel
+@inject IConfiguration Config
+@{
+    ViewData["Title"] = "Phiếu trả hàng " + Model.Code;
+    bool isAdmin = User.IsInRole("Admin");
+    string pill = Model.Status == "Đã duyệt" ? "pill-green" : Model.Status == "Từ chối" ? "pill-red" : "pill-yellow";
+}
+
+<div class="stat-card doc-card">
+    <div class="d-flex justify-content-between align-items-start mb-3">
+        <div>
+            <div class="text-muted small">Phiếu trả hàng</div>
+            <h4 class="fw-bold mb-0">#@Model.Code</h4>
+            <div class="text-muted small">Tạo lúc @Model.CreatedAt.ToString("HH:mm dd/MM/yyyy")</div>
+        </div>
+        <span class="status-pill @pill">@Model.Status</span>
+    </div>
+
+    @if (Model.Status == "Chờ duyệt")
+    {
+        <div class="alert alert-warning"><i class="bi bi-hourglass-split me-1"></i>Phiếu đang chờ Admin duyệt. Tiền chỉ được hoàn và kho chỉ được cập nhật sau khi duyệt.</div>
+    }
+    else if (Model.Status == "Từ chối")
+    {
+        <div class="alert alert-danger"><i class="bi bi-x-circle me-1"></i>Phiếu đã bị từ chối@(string.IsNullOrEmpty(Model.ReviewNote) ? "" : ": " + Model.ReviewNote).</div>
+    }
+
+    <div class="info-grid">
+        <div>
+            <div class="info-label">Hoá đơn gốc</div>
+            <div class="info-value"><a asp-controller="Order" asp-action="Detail" asp-route-id="@Model.OrderId" class="text-decoration-none">@Model.OrderCode</a></div>
+        </div>
+        <div>
+            <div class="info-label">Khách hàng</div>
+            <div class="info-value">@(Model.CustomerName ?? "Khách vãng lai")</div>
+        </div>
+        <div>
+            <div class="info-label">Người tạo</div>
+            <div class="info-value">@Model.CreatedByName</div>
+        </div>
+        <div>
+            <div class="info-label">Lý do</div>
+            <div class="info-value">@Model.Reason</div>
+        </div>
+        <div>
+            <div class="info-label">Hoàn tiền qua</div>
+            <div class="info-value">@Model.RefundMethod</div>
+        </div>
+        <div>
+            <div class="info-label">Nhập lại kho</div>
+            <div class="info-value">@(Model.RestockItems ? "Có" : "Không")</div>
+        </div>
+        @if (Model.ReviewedAt.HasValue)
+        {
+            <div>
+                <div class="info-label">Người xử lý</div>
+                <div class="info-value">@Model.ReviewedByName</div>
+            </div>
+            <div>
+                <div class="info-label">Thời gian xử lý</div>
+                <div class="info-value">@Model.ReviewedAt.Value.ToString("HH:mm dd/MM/yyyy")</div>
+            </div>
+        }
+        @if (!string.IsNullOrWhiteSpace(Model.Note))
+        {
+            <div style="grid-column: 1 / -1;">
+                <div class="info-label">Ghi chú</div>
+                <div class="info-value">@Model.Note</div>
+            </div>
+        }
+    </div>
+
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>Thuốc</th>
+                    <th class="text-end">SL trả</th>
+                    <th class="text-end">Đơn giá</th>
+                    <th class="text-end">Thành tiền</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var d in Model.Details)
+                {
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                @if (!string.IsNullOrEmpty(d.ImageUrl))
+                                {
+                                    <img src="@(Config["ApiSettings:BaseUrl"])@d.ImageUrl" alt="@d.MedicineName" style="width:44px;height:44px;object-fit:cover;border-radius:8px;" />
+                                }
+                                else
+                                {
+                                    <div class="d-flex align-items-center justify-content-center bg-light text-muted" style="width:44px;height:44px;border-radius:8px;font-size:10px;">No img</div>
+                                }
+                                <div>
+                                    <div class="fw-semibold">@d.MedicineName</div>
+                                    <div class="text-muted small">@d.MedicineCode</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="text-end">@d.Quantity</td>
+                        <td class="text-end">@d.UnitPrice.ToString("N0")đ</td>
+                        <td class="text-end fw-semibold">@d.Subtotal.ToString("N0")đ</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="total-box d-flex justify-content-between align-items-center">
+        <span class="fw-bold">Số tiền hoàn lại cho khách</span>
+        <span class="fs-4 fw-bold" style="color:@(Model.Status == "Từ chối" ? "#94a3b8" : "var(--pharmacy-primary)");@(Model.Status == "Từ chối" ? "text-decoration:line-through;" : "")">@Model.RefundAmount.ToString("N0")đ</span>
+    </div>
+
+    <div class="form-actions no-print flex-wrap">
+        @if (isAdmin && Model.Status == "Chờ duyệt")
+        {
+            <form asp-action="Approve" asp-route-id="@Model.Id" method="post"
+                  onsubmit="return confirm('Duyệt phiếu @Model.Code và hoàn @Model.RefundAmount.ToString("N0")đ cho khách?');">
+                <button type="submit" class="btn btn-success"><i class="bi bi-check2-circle me-1"></i>Duyệt phiếu</button>
+            </form>
+
+            <form asp-action="Reject" asp-route-id="@Model.Id" method="post" class="d-flex gap-2"
+                  onsubmit="return confirm('Từ chối phiếu @Model.Code?');">
+                <input type="text" name="note" class="form-control" style="width:230px;" placeholder="Lý do từ chối (không bắt buộc)" />
+                <button type="submit" class="btn btn-outline-danger text-nowrap"><i class="bi bi-x-circle me-1"></i>Từ chối</button>
+            </form>
+        }
+        <button type="button" class="btn btn-outline-secondary ms-auto" onclick="window.print()"><i class="bi bi-printer me-1"></i>In phiếu</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Danh sách phiếu</a>
+    </div>
+</div>

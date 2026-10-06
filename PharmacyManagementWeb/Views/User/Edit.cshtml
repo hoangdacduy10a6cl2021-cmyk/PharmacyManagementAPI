@@ -1,0 +1,80 @@
+﻿@model PharmacyManagementWeb.Models.ApiModels.UserEditViewModel
+@{
+    ViewData["Title"] = "Sửa nhân viên";
+    bool isSelf = ViewBag.IsSelf == true;
+}
+
+<div class="stat-card form-card" style="max-width:700px;">
+    <div class="form-head">
+        <div class="fh-icon"><i class="bi bi-person-gear"></i></div>
+        <div>
+            <h5>@ViewData["Title"]</h5>
+            <div class="sub">Tài khoản: <strong>@@@Model.Username</strong></div>
+        </div>
+    </div>
+
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <form asp-action="Edit" asp-route-id="@Model.Id" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Id" />
+        <input type="hidden" asp-for="Username" />
+
+        <div class="section-title" style="margin-top:0;">Thông tin cá nhân</div>
+        <div class="row g-3">
+            <div class="col-12">
+                <label asp-for="FullName" class="form-label"></label>
+                <input asp-for="FullName" class="form-control" />
+                <span asp-validation-for="FullName" class="text-danger small"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Email" class="form-label"></label>
+                <input asp-for="Email" class="form-control" />
+                <span asp-validation-for="Email" class="text-danger small"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Phone" class="form-label"></label>
+                <input asp-for="Phone" class="form-control" />
+            </div>
+        </div>
+
+        <div class="section-title">Phân quyền và trạng thái</div>
+
+        @if (isSelf)
+        {
+            <input type="hidden" asp-for="Role" />
+            <input type="hidden" asp-for="IsActive" />
+            <div class="alert alert-light border small">
+                <i class="bi bi-info-circle me-1"></i>Bạn không thể tự đổi vai trò hoặc khoá chính tài khoản của mình.
+            </div>
+        }
+        else
+        {
+            <div class="row g-3">
+                <div class="col-md-8">
+                    <label asp-for="Role" class="form-label"></label>
+                    <select asp-for="Role" class="form-select">
+                        <option value="NhanVien">Nhân viên bán hàng / Dược sĩ</option>
+                        <option value="Admin">Quản trị viên (toàn quyền)</option>
+                    </select>
+                    <div class="form-text">Xem chi tiết quyền ở trang <a asp-action="Permissions">Phân quyền</a>.</div>
+                </div>
+                <div class="col-md-4 d-flex align-items-center">
+                    <div class="form-check form-switch mt-3">
+                        <input asp-for="IsActive" class="form-check-input" />
+                        <label asp-for="IsActive" class="form-check-label"></label>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-success px-4"><i class="bi bi-check2 me-1"></i>Lưu</button>
+            <a asp-action="Index" class="btn btn-outline-secondary">Huỷ</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

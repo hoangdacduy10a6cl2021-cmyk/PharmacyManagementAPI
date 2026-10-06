@@ -1,0 +1,93 @@
+﻿@model PharmacyManagementWeb.Models.ApiModels.StockCheckModel
+@inject IConfiguration Config
+@{
+    ViewData["Title"] = "Phiếu kiểm kê " + Model.Code;
+}
+
+<div class="stat-card doc-card">
+    <div class="d-flex justify-content-between align-items-start mb-3">
+        <div>
+            <div class="text-muted small">Phiếu kiểm kê kho</div>
+            <h4 class="fw-bold mb-0">#@Model.Code</h4>
+            <div class="text-muted small">@Model.CreatedAt.ToString("HH:mm dd/MM/yyyy") · @Model.UserName</div>
+        </div>
+        @if (Model.DifferenceCount > 0)
+        {
+            <span class="status-pill pill-yellow">@Model.DifferenceCount thuốc chênh lệch</span>
+        }
+        else
+        {
+            <span class="status-pill pill-green">Tồn kho khớp</span>
+        }
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.Note))
+    {
+        <div class="total-box mb-3"><i class="bi bi-sticky me-1"></i>@Model.Note</div>
+    }
+
+    <div class="info-grid">
+        <div>
+            <div class="info-label">Số thuốc đã kiểm</div>
+            <div class="info-value">@Model.ItemCount</div>
+        </div>
+        <div>
+            <div class="info-label">Tổng số thừa</div>
+            <div class="info-value text-primary">+@Model.SurplusQty</div>
+        </div>
+        <div>
+            <div class="info-label">Tổng số thiếu</div>
+            <div class="info-value text-danger">-@Model.ShortageQty</div>
+        </div>
+        <div>
+            <div class="info-label">Giá trị chênh lệch (theo giá nhập)</div>
+            <div class="info-value @(Model.ValueDifference < 0 ? "text-danger" : "")">@Model.ValueDifference.ToString("N0")đ</div>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th style="width:64px;">Ảnh</th>
+                    <th>Thuốc</th>
+                    <th class="text-center">Tồn hệ thống</th>
+                    <th class="text-center">Đếm thực tế</th>
+                    <th class="text-center">Chênh lệch</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var d in Model.Details.OrderByDescending(x => Math.Abs(x.Difference)))
+                {
+                    <tr>
+                        <td>
+                            @if (!string.IsNullOrEmpty(d.ImageUrl))
+                            {
+                                <img src="@(Config["ApiSettings:BaseUrl"])@d.ImageUrl" alt="@d.MedicineName" style="width:44px;height:44px;object-fit:cover;border-radius:10px;" />
+                            }
+                            else
+                            {
+                                <div class="d-flex align-items-center justify-content-center bg-light text-muted" style="width:44px;height:44px;border-radius:10px;font-size:10px;">No img</div>
+                            }
+                        </td>
+                        <td>
+                            <div class="fw-semibold">@d.MedicineName</div>
+                            <div class="text-muted small">@d.MedicineCode</div>
+                        </td>
+                        <td class="text-center">@d.SystemQty</td>
+                        <td class="text-center fw-semibold">@d.ActualQty</td>
+                        <td class="text-center fw-bold @(d.Difference == 0 ? "text-success" : d.Difference > 0 ? "text-primary" : "text-danger")">
+                            @(d.Difference > 0 ? "+" + d.Difference : d.Difference.ToString())
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="form-actions no-print">
+        <button type="button" class="btn btn-outline-secondary" onclick="window.print()"><i class="bi bi-printer me-1"></i>In phiếu</button>
+        <a asp-action="Create" class="btn btn-success"><i class="bi bi-plus-lg me-1"></i>Tạo phiếu mới</a>
+        <a asp-action="Index" class="btn btn-outline-secondary">Danh sách phiếu</a>
+    </div>
+</div>

@@ -209,6 +209,9 @@ namespace PharmacyManagementAPI.Services
             if (order == null) return (null, "Không tìm thấy hoá đơn.");
             if (order.Status == CANCELLED) return (null, "Hoá đơn này đã được hủy trước đó.");
 
+            var hasReturns = await _context.ReturnOrders.AnyAsync(r => r.OrderId == id && r.Status != "Từ chối");
+            if (hasReturns) return (null, "Hoá đơn này đã có phiếu trả hàng nên không thể hủy.");
+
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {

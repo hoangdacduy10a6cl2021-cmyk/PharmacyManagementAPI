@@ -1,0 +1,87 @@
+﻿@model List<PharmacyManagementWeb.Models.ApiModels.StockCheckModel>
+@{
+    ViewData["Title"] = "Kiểm kê kho";
+    int thisMonth = Model.Count(s => s.CreatedAt.Year == DateTime.Now.Year && s.CreatedAt.Month == DateTime.Now.Month);
+}
+
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-danger">@ViewBag.Error</div>
+}
+
+<div class="row g-3 mb-3">
+    <div class="col-6 col-xl-3">
+        <div class="stat-tile compact tile-blue">
+            <div class="tile-icon"><i class="bi bi-clipboard-check"></i></div>
+            <div><div class="tile-label">Tổng phiếu kiểm kê</div><div class="tile-value">@Model.Count</div></div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="stat-tile compact tile-green">
+            <div class="tile-icon"><i class="bi bi-calendar-check"></i></div>
+            <div><div class="tile-label">Phiếu tháng này</div><div class="tile-value">@thisMonth</div></div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="stat-tile compact tile-orange">
+            <div class="tile-icon"><i class="bi bi-exclamation-diamond"></i></div>
+            <div><div class="tile-label">Lượt thuốc chênh lệch</div><div class="tile-value">@Model.Sum(s => s.DifferenceCount)</div></div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <a asp-action="Create" class="btn btn-success w-100 h-100 d-flex align-items-center justify-content-center fw-semibold" style="min-height:68px;">
+            <i class="bi bi-plus-lg me-2"></i>Tạo phiếu kiểm kê
+        </a>
+    </div>
+</div>
+
+<div class="stat-card">
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>Mã phiếu</th>
+                    <th>Thời gian</th>
+                    <th>Người kiểm kê</th>
+                    <th class="text-end">Số thuốc kiểm</th>
+                    <th class="text-end">Chênh lệch</th>
+                    <th class="text-end">Thừa</th>
+                    <th class="text-end">Thiếu</th>
+                    <th class="text-end">Giá trị chênh lệch</th>
+                    <th class="text-end">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var s in Model)
+                {
+                    <tr>
+                        <td><a asp-action="Detail" asp-route-id="@s.Id" class="fw-semibold text-decoration-none" style="color:var(--pharmacy-primary-dark);">@s.Code</a></td>
+                        <td>@s.CreatedAt.ToString("HH:mm dd/MM/yyyy")</td>
+                        <td>@s.UserName</td>
+                        <td class="text-end">@s.ItemCount</td>
+                        <td class="text-end">
+                            @if (s.DifferenceCount > 0)
+                            {
+                                <span class="status-pill pill-yellow">@s.DifferenceCount thuốc</span>
+                            }
+                            else
+                            {
+                                <span class="status-pill pill-green">Khớp</span>
+                            }
+                        </td>
+                        <td class="text-end text-success">@(s.SurplusQty > 0 ? "+" + s.SurplusQty : "-")</td>
+                        <td class="text-end text-danger">@(s.ShortageQty > 0 ? "-" + s.ShortageQty : "-")</td>
+                        <td class="text-end fw-semibold @(s.ValueDifference < 0 ? "text-danger" : "")">@s.ValueDifference.ToString("N0")đ</td>
+                        <td class="text-end">
+                            <a asp-action="Detail" asp-route-id="@s.Id" class="act-btn" title="Xem chi tiết"><i class="bi bi-eye"></i></a>
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="9"><div class="empty-state"><i class="bi bi-clipboard-check"></i>Chưa có phiếu kiểm kê nào.</div></td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

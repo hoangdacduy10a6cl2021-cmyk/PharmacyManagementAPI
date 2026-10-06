@@ -23,9 +23,28 @@ namespace PharmacyManagementAPI.Data
 
         public DbSet<AuditLog> AuditLogs { get; set; }
 
+        public DbSet<ReturnOrder> ReturnOrders { get; set; }
+        public DbSet<ReturnDetail> ReturnDetails { get; set; }
+        public DbSet<StockCheck> StockChecks { get; set; }
+        public DbSet<StockCheckDetail> StockCheckDetails { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+
+            // ===== Trả hàng và kiểm kê kho (tránh lỗi multiple cascade paths của SQL Server) =====
+            modelBuilder.Entity<ReturnOrder>().HasIndex(r => r.Code).IsUnique();
+            modelBuilder.Entity<ReturnOrder>().HasOne(r => r.Order).WithMany().HasForeignKey(r => r.OrderId).OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<ReturnOrder>().HasOne(r => r.Customer).WithMany().HasForeignKey(r => r.CustomerId).OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<ReturnOrder>().HasOne(r => r.CreatedBy).WithMany().HasForeignKey(r => r.CreatedByUserId).OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<ReturnOrder>().HasOne(r => r.ReviewedBy).WithMany().HasForeignKey(r => r.ReviewedByUserId).OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<ReturnDetail>().HasOne(d => d.Medicine).WithMany().HasForeignKey(d => d.MedicineId).OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<ReturnDetail>().HasOne(d => d.OrderDetail).WithMany().HasForeignKey(d => d.OrderDetailId).OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<StockCheck>().HasIndex(s => s.Code).IsUnique();
+            modelBuilder.Entity<StockCheck>().HasOne(s => s.User).WithMany().HasForeignKey(s => s.UserId).OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<StockCheckDetail>().HasOne(d => d.Medicine).WithMany().HasForeignKey(d => d.MedicineId).OnDelete(DeleteBehavior.Restrict);
 
             // Unique constraints
             modelBuilder.Entity<User>().HasIndex(u => u.Username).IsUnique();

@@ -1,0 +1,179 @@
+﻿@model List<PharmacyManagementWeb.Models.ApiModels.UserModel>
+@{
+    ViewData["Title"] = "Nhân viên";
+    int currentUserId = ViewBag.CurrentUserId ?? 0;
+    string? search = ViewBag.Search as string;
+    string? role = ViewBag.Role as string;
+    bool hasFilter = !string.IsNullOrEmpty(search) || !string.IsNullOrEmpty(role);
+}
+
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-danger">@ViewBag.Error</div>
+}
+
+<div class="row g-3 mb-3">
+    <div class="col-6 col-xl-3">
+        <div class="stat-tile compact tile-blue">
+            <div class="tile-icon"><i class="bi bi-people"></i></div>
+            <div><div class="tile-label">Tổng tài khoản</div><div class="tile-value">@Model.Count</div></div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="stat-tile compact tile-orange">
+            <div class="tile-icon"><i class="bi bi-shield-check"></i></div>
+            <div><div class="tile-label">Quản trị viên</div><div class="tile-value">@Model.Count(u => u.Role == "Admin")</div></div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="stat-tile compact tile-green">
+            <div class="tile-icon"><i class="bi bi-person-check"></i></div>
+            <div><div class="tile-label">Nhân viên / Dược sĩ</div><div class="tile-value">@Model.Count(u => u.Role != "Admin")</div></div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="stat-tile compact tile-red">
+            <div class="tile-icon"><i class="bi bi-lock"></i></div>
+            <div><div class="tile-label">Đã khoá</div><div class="tile-value">@Model.Count(u => !u.IsActive)</div></div>
+        </div>
+    </div>
+</div>
+
+<div class="stat-card mb-3">
+    <form method="get" class="list-toolbar">
+        <div class="search-box">
+            <i class="bi bi-search"></i>
+            <input type="text" name="search" value="@search" class="form-control" placeholder="Tìm theo tên, tên đăng nhập, email, số điện thoại..." />
+        </div>
+
+        <select name="role" class="form-select filter-select" onchange="this.form.submit()">
+            <option value="">Tất cả vai trò</option>
+            <option value="Admin" selected="@(role == "Admin")">Quản trị viên</option>
+            <option value="NhanVien" selected="@(role == "NhanVien")">Nhân viên / Dược sĩ</option>
+        </select>
+
+        @if (hasFilter)
+        {
+            <a asp-action="Index" class="btn btn-outline-secondary btn-sm"><i class="bi bi-x-circle me-1"></i>Xoá lọc</a>
+        }
+
+        <a asp-action="Create" class="btn btn-success ms-auto"><i class="bi bi-person-plus me-1"></i>Thêm nhân viên</a>
+    </form>
+</div>
+
+<div class="stat-card">
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>Nhân viên</th>
+                    <th>Liên hệ</th>
+                    <th>Vai trò</th>
+                    <th>Trạng thái</th>
+                    <th class="text-end">Số hoá đơn</th>
+                    <th>Ngày tạo</th>
+                    <th class="text-end">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var u in Model)
+                {
+                    var initial = string.IsNullOrWhiteSpace(u.FullName) ? "?" : u.FullName.Trim().Split(' ').Last().Substring(0, 1).ToUpper();
+                    bool isSelf = u.Id == currentUserId;
+                    <tr class="@(u.IsActive ? "" : "row-cancelled")">
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="avatar-circle">@initial</div>
+                                <div>
+                                    <div class="fw-semibold">@u.FullName @(isSelf ? "(bạn)" : "")</div>
+                                    <div class="text-muted small">@@@u.Username</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div>@(string.IsNullOrEmpty(u.Phone) ? "-" : u.Phone)</div>
+                            <div class="text-muted small">@(string.IsNullOrEmpty(u.Email) ? "-" : u.Email)</div>
+                        </td>
+                        <td>
+                            @if (u.Role == "Admin")
+                            {
+                                <span class="status-pill pill-blue">Quản trị viên</span>
+                            }
+                            else
+                            {
+                                <span class="status-pill pill-green">Nhân viên / Dược sĩ</span>
+                            }
+                        </td>
+                        <td>
+                            @if (u.IsActive)
+                            {
+                                <span class="status-pill pill-green">Hoạt động</span>
+                            }
+                            else
+                            {
+                                <span class="status-pill pill-gray">Đã khoá</span>
+                            }
+                        </td>
+                        <td class="text-end">@u.OrderCount</td>
+                        <td class="text-muted">@u.CreatedAt.ToString("dd/MM/yyyy")</td>
+                        <td class="text-end">
+                            <a asp-action="Edit" asp-route-id="@u.Id" class="act-btn" title="Sửa / phân quyền"><i class="bi bi-pencil"></i></a>
+                            <button type="button" class="act-btn btn-reset" title="Đặt lại mật khẩu"
+                                    data-bs-toggle="modal" data-bs-target="#resetModal"
+                                    data-id="@u.Id" data-name="@u.FullName"><i class="bi bi-key"></i></button>
+                            @if (!isSelf)
+                            {
+                                <form asp-action="Toggle" asp-route-id="@u.Id" method="post" class="d-inline"
+                                      onsubmit="return confirm('@(u.IsActive ? "Khoá" : "Mở khoá") tài khoản @u.Username?');">
+                                    <button type="submit" class="act-btn @(u.IsActive ? "danger" : "")" title="@(u.IsActive ? "Khoá tài khoản" : "Mở khoá")">
+                                        <i class="bi @(u.IsActive ? "bi-lock" : "bi-unlock")"></i>
+                                    </button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="7"><div class="empty-state"><i class="bi bi-people"></i>Không tìm thấy tài khoản nào.</div></td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <div class="table-foot">Tài khoản đã khoá sẽ không đăng nhập lại được sau khi phiên hiện tại hết hạn.</div>
+</div>
+
+<!-- Modal đặt lại mật khẩu -->
+<div class="modal fade" id="resetModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content" style="border-radius:16px;">
+            <form id="resetForm" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-header">
+                    <h6 class="modal-title">Đặt lại mật khẩu cho <strong id="resetName"></strong></h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <label class="form-label">Mật khẩu mới</label>
+                    <input type="text" name="newPassword" class="form-control" required minlength="6" autocomplete="off" />
+                    <div class="form-text">Ít nhất 6 ký tự. Hãy báo mật khẩu này cho nhân viên và nhắc họ đổi lại trong "Tài khoản cá nhân".</div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Huỷ</button>
+                    <button type="submit" class="btn btn-success">Đặt lại mật khẩu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('.btn-reset').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                document.getElementById('resetName').textContent = btn.dataset.name;
+                document.getElementById('resetForm').action = '/User/ResetPassword/' + btn.dataset.id;
+            });
+        });
+    </script>
+}

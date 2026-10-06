@@ -1,0 +1,224 @@
+﻿@model PharmacyManagementWeb.Models.ApiModels.ReturnableOrderModel
+@inject IConfiguration Config
+@{
+    ViewData["Title"] = "Tạo phiếu trả hàng";
+    string? code = ViewBag.Code as string;
+    bool isAdmin = User.IsInRole("Admin");
+    decimal ratio = (Model != null && Model.TotalAmount > 0) ? Model.FinalAmount / Model.TotalAmount : 1m;
+}
+
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-danger">@ViewBag.Error</div>
+}
+
+@if (Model == null)
+{
+    <div class="stat-card form-card" style="max-width:620px;">
+        <div class="form-head">
+            <div class="fh-icon"><i class="bi bi-arrow-return-left"></i></div>
+            <div>
+                <h5>Tạo phiếu trả hàng</h5>
+                <div class="sub">Bước 1: nhập mã hoá đơn mà khách muốn trả thuốc</div>
+            </div>
+        </div>
+
+        <form asp-action="Create" method="get">
+            <label class="form-label">Mã hoá đơn</label>
+            <div class="d-flex gap-2">
+                <input type="text" name="code" value="@code" class="form-control" placeholder="Ví dụ: HD0006" required autofocus />
+                <button type="submit" class="btn btn-success text-nowrap"><i class="bi bi-search me-1"></i>Tìm</button>
+            </div>
+            <div class="form-text">Mã hoá đơn in trên hoá đơn bán hàng, hoặc xem ở mục Hoá đơn.</div>
+        </form>
+
+        <div class="form-actions">
+            <a asp-action="Index" class="btn btn-outline-secondary">Quay lại danh sách</a>
+        </div>
+    </div>
+}
+else
+{
+    <style>
+        .qty-return { width: 90px; text-align: center; }
+    </style>
+
+    <form id="returnForm" asp-action="Create" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="orderId" value="@Model.OrderId" />
+        <input type="hidden" name="code" value="@Model.Code" />
+        <input type="hidden" name="itemsJson" id="itemsJson" />
+
+        <div class="row g-3">
+            <div class="col-xl-8">
+                <div class="stat-card mb-3">
+                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                        <div>
+                            <div class="text-muted small">Hoá đơn gốc</div>
+                            <h5 class="fw-bold mb-0">#@Model.Code</h5>
+                            <div class="text-muted small">@Model.OrderDate.ToString("HH:mm dd/MM/yyyy") · @(Model.CustomerName ?? "Khách vãng lai") · @Model.PaymentMethod</div>
+                        </div>
+                        <a asp-action="Create" class="btn btn-outline-secondary btn-sm">Đổi hoá đơn khác</a>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <h6 class="mb-3">Chọn thuốc khách trả</h6>
+                    <div class="table-responsive">
+                        <table class="table align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Thuốc</th>
+                                    <th class="text-end">Đơn giá</th>
+                                    <th class="text-center">Đã mua</th>
+                                    <th class="text-center">Đã trả</th>
+                                    <th class="text-center" style="width:120px;">Số lượng trả</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var i in Model.Items)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center gap-2">
+                                                @if (!string.IsNullOrEmpty(i.ImageUrl))
+                                                {
+                                                    <img src="@(Config["ApiSettings:BaseUrl"])@i.ImageUrl" alt="@i.MedicineName" style="width:44px;height:44px;object-fit:cover;border-radius:8px;" />
+                                                }
+                                                else
+                                                {
+                                                    <div class="d-flex align-items-center justify-content-center bg-light text-muted" style="width:44px;height:44px;border-radius:8px;font-size:10px;">No img</div>
+                                                }
+                                                <div>
+                                                    <div class="fw-semibold">@i.MedicineName</div>
+                                                    <div class="text-muted small">@i.MedicineCode</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="text-end">@i.UnitPrice.ToString("N0")đ</td>
+                                        <td class="text-center">@i.SoldQuantity</td>
+                                        <td class="text-center">@i.ReturnedQuantity</td>
+                                        <td class="text-center">
+                                            @if (i.MaxReturnQuantity > 0)
+                                            {
+                                                <input type="number" class="form-control form-control-sm qty-return ret-qty" min="0" max="@i.MaxReturnQuantity" value="0"
+                                                       data-detail-id="@i.OrderDetailId" data-price="@i.UnitPrice.ToString(System.Globalization.CultureInfo.InvariantCulture)" />
+                                                <div class="text-muted" style="font-size:0.7rem;">tối đa @i.MaxReturnQuantity</div>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted small">Đã trả hết</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-4">
+                <div style="position:sticky; top:90px;">
+                    <div class="stat-card">
+                        <div class="mb-3">
+                            <label class="form-label">Lý do trả hàng</label>
+                            <select name="reason" id="reason" class="form-select" required>
+                                <option>Mua nhầm thuốc</option>
+                                <option>Thuốc lỗi / hư hỏng</option>
+                                <option>Thuốc cận hạn / hết hạn</option>
+                                <option>Bác sĩ đổi thuốc</option>
+                                <option>Khách đổi ý</option>
+                                <option>Lý do khác</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Ghi chú</label>
+                            <textarea name="note" class="form-control" rows="2" placeholder="Mô tả thêm (nếu có)"></textarea>
+                        </div>
+
+                        <div class="form-check mb-1">
+                            <input class="form-check-input" type="checkbox" name="restockItems" id="restock" value="true" checked />
+                            <label class="form-check-label" for="restock">Nhập lại thuốc vào kho</label>
+                        </div>
+                        <div class="form-text mb-3">Bỏ chọn nếu thuốc lỗi, hỏng hoặc cận hạn, không nên bán lại.</div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Hoàn tiền qua</label>
+                            <select name="refundMethod" class="form-select">
+                                @foreach (var m in new[] { "Tiền mặt", "Chuyển khoản", "Thẻ", "Ví điện tử" })
+                                {
+                                    <option value="@m" selected="@(m == Model.PaymentMethod)">@m</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="total-box mb-3">
+                            <div class="d-flex justify-content-between"><span class="text-muted">Giá trị hàng trả</span><span id="subtotalText">0đ</span></div>
+                            @if (ratio < 1m)
+                            {
+                                <div class="d-flex justify-content-between small text-muted"><span>Trừ giảm giá của hoá đơn (@((1m - ratio).ToString("P1")))</span><span></span></div>
+                            }
+                            <div class="d-flex justify-content-between align-items-center border-top mt-2 pt-2">
+                                <span class="fw-bold">Hoàn tiền khách</span>
+                                <span class="fs-4 fw-bold" style="color:var(--pharmacy-primary);" id="refundText">0đ</span>
+                            </div>
+                        </div>
+
+                        <button type="submit" id="submitBtn" class="btn btn-success w-100" disabled>
+                            <i class="bi bi-check2-circle me-1"></i>@(isAdmin ? "Tạo và duyệt phiếu" : "Gửi phiếu chờ duyệt")
+                        </button>
+                        @if (!isAdmin)
+                        {
+                            <div class="form-text text-center mt-2">Phiếu sẽ được hoàn tiền sau khi Admin duyệt.</div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    @section Scripts {
+        <script>
+            const ratio = @ratio.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            const inputs = document.querySelectorAll('.ret-qty');
+
+            function money(n) { return Math.round(n).toLocaleString('vi-VN') + 'đ'; }
+
+            function recalc() {
+                let subtotal = 0, totalQty = 0;
+                inputs.forEach(function (inp) {
+                    const max = parseInt(inp.max) || 0;
+                    let qty = parseInt(inp.value) || 0;
+                    if (qty < 0) qty = 0;
+                    if (qty > max) { qty = max; inp.value = max; }
+                    subtotal += qty * parseFloat(inp.dataset.price);
+                    totalQty += qty;
+                });
+                document.getElementById('subtotalText').textContent = money(subtotal);
+                document.getElementById('refundText').textContent = money(subtotal * ratio);
+                document.getElementById('submitBtn').disabled = totalQty === 0;
+            }
+
+            inputs.forEach(function (inp) { inp.addEventListener('input', recalc); });
+
+            // Thuốc lỗi / cận hạn thì mặc định không nhập lại kho
+            document.getElementById('reason').addEventListener('change', function () {
+                const noRestock = this.value === 'Thuốc lỗi / hư hỏng' || this.value === 'Thuốc cận hạn / hết hạn';
+                document.getElementById('restock').checked = !noRestock;
+            });
+
+            document.getElementById('returnForm').addEventListener('submit', function () {
+                const items = [];
+                inputs.forEach(function (inp) {
+                    const qty = parseInt(inp.value) || 0;
+                    if (qty > 0) items.push({ orderDetailId: parseInt(inp.dataset.detailId), quantity: qty });
+                });
+                document.getElementById('itemsJson').value = JSON.stringify(items);
+            });
+
+            recalc();
+        </script>
+    }
+}

@@ -1,0 +1,114 @@
+﻿@model List<PharmacyManagementWeb.Models.ApiModels.ReturnOrderModel>
+@{
+    ViewData["Title"] = "Đổi trả";
+    string? status = ViewBag.Status as string;
+    string? search = ViewBag.Search as string;
+    bool hasFilter = !string.IsNullOrEmpty(status) || !string.IsNullOrEmpty(search);
+
+    string PillOf(string s) => s == "Đã duyệt" ? "pill-green" : s == "Từ chối" ? "pill-red" : "pill-yellow";
+}
+
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-danger">@ViewBag.Error</div>
+}
+
+<div class="row g-3 mb-3">
+    <div class="col-6 col-xl-3">
+        <div class="stat-tile compact tile-orange">
+            <div class="tile-icon"><i class="bi bi-hourglass-split"></i></div>
+            <div><div class="tile-label">Chờ duyệt</div><div class="tile-value">@ViewBag.PendingCount</div></div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="stat-tile compact tile-green">
+            <div class="tile-icon"><i class="bi bi-check2-circle"></i></div>
+            <div><div class="tile-label">Đã duyệt</div><div class="tile-value">@ViewBag.ApprovedCount</div></div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="stat-tile compact tile-red">
+            <div class="tile-icon"><i class="bi bi-x-circle"></i></div>
+            <div><div class="tile-label">Từ chối</div><div class="tile-value">@ViewBag.RejectedCount</div></div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="stat-tile compact tile-blue">
+            <div class="tile-icon"><i class="bi bi-cash-coin"></i></div>
+            <div><div class="tile-label">Tổng đã hoàn tiền</div><div class="tile-value">@(((decimal)ViewBag.RefundTotal).ToString("N0"))đ</div></div>
+        </div>
+    </div>
+</div>
+
+<div class="stat-card mb-3">
+    <div class="d-flex flex-wrap align-items-center gap-3">
+        <div class="fw-semibold"><i class="bi bi-arrow-return-left me-1"></i>Tạo phiếu trả hàng:</div>
+        <form asp-action="Create" method="get" class="d-flex gap-2 flex-grow-1" style="max-width:460px;">
+            <input type="text" name="code" class="form-control" placeholder="Nhập mã hoá đơn, ví dụ HD0006" required />
+            <button type="submit" class="btn btn-success text-nowrap"><i class="bi bi-search me-1"></i>Tìm hoá đơn</button>
+        </form>
+        <div class="text-muted small">Hoặc mở hoá đơn bất kỳ và bấm nút <strong>Trả hàng</strong>.</div>
+    </div>
+</div>
+
+<div class="stat-card mb-3">
+    <form method="get" class="list-toolbar">
+        <div class="search-box">
+            <i class="bi bi-search"></i>
+            <input type="text" name="search" value="@search" class="form-control" placeholder="Tìm theo mã phiếu, mã hoá đơn, khách hàng..." />
+        </div>
+        <select name="status" class="form-select filter-select" onchange="this.form.submit()">
+            <option value="">Tất cả trạng thái</option>
+            <option value="Chờ duyệt" selected="@(status == "Chờ duyệt")">Chờ duyệt</option>
+            <option value="Đã duyệt" selected="@(status == "Đã duyệt")">Đã duyệt</option>
+            <option value="Từ chối" selected="@(status == "Từ chối")">Từ chối</option>
+        </select>
+        @if (hasFilter)
+        {
+            <a asp-action="Index" class="btn btn-outline-secondary btn-sm"><i class="bi bi-x-circle me-1"></i>Xoá lọc</a>
+        }
+    </form>
+</div>
+
+<div class="stat-card">
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>Mã phiếu</th>
+                    <th>Hoá đơn gốc</th>
+                    <th>Khách hàng</th>
+                    <th>Người tạo</th>
+                    <th>Ngày tạo</th>
+                    <th>Lý do</th>
+                    <th class="text-end">Hoàn tiền</th>
+                    <th>Trạng thái</th>
+                    <th class="text-end">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var r in Model)
+                {
+                    <tr>
+                        <td><a asp-action="Detail" asp-route-id="@r.Id" class="fw-semibold text-decoration-none" style="color:var(--pharmacy-primary-dark);">@r.Code</a></td>
+                        <td><a asp-controller="Order" asp-action="Detail" asp-route-id="@r.OrderId" class="text-decoration-none">@r.OrderCode</a></td>
+                        <td>@(r.CustomerName ?? "Khách vãng lai")</td>
+                        <td>@r.CreatedByName</td>
+                        <td>@r.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td><span class="soft-tag">@r.Reason</span></td>
+                        <td class="text-end fw-semibold">@r.RefundAmount.ToString("N0")đ</td>
+                        <td><span class="status-pill @PillOf(r.Status)">@r.Status</span></td>
+                        <td class="text-end">
+                            <a asp-action="Detail" asp-route-id="@r.Id" class="act-btn" title="Xem chi tiết"><i class="bi bi-eye"></i></a>
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="9"><div class="empty-state"><i class="bi bi-arrow-return-left"></i>Chưa có phiếu trả hàng nào.</div></td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <div class="table-foot">Hiển thị @Model.Count phiếu</div>
+</div>
