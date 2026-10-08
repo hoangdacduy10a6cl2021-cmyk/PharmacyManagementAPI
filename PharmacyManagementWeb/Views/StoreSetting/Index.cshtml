@@ -1,0 +1,127 @@
+﻿@model PharmacyManagementWeb.Models.ApiModels.StoreSettingModel
+@{
+    ViewData["Title"] = "Cài đặt cửa hàng";
+}
+
+<div class="row g-3">
+    <div class="col-xl-8">
+        <div class="stat-card">
+            <div class="form-head">
+                <div class="fh-icon"><i class="bi bi-gear"></i></div>
+                <div>
+                    <h5>Cài đặt cửa hàng</h5>
+                    <div class="sub">Thông tin in trên chứng từ và các quy tắc vận hành</div>
+                </div>
+            </div>
+
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <form asp-action="Index" method="post">
+                @Html.AntiForgeryToken()
+
+                <div class="section-title" style="margin-top:0;">Thông tin cửa hàng</div>
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label asp-for="StoreName" class="form-label"></label>
+                        <input asp-for="StoreName" class="form-control" id="inName" />
+                        <span asp-validation-for="StoreName" class="text-danger small"></span>
+                    </div>
+                    <div class="col-12">
+                        <label asp-for="Address" class="form-label"></label>
+                        <input asp-for="Address" class="form-control" id="inAddress" />
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="Phone" class="form-label"></label>
+                        <input asp-for="Phone" class="form-control" id="inPhone" />
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="Email" class="form-label"></label>
+                        <input asp-for="Email" class="form-control" id="inEmail" />
+                        <span asp-validation-for="Email" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="TaxCode" class="form-label"></label>
+                        <input asp-for="TaxCode" class="form-control" id="inTax" />
+                    </div>
+                </div>
+
+                <div class="section-title">Cảnh báo kho</div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="LowStockThreshold" class="form-label"></label>
+                        <input asp-for="LowStockThreshold" class="form-control" type="number" min="0" />
+                        <span asp-validation-for="LowStockThreshold" class="text-danger small"></span>
+                        <div class="form-text">Thuốc có tồn kho bằng hoặc thấp hơn mức này sẽ hiện ở Cảnh báo và chuông thông báo.</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="ExpiringSoonDays" class="form-label"></label>
+                        <input asp-for="ExpiringSoonDays" class="form-control" type="number" min="1" max="365" />
+                        <span asp-validation-for="ExpiringSoonDays" class="text-danger small"></span>
+                        <div class="form-text">Thuốc còn hạn dưới số ngày này sẽ được cảnh báo sắp hết hạn.</div>
+                    </div>
+                </div>
+
+                <div class="section-title">Chính sách bán hàng</div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="MaxStaffDiscountPercent" class="form-label"></label>
+                        <input asp-for="MaxStaffDiscountPercent" class="form-control" type="number" step="any" min="0" max="100" />
+                        <span asp-validation-for="MaxStaffDiscountPercent" class="text-danger small"></span>
+                        <div class="form-text">Admin không bị giới hạn. Đặt 0 nếu không cho nhân viên giảm giá.</div>
+                    </div>
+                </div>
+
+                <div class="section-title">Hoá đơn</div>
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label asp-for="ReceiptFooter" class="form-label"></label>
+                        <input asp-for="ReceiptFooter" class="form-control" id="inFooter" />
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-success px-4"><i class="bi bi-check2 me-1"></i>Lưu cài đặt</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-xl-4">
+        <div class="stat-card" style="position:sticky; top:90px;">
+            <h6 class="mb-3"><i class="bi bi-eye me-1"></i>Xem trước trên chứng từ</h6>
+            <div class="store-header">
+                <div class="fw-bold fs-5" id="pvName"></div>
+                <div class="small text-muted" id="pvAddress"></div>
+                <div class="small text-muted" id="pvContact"></div>
+            </div>
+            <div class="text-center text-muted small my-3">( nội dung hoá đơn )</div>
+            <div class="store-footer" id="pvFooter"></div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        function val(id) { return (document.getElementById(id).value || '').trim(); }
+
+        function renderPreview() {
+            document.getElementById('pvName').textContent = val('inName') || 'Tên cửa hàng';
+            document.getElementById('pvAddress').textContent = val('inAddress');
+
+            var contacts = [];
+            if (val('inPhone')) contacts.push('ĐT: ' + val('inPhone'));
+            if (val('inEmail')) contacts.push(val('inEmail'));
+            if (val('inTax')) contacts.push('MST: ' + val('inTax'));
+            document.getElementById('pvContact').textContent = contacts.join(' · ');
+
+            document.getElementById('pvFooter').textContent = val('inFooter');
+        }
+
+        ['inName', 'inAddress', 'inPhone', 'inEmail', 'inTax', 'inFooter'].forEach(function (id) {
+            document.getElementById(id).addEventListener('input', renderPreview);
+        });
+
+        renderPreview();
+    </script>
+}

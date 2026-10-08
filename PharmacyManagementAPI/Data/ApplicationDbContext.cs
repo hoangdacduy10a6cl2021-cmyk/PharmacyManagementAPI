@@ -28,6 +28,10 @@ namespace PharmacyManagementAPI.Data
         public DbSet<StockCheck> StockChecks { get; set; }
         public DbSet<StockCheckDetail> StockCheckDetails { get; set; }
 
+        public DbSet<StoreSetting> StoreSettings { get; set; }
+        public DbSet<Consultation> Consultations { get; set; }
+        public DbSet<ConsultationMedicine> ConsultationMedicines { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -45,6 +49,12 @@ namespace PharmacyManagementAPI.Data
             modelBuilder.Entity<StockCheck>().HasIndex(s => s.Code).IsUnique();
             modelBuilder.Entity<StockCheck>().HasOne(s => s.User).WithMany().HasForeignKey(s => s.UserId).OnDelete(DeleteBehavior.Restrict);
             modelBuilder.Entity<StockCheckDetail>().HasOne(d => d.Medicine).WithMany().HasForeignKey(d => d.MedicineId).OnDelete(DeleteBehavior.Restrict);
+
+            // ===== Tư vấn thuốc =====
+            modelBuilder.Entity<Consultation>().HasIndex(c => c.Code).IsUnique();
+            modelBuilder.Entity<Consultation>().HasOne(c => c.Customer).WithMany().HasForeignKey(c => c.CustomerId).OnDelete(DeleteBehavior.SetNull);
+            modelBuilder.Entity<Consultation>().HasOne(c => c.CreatedBy).WithMany().HasForeignKey(c => c.CreatedByUserId).OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<ConsultationMedicine>().HasOne(m => m.Medicine).WithMany().HasForeignKey(m => m.MedicineId).OnDelete(DeleteBehavior.Restrict);
 
             // Unique constraints
             modelBuilder.Entity<User>().HasIndex(u => u.Username).IsUnique();

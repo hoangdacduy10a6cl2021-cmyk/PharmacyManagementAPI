@@ -1,4 +1,5 @@
-﻿@{
+﻿@inject PharmacyManagementWeb.Services.IStoreSettingsProvider Store
+@{
     ViewData["Title"] = "Phân quyền";
 
     var groups = new[]
@@ -10,6 +11,7 @@
             ("Giảm giá trên hoá đơn", true, true),
             ("Xem, in, hủy hoá đơn (hoàn tiền)", true, true),
             ("Tạo phiếu đổi trả / trả hàng (chờ Admin duyệt)", true, true),
+            ("Ghi nhận và xem phiếu tư vấn thuốc cho khách", true, true),
             ("Tạo và xem đơn thuốc", true, true),
             ("Xem, thêm, sửa khách hàng", true, true),
             ("Xoá khách hàng", false, true),
@@ -31,6 +33,7 @@
             ("Quản lý nhân viên, khoá / mở khoá tài khoản", false, true),
             ("Phân quyền (gán vai trò)", false, true),
             ("Xem nhật ký hệ thống", false, true),
+            ("Cài đặt cửa hàng (thông tin, ngưỡng cảnh báo, giảm giá tối đa)", false, true),
         }},
         new { Title = "Tài khoản cá nhân", Rows = new[]
         {
@@ -87,4 +90,5 @@
     </div>
 }
 
-<div class="text-muted small"><i class="bi bi-info-circle me-1"></i>Nhân viên chỉ được giảm giá tối đa 10% giá trị mỗi hoá đơn, Admin không bị giới hạn.</div>
+@{ var discountPct = (await Store.GetAsync()).MaxStaffDiscountPercent; }
+<div class="text-muted small"><i class="bi bi-info-circle me-1"></i>Nhân viên chỉ được giảm giá tối đa @discountPct.ToString("0.##")% giá trị mỗi hoá đơn, Admin không bị giới hạn. Mức này chỉnh được ở Cài đặt cửa hàng.</div>

@@ -1,0 +1,147 @@
+﻿@model List<PharmacyManagementWeb.Models.ApiModels.ConsultationModel>
+@inject IConfiguration Config
+@{
+    ViewData["Title"] = "Tư vấn thuốc";
+    string? status = ViewBag.Status as string;
+    string? search = ViewBag.Search as string;
+    bool hasFilter = !string.IsNullOrEmpty(status) || !string.IsNullOrEmpty(search);
+}
+
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-danger">@ViewBag.Error</div>
+}
+
+<div class="row g-3 mb-3">
+    <div class="col-6 col-xl-3">
+        <div class="stat-tile compact tile-blue">
+            <div class="tile-icon"><i class="bi bi-chat-heart"></i></div>
+            <div><div class="tile-label">Tổng phiếu tư vấn</div><div class="tile-value">@ViewBag.TotalCount</div></div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="stat-tile compact tile-green">
+            <div class="tile-icon"><i class="bi bi-calendar-check"></i></div>
+            <div><div class="tile-label">Tư vấn hôm nay</div><div class="tile-value">@ViewBag.TodayCount</div></div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="stat-tile compact tile-orange">
+            <div class="tile-icon"><i class="bi bi-eye"></i></div>
+            <div><div class="tile-label">Cần theo dõi</div><div class="tile-value">@ViewBag.FollowUpCount</div></div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="stat-tile compact tile-red">
+            <div class="tile-icon"><i class="bi bi-alarm"></i></div>
+            <div><div class="tile-label">Quá hạn theo dõi</div><div class="tile-value">@ViewBag.OverdueCount</div></div>
+        </div>
+    </div>
+</div>
+
+<div class="stat-card mb-3">
+    <form method="get" class="list-toolbar">
+        <div class="search-box">
+            <i class="bi bi-search"></i>
+            <input type="text" name="search" value="@search" class="form-control" placeholder="Tìm theo mã phiếu, khách hàng, SĐT, triệu chứng..." />
+        </div>
+        <select name="status" class="form-select filter-select" onchange="this.form.submit()">
+            <option value="">Tất cả trạng thái</option>
+            <option value="Cần theo dõi" selected="@(status == "Cần theo dõi")">Cần theo dõi</option>
+            <option value="Hoàn tất" selected="@(status == "Hoàn tất")">Hoàn tất</option>
+        </select>
+        @if (hasFilter)
+        {
+            <a asp-action="Index" class="btn btn-outline-secondary btn-sm"><i class="bi bi-x-circle me-1"></i>Xoá lọc</a>
+        }
+        <a asp-action="Create" class="btn btn-success ms-auto"><i class="bi bi-plus-lg me-1"></i>Tạo phiếu tư vấn</a>
+    </form>
+</div>
+
+<div class="stat-card">
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>Mã phiếu</th>
+                    <th>Khách hàng</th>
+                    <th>Triệu chứng / yêu cầu</th>
+                    <th>Thuốc gợi ý</th>
+                    <th>Hẹn theo dõi</th>
+                    <th>Người tư vấn</th>
+                    <th>Trạng thái</th>
+                    <th class="text-end">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var c in Model)
+                {
+                    bool overdue = c.Status == "Cần theo dõi" && c.FollowUpDate.HasValue && c.FollowUpDate.Value.Date < DateTime.Today;
+                    var initial = string.IsNullOrWhiteSpace(c.CustomerName) ? "?" : c.CustomerName.Trim().Split(' ').Last().Substring(0, 1).ToUpper();
+                    <tr>
+                        <td>
+                            <a asp-action="Detail" asp-route-id="@c.Id" class="fw-semibold text-decoration-none" style="color:var(--pharmacy-primary-dark);">@c.Code</a>
+                            <div class="text-muted small">@c.CreatedAt.ToString("dd/MM/yyyy HH:mm")</div>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="avatar-circle">@initial</div>
+                                <div>
+                                    <div class="fw-semibold">@c.CustomerName</div>
+                                    <div class="text-muted small">@(string.IsNullOrEmpty(c.CustomerPhone) ? "-" : c.CustomerPhone)</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td style="max-width:240px;"><div class="text-truncate" title="@c.Symptoms">@c.Symptoms</div></td>
+                        <td>
+                            @if (c.Medicines.Any())
+                            {
+                                <div class="d-flex align-items-center">
+                                    @foreach (var m in c.Medicines.Take(3))
+                                    {
+                                        if (!string.IsNullOrEmpty(m.ImageUrl))
+                                        {
+                                            <img src="@(Config["ApiSettings:BaseUrl"])@m.ImageUrl" title="@m.Name" style="width:32px;height:32px;object-fit:cover;border-radius:8px;border:2px solid #fff;margin-right:-8px;" />
+                                        }
+                                        else
+                                        {
+                                            <span class="d-inline-flex align-items-center justify-content-center bg-light text-muted" title="@m.Name" style="width:32px;height:32px;border-radius:8px;font-size:9px;border:2px solid #fff;margin-right:-8px;">No img</span>
+                                        }
+                                    }
+                                    <span class="ms-3 small text-muted">@c.Medicines.Count thuốc</span>
+                                </div>
+                            }
+                            else
+                            {
+                                <span class="text-muted small">Không gợi ý thuốc</span>
+                            }
+                        </td>
+                        <td class="@(overdue ? "text-danger fw-semibold" : "")">
+                            @(c.FollowUpDate.HasValue ? c.FollowUpDate.Value.ToString("dd/MM/yyyy") : "-")
+                            @if (overdue) { <div class="small">Quá hạn</div> }
+                        </td>
+                        <td>@c.CreatedByName</td>
+                        <td>
+                            @if (c.Status == "Cần theo dõi")
+                            {
+                                <span class="status-pill pill-yellow">Cần theo dõi</span>
+                            }
+                            else
+                            {
+                                <span class="status-pill pill-green">Hoàn tất</span>
+                            }
+                        </td>
+                        <td class="text-end">
+                            <a asp-action="Detail" asp-route-id="@c.Id" class="act-btn" title="Xem chi tiết"><i class="bi bi-eye"></i></a>
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="8"><div class="empty-state"><i class="bi bi-chat-heart"></i>Chưa có phiếu tư vấn nào.</div></td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <div class="table-foot">Hiển thị @Model.Count phiếu</div>
+</div>

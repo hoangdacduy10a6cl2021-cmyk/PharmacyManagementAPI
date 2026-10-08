@@ -18,6 +18,8 @@
         public int LowStockCount { get; set; }
         public int ExpiringSoonCount { get; set; }
         public int ExpiredCount { get; set; }
+        public int LowStockThreshold { get; set; } = 20;
+        public int ExpiringSoonDays { get; set; } = 90;
         public List<AlertMedicineModel> LowStock { get; set; } = new();
         public List<AlertMedicineModel> ExpiringSoon { get; set; } = new();
         public List<AlertMedicineModel> Expired { get; set; } = new();

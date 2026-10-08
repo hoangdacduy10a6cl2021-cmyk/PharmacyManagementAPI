@@ -1,0 +1,20 @@
+﻿@inject PharmacyManagementWeb.Services.IStoreSettingsProvider Store
+@{
+    var s = await Store.GetAsync();
+    var contacts = new List<string>();
+    if (!string.IsNullOrWhiteSpace(s.Phone)) contacts.Add("ĐT: " + s.Phone);
+    if (!string.IsNullOrWhiteSpace(s.Email)) contacts.Add(s.Email!);
+    if (!string.IsNullOrWhiteSpace(s.TaxCode)) contacts.Add("MST: " + s.TaxCode);
+}
+
+<div class="store-header">
+    <div class="fw-bold fs-5">@s.StoreName</div>
+    @if (!string.IsNullOrWhiteSpace(s.Address))
+    {
+        <div class="small text-muted">@s.Address</div>
+    }
+    @if (contacts.Any())
+    {
+        <div class="small text-muted">@string.Join(" · ", contacts)</div>
+    }
+</div>

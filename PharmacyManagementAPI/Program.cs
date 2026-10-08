@@ -30,6 +30,8 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAuditService, AuditService>();
 builder.Services.AddScoped<IReturnService, ReturnService>();
 builder.Services.AddScoped<IStockCheckService, StockCheckService>();
+builder.Services.AddScoped<IStoreSettingService, StoreSettingService>();
+builder.Services.AddScoped<IConsultationService, ConsultationService>();
 
 // JWT Auth
 var jwtSettings = builder.Configuration.GetSection("Jwt");

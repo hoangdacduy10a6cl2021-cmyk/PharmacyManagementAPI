@@ -1027,3 +1027,19 @@ body.theme-admin .brand-logo-box {
 .row-cancelled .amt {
     text-decoration: line-through;
 }
+/* ===== Đầu và chân chứng từ (thông tin cửa hàng) ===== */
+.store-header {
+    text-align: center;
+    padding-bottom: 0.9rem;
+    margin-bottom: 1.1rem;
+    border-bottom: 1px dashed #dbe4e1;
+}
+
+.store-footer {
+    text-align: center;
+    color: #64748b;
+    font-style: italic;
+    padding-top: 0.9rem;
+    margin-top: 1rem;
+    border-top: 1px dashed #dbe4e1;
+}

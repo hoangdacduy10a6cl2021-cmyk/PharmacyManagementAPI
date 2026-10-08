@@ -1,4 +1,6 @@
-﻿@{
+﻿@inject PharmacyManagementWeb.Services.IStoreSettingsProvider Store
+@{
+    var store = await Store.GetAsync();
     var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
     var fullName = User.FindFirst("FullName")?.Value ?? User.Identity?.Name ?? "";
     bool isAdmin = role == "Admin";
@@ -14,7 +16,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>@ViewData["Title"] - Tâm Thần Pharmacy</title>
+    <title>@ViewData["Title"] - @store.StoreName</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect x='35' y='4' width='30' height='92' rx='10' fill='%2310b981'/%3E%3Crect x='4' y='35' width='92' height='30' rx='10' fill='%2310b981'/%3E%3Cpath d='M36 72C36 46 54 30 76 28C76 52 62 72 36 72Z' fill='white'/%3E%3C/svg%3E" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -40,7 +42,7 @@
                     <path d="M38 70 C46 58 56 49 68 40" stroke="#0d9488" stroke-width="2.2" fill="none" stroke-linecap="round" />
                 </svg>
                 <div>
-                    <div class="brand-name">Tâm Thần Pharmacy</div>
+                    <div class="brand-name">@store.StoreName</div>
                     <div class="brand-tagline">Vì sức khoẻ cộng đồng</div>
                 </div>
             </div>
@@ -50,6 +52,7 @@
                 <a class="nav-link @Active("Order", "Index", "Create")" asp-controller="Order" asp-action="Index"><i class="bi bi-cart3"></i><span>Bán hàng</span></a>
                 <a class="nav-link @Active("Order", "History", "Detail")" asp-controller="Order" asp-action="History"><i class="bi bi-receipt"></i><span>Hoá đơn</span></a>
                 <a class="nav-link @Active("Return")" asp-controller="Return" asp-action="Index"><i class="bi bi-arrow-return-left"></i><span>Đổi trả</span></a>
+                <a class="nav-link @Active("Consultation")" asp-controller="Consultation" asp-action="Index"><i class="bi bi-chat-heart"></i><span>Tư vấn</span></a>
                 <a class="nav-link @Active("Prescription")" asp-controller="Prescription" asp-action="Index"><i class="bi bi-journal-medical"></i><span>Đơn thuốc</span></a>
                 <a class="nav-link @Active("Customer")" asp-controller="Customer" asp-action="Index"><i class="bi bi-people"></i><span>Khách hàng</span></a>
                 <a class="nav-link @Active("Medicine")" asp-controller="Medicine" asp-action="Index"><i class="bi bi-capsule"></i><span>Thuốc / Kho</span></a>
@@ -66,6 +69,7 @@
                     <a class="nav-link @Active("User", "Index", "Create", "Edit")" asp-controller="User" asp-action="Index"><i class="bi bi-person-badge"></i><span>Nhân viên</span></a>
                     <a class="nav-link @Active("User", "Permissions")" asp-controller="User" asp-action="Permissions"><i class="bi bi-shield-lock"></i><span>Phân quyền</span></a>
                     <a class="nav-link @Active("AuditLog")" asp-controller="AuditLog" asp-action="Index"><i class="bi bi-clock-history"></i><span>Nhật ký</span></a>
+                    <a class="nav-link @Active("StoreSetting")" asp-controller="StoreSetting" asp-action="Index"><i class="bi bi-gear"></i><span>Cài đặt</span></a>
 
                     <div class="nav-section-title">Báo cáo</div>
                     <a class="nav-link @Active("Report", "Index")" asp-controller="Report" asp-action="Index"><i class="bi bi-bar-chart-line"></i><span>Doanh thu</span></a>

@@ -1,0 +1,9 @@
+﻿@inject PharmacyManagementWeb.Services.IStoreSettingsProvider Store
+@{
+    var s = await Store.GetAsync();
+}
+
+@if (!string.IsNullOrWhiteSpace(s.ReceiptFooter))
+{
+    <div class="store-footer">@s.ReceiptFooter</div>
+}

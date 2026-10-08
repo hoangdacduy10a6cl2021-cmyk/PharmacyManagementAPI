@@ -17,14 +17,14 @@ namespace PharmacyManagementAPI.Services
     public class DashboardService : IDashboardService
     {
         private readonly ApplicationDbContext _context;
-        private const int LOW_STOCK_THRESHOLD = 20;
-        private const int EXPIRING_SOON_DAYS = 90;
+        private readonly IStoreSettingService _settings;
         private const string CANCELLED = "Đã hủy";
         private const string RETURN_APPROVED = "Đã duyệt";
 
-        public DashboardService(ApplicationDbContext context)
+        public DashboardService(ApplicationDbContext context, IStoreSettingService settings)
         {
             _context = context;
+            _settings = settings;
         }
 
         // Các phiếu trả hàng đã duyệt trong khoảng thời gian (tính theo ngày duyệt)
@@ -57,10 +57,13 @@ namespace PharmacyManagementAPI.Services
             var sevenDaysAgo = today.AddDays(-6);
             var returns7 = await GetApprovedReturnsAsync(sevenDaysAgo, tomorrow);
 
-            var lowStockCount = await _context.Medicines
-                .CountAsync(m => m.IsActive && m.Stock <= LOW_STOCK_THRESHOLD);
+            var cfg = await _settings.GetEntityAsync();
+            var lowThreshold = cfg.LowStockThreshold;
 
-            var expiringThreshold = today.AddDays(EXPIRING_SOON_DAYS);
+            var lowStockCount = await _context.Medicines
+                .CountAsync(m => m.IsActive && m.Stock <= lowThreshold);
+
+            var expiringThreshold = today.AddDays(cfg.ExpiringSoonDays);
             var expiringSoonCount = await _context.Medicines
                 .CountAsync(m => m.IsActive && m.ExpiryDate != null && m.ExpiryDate <= expiringThreshold);
 
@@ -124,11 +127,12 @@ namespace PharmacyManagementAPI.Services
         public async Task<AlertsDto> GetAlertsAsync()
         {
             var today = DateTime.Now.Date;
-            var soon = today.AddDays(EXPIRING_SOON_DAYS);
+            var cfg = await _settings.GetEntityAsync();
+            var soon = today.AddDays(cfg.ExpiringSoonDays);
 
             var medicines = await _context.Medicines.Where(m => m.IsActive).ToListAsync();
 
-            var lowStock = medicines.Where(m => m.Stock <= LOW_STOCK_THRESHOLD)
+            var lowStock = medicines.Where(m => m.Stock <= cfg.LowStockThreshold)
                 .OrderBy(m => m.Stock).Select(m => ToAlert(m, today)).ToList();
 
             var expired = medicines.Where(m => m.ExpiryDate.HasValue && m.ExpiryDate.Value.Date < today)
@@ -143,6 +147,8 @@ namespace PharmacyManagementAPI.Services
                 LowStockCount = lowStock.Count,
                 ExpiringSoonCount = expiring.Count,
                 ExpiredCount = expired.Count,
+                LowStockThreshold = cfg.LowStockThreshold,
+                ExpiringSoonDays = cfg.ExpiringSoonDays,
                 LowStock = lowStock,
                 ExpiringSoon = expiring,
                 Expired = expired

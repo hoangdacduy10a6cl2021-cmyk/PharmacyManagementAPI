@@ -1,0 +1,113 @@
+﻿@model PharmacyManagementWeb.Models.ApiModels.ConsultationModel
+@inject IConfiguration Config
+@{
+    ViewData["Title"] = "Phiếu tư vấn " + Model.Code;
+    bool followUp = Model.Status == "Cần theo dõi";
+    bool overdue = followUp && Model.FollowUpDate.HasValue && Model.FollowUpDate.Value.Date < DateTime.Today;
+}
+
+<div class="stat-card doc-card">
+    <partial name="_StoreHeader" />
+
+    <div class="d-flex justify-content-between align-items-start mb-3">
+        <div>
+            <div class="text-muted small">Phiếu tư vấn thuốc</div>
+            <h4 class="fw-bold mb-0">#@Model.Code</h4>
+            <div class="text-muted small">@Model.CreatedAt.ToString("HH:mm dd/MM/yyyy") · Dược sĩ @Model.CreatedByName</div>
+        </div>
+        @if (followUp)
+        {
+            <span class="status-pill pill-yellow">Cần theo dõi</span>
+        }
+        else
+        {
+            <span class="status-pill pill-green">Hoàn tất</span>
+        }
+    </div>
+
+    @if (overdue)
+    {
+        <div class="alert alert-danger no-print"><i class="bi bi-alarm me-1"></i>Đã quá ngày hẹn theo dõi (@Model.FollowUpDate!.Value.ToString("dd/MM/yyyy")). Hãy liên hệ khách để hỏi thăm.</div>
+    }
+
+    <div class="info-grid">
+        <div>
+            <div class="info-label">Khách hàng</div>
+            <div class="info-value">@Model.CustomerName</div>
+        </div>
+        <div>
+            <div class="info-label">Số điện thoại</div>
+            <div class="info-value">@(string.IsNullOrEmpty(Model.CustomerPhone) ? "-" : Model.CustomerPhone)</div>
+        </div>
+        <div>
+            <div class="info-label">Hẹn theo dõi</div>
+            <div class="info-value @(overdue ? "text-danger" : "")">@(Model.FollowUpDate.HasValue ? Model.FollowUpDate.Value.ToString("dd/MM/yyyy") : "Không hẹn")</div>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <div class="info-label mb-1">Triệu chứng / yêu cầu của khách</div>
+        <div class="total-box" style="white-space:pre-line;">@Model.Symptoms</div>
+    </div>
+
+    <div class="mb-3">
+        <div class="info-label mb-1">Tư vấn của dược sĩ</div>
+        <div class="total-box" style="white-space:pre-line;">@Model.Advice</div>
+    </div>
+
+    @if (Model.Medicines.Any())
+    {
+        <div class="info-label mb-1">Thuốc gợi ý</div>
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
+                    <tr>
+                        <th>Thuốc</th>
+                        <th class="text-end">Giá bán</th>
+                        <th class="text-end">Tồn kho</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var m in Model.Medicines)
+                    {
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    @if (!string.IsNullOrEmpty(m.ImageUrl))
+                                    {
+                                        <img src="@(Config["ApiSettings:BaseUrl"])@m.ImageUrl" alt="@m.Name" style="width:44px;height:44px;object-fit:cover;border-radius:8px;" />
+                                    }
+                                    else
+                                    {
+                                        <div class="d-flex align-items-center justify-content-center bg-light text-muted" style="width:44px;height:44px;border-radius:8px;font-size:10px;">No img</div>
+                                    }
+                                    <div>
+                                        <div class="fw-semibold">@m.Name</div>
+                                        <div class="text-muted small">@m.Code @(string.IsNullOrEmpty(m.Unit) ? "" : "· " + m.Unit)</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="text-end">@m.SellPrice.ToString("N0")đ</td>
+                            <td class="text-end">@m.Stock</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    <partial name="_StoreFooter" />
+
+    <div class="form-actions no-print">
+        @if (followUp)
+        {
+            <form asp-action="Complete" asp-route-id="@Model.Id" method="post">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-success"><i class="bi bi-check2-circle me-1"></i>Đánh dấu hoàn tất</button>
+            </form>
+        }
+        <button type="button" class="btn btn-outline-secondary" onclick="window.print()"><i class="bi bi-printer me-1"></i>In phiếu</button>
+        <a asp-action="Create" class="btn btn-outline-secondary"><i class="bi bi-plus-lg me-1"></i>Tạo phiếu mới</a>
+        <a asp-action="Index" class="btn btn-outline-secondary">Danh sách phiếu</a>
+    </div>
+</div>

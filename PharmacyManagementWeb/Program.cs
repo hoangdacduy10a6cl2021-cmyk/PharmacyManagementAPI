@@ -15,6 +15,8 @@ builder.Services.AddHttpClient("PharmacyApi", client =>
 });
 
 builder.Services.AddScoped<IApiClient, ApiClient>();
+builder.Services.AddMemoryCache();
+builder.Services.AddScoped<IStoreSettingsProvider, StoreSettingsProvider>();
 
 // Đăng nhập bằng Cookie - JWT token từ API được lưu trong claim của cookie
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)

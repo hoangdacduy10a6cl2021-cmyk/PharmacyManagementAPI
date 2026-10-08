@@ -21,15 +21,15 @@ namespace PharmacyManagementAPI.Services
     {
         private readonly ApplicationDbContext _context;
         private readonly IWebHostEnvironment _env;
-        private const int LOW_STOCK_THRESHOLD = 20;
-        private const int EXPIRING_SOON_DAYS = 90;
+        private readonly IStoreSettingService _settings;
         private const long MAX_IMAGE_SIZE = 2 * 1024 * 1024; // 2MB
         private static readonly string[] AllowedImageExtensions = { ".jpg", ".jpeg", ".png", ".webp", ".gif" };
 
-        public MedicineService(ApplicationDbContext context, IWebHostEnvironment env)
+        public MedicineService(ApplicationDbContext context, IWebHostEnvironment env, IStoreSettingService settings)
         {
             _context = context;
             _env = env;
+            _settings = settings;
         }
 
         private string GetUploadFolder()
@@ -84,12 +84,17 @@ namespace PharmacyManagementAPI.Services
             if (categoryId.HasValue)
                 query = query.Where(m => m.CategoryId == categoryId.Value);
 
+            var cfg = await _settings.GetEntityAsync();
+
             if (lowStock == true)
-                query = query.Where(m => m.Stock <= LOW_STOCK_THRESHOLD);
+            {
+                var lowThreshold = cfg.LowStockThreshold;
+                query = query.Where(m => m.Stock <= lowThreshold);
+            }
 
             if (expiringSoon == true)
             {
-                var threshold = DateTime.Now.AddDays(EXPIRING_SOON_DAYS);
+                var threshold = DateTime.Now.AddDays(cfg.ExpiringSoonDays);
                 query = query.Where(m => m.ExpiryDate != null && m.ExpiryDate <= threshold);
             }
 

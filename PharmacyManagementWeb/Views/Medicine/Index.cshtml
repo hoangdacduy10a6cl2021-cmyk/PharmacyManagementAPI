@@ -1,14 +1,16 @@
 ﻿@model List<PharmacyManagementWeb.Models.ApiModels.MedicineModel>
 @inject IConfiguration Config
+@inject PharmacyManagementWeb.Services.IStoreSettingsProvider Store
 @{
     ViewData["Title"] = "Thuốc / Kho";
+    var cfg = await Store.GetAsync();
     bool isAdmin = User.IsInRole("Admin");
     var categories = ViewBag.Categories as List<PharmacyManagementWeb.Models.ApiModels.CategoryModel> ?? new();
 
     int totalCount = Model.Count;
     int activeCount = Model.Count(m => m.IsActive);
-    int lowCount = Model.Count(m => m.Stock <= 20);
-    int expCount = Model.Count(m => m.ExpiryDate.HasValue && m.ExpiryDate.Value <= DateTime.Now.AddDays(90));
+    int lowCount = Model.Count(m => m.Stock <= cfg.LowStockThreshold);
+    int expCount = Model.Count(m => m.ExpiryDate.HasValue && m.ExpiryDate.Value <= DateTime.Now.AddDays(cfg.ExpiringSoonDays));
 
     bool hasFilter = !string.IsNullOrEmpty(ViewBag.Search as string)
                      || ViewBag.CategoryId != null
@@ -112,8 +114,8 @@
             <tbody>
                 @foreach (var m in Model)
                 {
-                    bool expiringSoon = m.ExpiryDate.HasValue && m.ExpiryDate.Value <= DateTime.Now.AddDays(90);
-                    bool lowStock = m.Stock <= 20;
+                    bool expiringSoon = m.ExpiryDate.HasValue && m.ExpiryDate.Value <= DateTime.Now.AddDays(cfg.ExpiringSoonDays);
+                    bool lowStock = m.Stock <= cfg.LowStockThreshold;
 
                     <tr>
                         <td>

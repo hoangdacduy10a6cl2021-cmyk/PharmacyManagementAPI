@@ -22,12 +22,13 @@ namespace PharmacyManagementAPI.Services
         // Khách chi tiêu từ mức này trở lên -> tự động nâng hạng VIP
         private const decimal VIP_THRESHOLD = 5_000_000;
 
-        // Nhân viên chỉ được giảm tối đa X% giá trị đơn, Admin không bị giới hạn (chỉnh số này nếu cần)
-        private const decimal MAX_STAFF_DISCOUNT_PERCENT = 10;
+        // % giảm giá tối đa của nhân viên được lấy từ Cài đặt cửa hàng
+        private readonly IStoreSettingService _settings;
 
-        public OrderService(ApplicationDbContext context)
+        public OrderService(ApplicationDbContext context, IStoreSettingService settings)
         {
             _context = context;
+            _settings = settings;
         }
 
         private static OrderDto ToDto(Order o) => new OrderDto
@@ -128,9 +129,10 @@ namespace PharmacyManagementAPI.Services
 
             if (!isAdmin)
             {
-                var maxDiscount = totalAmount * MAX_STAFF_DISCOUNT_PERCENT / 100;
+                var maxPercent = (await _settings.GetEntityAsync()).MaxStaffDiscountPercent;
+                var maxDiscount = totalAmount * maxPercent / 100;
                 if (dto.DiscountAmount > maxDiscount)
-                    return (null, $"Nhân viên chỉ được giảm tối đa {MAX_STAFF_DISCOUNT_PERCENT}% ({maxDiscount:N0}đ) cho đơn này. Giảm nhiều hơn cần Admin thực hiện.");
+                    return (null, $"Nhân viên chỉ được giảm tối đa {maxPercent:0.##}% ({maxDiscount:N0}đ) cho đơn này. Giảm nhiều hơn cần Admin thực hiện.");
             }
 
             using var transaction = await _context.Database.BeginTransactionAsync();

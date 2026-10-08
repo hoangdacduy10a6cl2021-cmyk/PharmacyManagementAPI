@@ -7,8 +7,8 @@
     var sections = new[]
     {
         new { Title = "Đã hết hạn", Desc = "Thuốc đã quá hạn sử dụng, cần ngừng bán và xử lý.", Icon = "bi-x-octagon", Pill = "pill-red", Items = Model.Expired, Kind = "expired" },
-        new { Title = "Sắp hết hạn", Desc = "Hạn sử dụng còn dưới 90 ngày.", Icon = "bi-alarm", Pill = "pill-yellow", Items = Model.ExpiringSoon, Kind = "expiring" },
-        new { Title = "Sắp hết hàng", Desc = "Tồn kho từ 20 trở xuống.", Icon = "bi-box-seam", Pill = "pill-orange", Items = Model.LowStock, Kind = "low" }
+        new { Title = "Sắp hết hạn", Desc = $"Hạn sử dụng còn dưới {Model.ExpiringSoonDays} ngày.", Icon = "bi-alarm", Pill = "pill-yellow", Items = Model.ExpiringSoon, Kind = "expiring" },
+        new { Title = "Sắp hết hàng", Desc = $"Tồn kho từ {Model.LowStockThreshold} trở xuống.", Icon = "bi-box-seam", Pill = "pill-orange", Items = Model.LowStock, Kind = "low" }
     };
 }
 
@@ -85,7 +85,7 @@
                                     <div class="fw-semibold">@m.Name</div>
                                     <div class="text-muted small">@m.Code</div>
                                 </td>
-                                <td class="text-end fw-semibold @(m.Stock <= 20 ? "text-danger" : "")">@m.Stock @m.Unit</td>
+                                <td class="text-end fw-semibold @(m.Stock <= Model.LowStockThreshold ? "text-danger" : "")">@m.Stock @m.Unit</td>
                                 <td>@(m.ExpiryDate?.ToString("dd/MM/yyyy") ?? "-")</td>
                                 <td>
                                     @if (m.DaysToExpire.HasValue)
