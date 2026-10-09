@@ -16,19 +16,19 @@ namespace PharmacyManagementAPI.Services
     public class OrderService : IOrderService
     {
         private readonly ApplicationDbContext _context;
+        private readonly IStoreSettingService _settings;
+        private readonly IBatchService _batches;
 
         private const string CANCELLED = "Đã hủy";
 
         // Khách chi tiêu từ mức này trở lên -> tự động nâng hạng VIP
         private const decimal VIP_THRESHOLD = 5_000_000;
 
-        // % giảm giá tối đa của nhân viên được lấy từ Cài đặt cửa hàng
-        private readonly IStoreSettingService _settings;
-
-        public OrderService(ApplicationDbContext context, IStoreSettingService settings)
+        public OrderService(ApplicationDbContext context, IStoreSettingService settings, IBatchService batches)
         {
             _context = context;
             _settings = settings;
+            _batches = batches;
         }
 
         private static OrderDto ToDto(Order o) => new OrderDto
@@ -98,7 +98,13 @@ namespace PharmacyManagementAPI.Services
                 if (!customerExists) return (null, "Khách hàng không tồn tại.");
             }
 
-            var medicineIds = dto.Details.Select(d => d.MedicineId).Distinct().ToList();
+            // Gộp các dòng trùng thuốc để kiểm tra tồn kho cho đúng
+            var wanted = dto.Details
+                .GroupBy(d => d.MedicineId)
+                .Select(g => new { MedicineId = g.Key, Quantity = g.Sum(x => x.Quantity) })
+                .ToList();
+
+            var medicineIds = wanted.Select(w => w.MedicineId).ToList();
             var medicines = await _context.Medicines
                 .Where(m => medicineIds.Contains(m.Id))
                 .ToListAsync();
@@ -106,19 +112,21 @@ namespace PharmacyManagementAPI.Services
             if (medicines.Count != medicineIds.Count)
                 return (null, "Có thuốc trong hoá đơn không tồn tại.");
 
-            // Kiểm tra thuốc còn kinh doanh và đủ tồn kho trước khi trừ
-            foreach (var item in dto.Details)
+            // Kiểm tra thuốc còn kinh doanh và đủ số lượng CÒN HẠN trước khi trừ kho
+            foreach (var w in wanted)
             {
-                var medicine = medicines.First(m => m.Id == item.MedicineId);
+                var medicine = medicines.First(m => m.Id == w.MedicineId);
 
                 if (!medicine.IsActive)
                     return (null, $"Thuốc '{medicine.Name}' đã ngưng kinh doanh.");
 
-                if (medicine.ExpiryDate.HasValue && medicine.ExpiryDate.Value.Date < DateTime.Today)
-                    return (null, $"Thuốc '{medicine.Name}' đã hết hạn sử dụng ({medicine.ExpiryDate.Value:dd/MM/yyyy}), không thể bán.");
-
-                if (medicine.Stock < item.Quantity)
-                    return (null, $"Thuốc '{medicine.Name}' không đủ tồn kho (còn {medicine.Stock}, cần {item.Quantity}).");
+                var sellable = await _batches.GetSellableQuantityAsync(medicine.Id);
+                if (sellable < w.Quantity)
+                {
+                    var expiredQty = medicine.Stock - sellable;
+                    var extra = expiredQty > 0 ? $", {expiredQty} đã hết hạn không bán được" : "";
+                    return (null, $"Thuốc '{medicine.Name}' không đủ số lượng còn hạn (còn bán được {sellable}, cần {w.Quantity}{extra}).");
+                }
             }
 
             var totalAmount = dto.Details.Sum(d => d.Quantity * medicines.First(m => m.Id == d.MedicineId).SellPrice);
@@ -163,17 +171,33 @@ namespace PharmacyManagementAPI.Services
                 {
                     var medicine = medicines.First(m => m.Id == item.MedicineId);
 
-                    _context.OrderDetails.Add(new OrderDetail
+                    var detail = new OrderDetail
                     {
                         OrderId = order.Id,
                         MedicineId = item.MedicineId,
                         Quantity = item.Quantity,
                         UnitPrice = medicine.SellPrice,
                         Subtotal = item.Quantity * medicine.SellPrice
-                    });
+                    };
+                    _context.OrderDetails.Add(detail);
 
-                    // Tự động trừ tồn kho
-                    medicine.Stock -= item.Quantity;
+                    // Trừ kho theo FEFO và ghi lại đã lấy từ lô nào
+                    var (allocations, error) = await _batches.DeductFefoAsync(item.MedicineId, item.Quantity);
+                    if (allocations == null)
+                    {
+                        await transaction.RollbackAsync();
+                        return (null, $"Thuốc '{medicine.Name}': {error}");
+                    }
+
+                    foreach (var (batch, qty) in allocations)
+                    {
+                        _context.OrderDetailBatches.Add(new OrderDetailBatch
+                        {
+                            OrderDetail = detail,
+                            BatchId = batch.Id,
+                            Quantity = qty
+                        });
+                    }
                 }
 
                 // Cộng dồn chi tiêu và tự động nâng hạng VIP cho khách hàng (nếu có chọn khách hàng)
@@ -189,6 +213,12 @@ namespace PharmacyManagementAPI.Services
                 }
 
                 await _context.SaveChangesAsync();
+
+                // Tồn kho và hạn dùng của thuốc được tính lại từ các lô
+                foreach (var medicine in medicines)
+                    await _batches.SyncMedicineAsync(medicine);
+
+                await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
                 var result = await GetByIdAsync(order.Id);
@@ -201,7 +231,7 @@ namespace PharmacyManagementAPI.Services
             }
         }
 
-        // Hủy hoá đơn = hoàn tiền: trả thuốc về kho, trừ lại chi tiêu của khách, đổi trạng thái "Đã hủy"
+        // Hủy hoá đơn = hoàn tiền: trả thuốc về ĐÚNG LÔ đã bán, trừ lại chi tiêu của khách, đổi trạng thái "Đã hủy"
         public async Task<(OrderDto? data, string? error)> CancelAsync(int id)
         {
             var order = await _context.Orders
@@ -218,10 +248,7 @@ namespace PharmacyManagementAPI.Services
             try
             {
                 foreach (var detail in order.OrderDetails)
-                {
-                    var medicine = await _context.Medicines.FindAsync(detail.MedicineId);
-                    if (medicine != null) medicine.Stock += detail.Quantity;
-                }
+                    await _batches.RestoreForOrderDetailAsync(detail.Id, detail.MedicineId, detail.Quantity);
 
                 if (order.CustomerId.HasValue)
                 {
@@ -231,6 +258,13 @@ namespace PharmacyManagementAPI.Services
                 }
 
                 order.Status = CANCELLED;
+
+                await _context.SaveChangesAsync();
+
+                var medicineIds = order.OrderDetails.Select(d => d.MedicineId).Distinct().ToList();
+                var medicines = await _context.Medicines.Where(m => medicineIds.Contains(m.Id)).ToListAsync();
+                foreach (var medicine in medicines)
+                    await _batches.SyncMedicineAsync(medicine);
 
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();

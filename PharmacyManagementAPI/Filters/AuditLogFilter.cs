@@ -28,7 +28,8 @@ namespace PharmacyManagementAPI.Filters
             ["Return"] = "phiếu trả hàng",
             ["StockCheck"] = "phiếu kiểm kê",
             ["StoreSetting"] = "cài đặt cửa hàng",
-            ["Consultation"] = "phiếu tư vấn"
+            ["Consultation"] = "phiếu tư vấn",
+            ["MedicineBatch"] = "lô thuốc"
         };
 
         public AuditLogFilter(IAuditService audit)
@@ -102,6 +103,7 @@ namespace PharmacyManagementAPI.Filters
                 case "approve": return ("Duyệt", $"Duyệt phiếu trả hàng{suffix}");
                 case "reject": return ("Từ chối", $"Từ chối phiếu trả hàng{suffix}");
                 case "complete": return ("Cập nhật", $"Hoàn tất phiếu tư vấn{suffix}");
+                case "dispose": return ("Hủy", $"Hủy lô thuốc hết hạn{suffix}");
             }
 
             var verb = method.ToUpperInvariant() switch

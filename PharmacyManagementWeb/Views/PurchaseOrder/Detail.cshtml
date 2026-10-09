@@ -44,6 +44,10 @@
                         <td class="text-muted">@stt</td>
                         <td>
                             <div class="fw-semibold">@d.MedicineName</div>
+                                                        @if (!string.IsNullOrEmpty(d.BatchNumber))
+                            {
+                                <div class="small text-muted">Lô @d.BatchNumber @(d.ExpiryDate.HasValue ? "· HSD " + d.ExpiryDate.Value.ToString("dd/MM/yyyy") : "")</div>
+                            }
                             <div class="text-muted small">@d.MedicineCode</div>
                         </td>
                         <td class="text-end">@d.Quantity</td>

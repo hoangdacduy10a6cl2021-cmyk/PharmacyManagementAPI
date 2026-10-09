@@ -135,12 +135,31 @@ namespace PharmacyManagementAPI.Services
             var lowStock = medicines.Where(m => m.Stock <= cfg.LowStockThreshold)
                 .OrderBy(m => m.Stock).Select(m => ToAlert(m, today)).ToList();
 
-            var expired = medicines.Where(m => m.ExpiryDate.HasValue && m.ExpiryDate.Value.Date < today)
-                .OrderBy(m => m.ExpiryDate).Select(m => ToAlert(m, today)).ToList();
+            // Hạn dùng tính theo từng lô còn hàng
+            var batches = await _context.MedicineBatches
+                .Include(b => b.Medicine)
+                .Where(b => b.Quantity > 0 && b.ExpiryDate != null && b.Medicine!.IsActive)
+                .ToListAsync();
 
-            var expiring = medicines.Where(m => m.ExpiryDate.HasValue
-                    && m.ExpiryDate.Value.Date >= today && m.ExpiryDate.Value.Date <= soon)
-                .OrderBy(m => m.ExpiryDate).Select(m => ToAlert(m, today)).ToList();
+            AlertMedicineDto ToBatchAlert(MedicineBatch b) => new AlertMedicineDto
+            {
+                Id = b.MedicineId,
+                Code = b.Medicine!.Code,
+                Name = b.Medicine.Name,
+                Unit = b.Medicine.Unit,
+                Stock = b.Quantity,
+                ExpiryDate = b.ExpiryDate,
+                DaysToExpire = (int)(b.ExpiryDate!.Value.Date - today).TotalDays,
+                ImageUrl = b.Medicine.ImageUrl,
+                BatchNumber = b.BatchNumber,
+                BatchId = b.Id
+            };
+
+            var expired = batches.Where(b => b.ExpiryDate!.Value.Date < today)
+                .OrderBy(b => b.ExpiryDate).Select(ToBatchAlert).ToList();
+
+            var expiring = batches.Where(b => b.ExpiryDate!.Value.Date >= today && b.ExpiryDate!.Value.Date <= soon)
+                .OrderBy(b => b.ExpiryDate).Select(ToBatchAlert).ToList();
 
             return new AlertsDto
             {

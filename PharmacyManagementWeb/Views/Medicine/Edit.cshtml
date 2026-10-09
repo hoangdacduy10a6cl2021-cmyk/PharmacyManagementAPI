@@ -90,9 +90,18 @@
                     <input asp-for="Stock" class="form-control" type="number" />
                 </div>
             }
-            <div class="col-md-4">
-                <label asp-for="ExpiryDate" class="form-label"></label>
-                <input asp-for="ExpiryDate" class="form-control" type="date" />
+                        <div class="col-md-4">
+                @if (isEdit)
+                {
+                    <label class="form-label">Hạn dùng gần nhất</label>
+                    <input value="@(Model.ExpiryDate.HasValue ? Model.ExpiryDate.Value.ToString("dd/MM/yyyy") : "-")" class="form-control" disabled />
+                    <div class="form-text">Tính theo các lô. <a asp-controller="MedicineBatch" asp-action="Index" asp-route-id="@Model.Id">Xem các lô</a></div>
+                }
+                else
+                {
+                    <label asp-for="ExpiryDate" class="form-label">Hạn dùng của lô đầu tiên</label>
+                    <input asp-for="ExpiryDate" class="form-control" type="date" />
+                }
             </div>
         </div>
 

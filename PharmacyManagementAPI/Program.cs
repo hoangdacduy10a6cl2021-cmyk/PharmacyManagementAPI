@@ -32,6 +32,7 @@ builder.Services.AddScoped<IReturnService, ReturnService>();
 builder.Services.AddScoped<IStockCheckService, StockCheckService>();
 builder.Services.AddScoped<IStoreSettingService, StoreSettingService>();
 builder.Services.AddScoped<IConsultationService, ConsultationService>();
+builder.Services.AddScoped<IBatchService, BatchService>();
 
 // JWT Auth
 var jwtSettings = builder.Configuration.GetSection("Jwt");
@@ -123,5 +124,20 @@ app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+
+// Tạo lô đầu kỳ cho các thuốc đang có tồn kho nhưng chưa có lô (chạy an toàn nhiều lần)
+using (var scope = app.Services.CreateScope())
+{
+    try
+    {
+        var batchService = scope.ServiceProvider.GetRequiredService<IBatchService>();
+        await batchService.EnsureInitialBatchesAsync();
+    }
+    catch (Exception ex)
+    {
+        scope.ServiceProvider.GetRequiredService<ILogger<Program>>()
+            .LogWarning(ex, "Chưa tạo được lô đầu kỳ (đã chạy migration chưa?)");
+    }
+}
 
 app.Run();

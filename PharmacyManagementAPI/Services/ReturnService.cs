@@ -18,15 +18,17 @@ namespace PharmacyManagementAPI.Services
     public class ReturnService : IReturnService
     {
         private readonly ApplicationDbContext _context;
+        private readonly IBatchService _batches;
 
         private const string PENDING = "Chờ duyệt";
         private const string APPROVED = "Đã duyệt";
         private const string REJECTED = "Từ chối";
         private const string ORDER_CANCELLED = "Đã hủy";
 
-        public ReturnService(ApplicationDbContext context)
+        public ReturnService(ApplicationDbContext context, IBatchService batches)
         {
             _context = context;
+            _batches = batches;
         }
 
         private IQueryable<ReturnOrder> Query() => _context.ReturnOrders
@@ -228,10 +230,16 @@ namespace PharmacyManagementAPI.Services
         {
             if (ret.RestockItems)
             {
+                // Trả thuốc về đúng lô đã bán ra, rồi tính lại tồn kho và hạn dùng của thuốc
                 foreach (var d in ret.ReturnDetails)
+                    await _batches.RestoreForOrderDetailAsync(d.OrderDetailId, d.MedicineId, d.Quantity);
+
+                await _context.SaveChangesAsync();
+
+                foreach (var medicineId in ret.ReturnDetails.Select(d => d.MedicineId).Distinct())
                 {
-                    var medicine = await _context.Medicines.FindAsync(d.MedicineId);
-                    if (medicine != null) medicine.Stock += d.Quantity;
+                    var medicine = await _context.Medicines.FindAsync(medicineId);
+                    if (medicine != null) await _batches.SyncMedicineAsync(medicine);
                 }
             }
 

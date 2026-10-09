@@ -15,10 +15,12 @@ namespace PharmacyManagementAPI.Services
     public class StockCheckService : IStockCheckService
     {
         private readonly ApplicationDbContext _context;
+        private readonly IBatchService _batches;
 
-        public StockCheckService(ApplicationDbContext context)
+        public StockCheckService(ApplicationDbContext context, IBatchService batches)
         {
             _context = context;
+            _batches = batches;
         }
 
         private IQueryable<StockCheck> Query() => _context.StockChecks
@@ -90,6 +92,8 @@ namespace PharmacyManagementAPI.Services
                     Note = dto.Note
                 };
 
+                _context.StockChecks.Add(check);
+
                 foreach (var item in items)
                 {
                     var medicine = medicines.First(m => m.Id == item.MedicineId);
@@ -102,11 +106,10 @@ namespace PharmacyManagementAPI.Services
                         Note = item.Note
                     });
 
-                    // Điều chỉnh tồn kho theo số đếm thực tế
-                    medicine.Stock = item.ActualQty;
+                    // Điều chỉnh các lô cho khớp số đếm thực tế (thiếu thì trừ lô gần hết hạn, thừa thì tạo lô kiểm kê)
+                    await _batches.AdjustToQuantityAsync(medicine, item.ActualQty, $"Điều chỉnh từ phiếu {check.Code}");
                 }
 
-                _context.StockChecks.Add(check);
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 

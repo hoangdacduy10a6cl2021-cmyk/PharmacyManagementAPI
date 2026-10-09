@@ -8,6 +8,8 @@
         public string? MedicineCode { get; set; }
         public int Quantity { get; set; }
         public decimal ImportPrice { get; set; }
+        public string? BatchNumber { get; set; }
+        public DateTime? ExpiryDate { get; set; }
         public decimal Subtotal { get; set; }
     }
 
@@ -31,5 +33,7 @@
         public int MedicineId { get; set; }
         public int Quantity { get; set; }
         public decimal ImportPrice { get; set; }
+        public string? BatchNumber { get; set; }
+        public DateTime? ExpiryDate { get; set; }
     }
 }

@@ -31,6 +31,8 @@ namespace PharmacyManagementAPI.Data
         public DbSet<StoreSetting> StoreSettings { get; set; }
         public DbSet<Consultation> Consultations { get; set; }
         public DbSet<ConsultationMedicine> ConsultationMedicines { get; set; }
+        public DbSet<MedicineBatch> MedicineBatches { get; set; }
+        public DbSet<OrderDetailBatch> OrderDetailBatches { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -55,6 +57,12 @@ namespace PharmacyManagementAPI.Data
             modelBuilder.Entity<Consultation>().HasOne(c => c.Customer).WithMany().HasForeignKey(c => c.CustomerId).OnDelete(DeleteBehavior.SetNull);
             modelBuilder.Entity<Consultation>().HasOne(c => c.CreatedBy).WithMany().HasForeignKey(c => c.CreatedByUserId).OnDelete(DeleteBehavior.Restrict);
             modelBuilder.Entity<ConsultationMedicine>().HasOne(m => m.Medicine).WithMany().HasForeignKey(m => m.MedicineId).OnDelete(DeleteBehavior.Restrict);
+
+            // ===== Quản lý theo lô =====
+            modelBuilder.Entity<MedicineBatch>().HasOne(b => b.Medicine).WithMany().HasForeignKey(b => b.MedicineId).OnDelete(DeleteBehavior.Cascade);
+            modelBuilder.Entity<MedicineBatch>().HasIndex(b => new { b.MedicineId, b.ExpiryDate });
+            modelBuilder.Entity<OrderDetailBatch>().HasOne(x => x.OrderDetail).WithMany().HasForeignKey(x => x.OrderDetailId).OnDelete(DeleteBehavior.Cascade);
+            modelBuilder.Entity<OrderDetailBatch>().HasOne(x => x.Batch).WithMany().HasForeignKey(x => x.BatchId).OnDelete(DeleteBehavior.Restrict);
 
             // Unique constraints
             modelBuilder.Entity<User>().HasIndex(u => u.Username).IsUnique();

@@ -15,10 +15,12 @@ namespace PharmacyManagementAPI.Services
     public class PurchaseOrderService : IPurchaseOrderService
     {
         private readonly ApplicationDbContext _context;
+        private readonly IBatchService _batches;
 
-        public PurchaseOrderService(ApplicationDbContext context)
+        public PurchaseOrderService(ApplicationDbContext context, IBatchService batches)
         {
             _context = context;
+            _batches = batches;
         }
 
         private static PurchaseOrderDto ToDto(PurchaseOrder p) => new PurchaseOrderDto
@@ -39,7 +41,9 @@ namespace PharmacyManagementAPI.Services
                 MedicineName = d.Medicine?.Name,
                 MedicineCode = d.Medicine?.Code,
                 Quantity = d.Quantity,
-                ImportPrice = d.ImportPrice
+                ImportPrice = d.ImportPrice,
+                BatchNumber = d.BatchNumber,
+                ExpiryDate = d.ExpiryDate
             }).ToList()
         };
 
@@ -109,19 +113,33 @@ namespace PharmacyManagementAPI.Services
 
                 foreach (var item in dto.Details)
                 {
+                    var batchNumber = string.IsNullOrWhiteSpace(item.BatchNumber)
+                        ? $"{purchaseOrder.Code}-{item.MedicineId}"
+                        : item.BatchNumber.Trim();
+
                     _context.PurchaseOrderDetails.Add(new PurchaseOrderDetail
                     {
                         PurchaseOrderId = purchaseOrder.Id,
                         MedicineId = item.MedicineId,
                         Quantity = item.Quantity,
-                        ImportPrice = item.ImportPrice
+                        ImportPrice = item.ImportPrice,
+                        BatchNumber = batchNumber,
+                        ExpiryDate = item.ExpiryDate?.Date
                     });
 
-                    // Tự động cộng tồn kho + cập nhật giá nhập mới nhất
+                    // Mỗi dòng nhập tạo một lô mới, cập nhật giá nhập mới nhất của thuốc
                     var medicine = medicines.First(m => m.Id == item.MedicineId);
-                    medicine.Stock += item.Quantity;
                     medicine.ImportPrice = item.ImportPrice;
+
+                    _batches.AddBatch(item.MedicineId, batchNumber, item.ExpiryDate, item.ImportPrice,
+                                      item.Quantity, purchaseOrder.Id, null);
                 }
+
+                await _context.SaveChangesAsync();
+
+                // Tồn kho và hạn dùng của thuốc được tính lại từ các lô
+                foreach (var medicine in medicines)
+                    await _batches.SyncMedicineAsync(medicine);
 
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();

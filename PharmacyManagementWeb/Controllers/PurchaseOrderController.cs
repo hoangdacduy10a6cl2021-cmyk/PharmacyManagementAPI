@@ -59,7 +59,7 @@ namespace PharmacyManagementWeb.Controllers
             var result = await _apiClient.PostAsync<PurchaseOrderModel>("/api/PurchaseOrder", new
             {
                 supplierId,
-                details = items.Select(i => new { medicineId = i.MedicineId, quantity = i.Quantity, importPrice = i.ImportPrice })
+                details = items.Select(i => new { medicineId = i.MedicineId, quantity = i.Quantity, importPrice = i.ImportPrice, batchNumber = i.BatchNumber, expiryDate = i.ExpiryDate })
             });
 
             if (!result.Success || result.Data == null)

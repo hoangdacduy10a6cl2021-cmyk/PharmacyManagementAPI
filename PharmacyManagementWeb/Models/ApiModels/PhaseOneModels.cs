@@ -11,6 +11,8 @@
         public DateTime? ExpiryDate { get; set; }
         public int? DaysToExpire { get; set; }
         public string? ImageUrl { get; set; }
+        public string? BatchNumber { get; set; }
+        public int? BatchId { get; set; }
     }
 
     public class AlertsModel

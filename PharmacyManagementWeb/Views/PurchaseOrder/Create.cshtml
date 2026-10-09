@@ -147,7 +147,7 @@
         if (cart.find(i => i.medicineId === medicine.id)) {
             alert('Thuốc này đã có trong phiếu nhập.');
         } else {
-            cart.push({ medicineId: medicine.id, code: medicine.code, name: medicine.name, importPrice: 0, quantity: 1, imageUrl: medicine.imageUrl });
+           cart.push({ medicineId: medicine.id, code: medicine.code, name: medicine.name, importPrice: 0, quantity: 1, imageUrl: medicine.imageUrl, batchNumber: '', expiryDate: '' });
         }
         searchInput.value = '';
         searchResults.style.display = 'none';
@@ -167,6 +167,15 @@
         if (item) item.importPrice = Math.max(0, parseFloat(value) || 0);
         renderCart();
     }
+        function updateBatchNumber(medicineId, value) {
+        const item = cart.find(i => i.medicineId === medicineId);
+        if (item) item.batchNumber = value;
+    }
+
+    function updateExpiry(medicineId, value) {
+        const item = cart.find(i => i.medicineId === medicineId);
+        if (item) item.expiryDate = value;
+    }
 
     function renderCart() {
         const body = document.getElementById('cartBody');
@@ -178,7 +187,13 @@
                     <td>
                         <div class="d-flex align-items-center gap-2">
                             ${thumb(i.imageUrl, 44)}
-                            <div><div class="fw-semibold">${esc(i.name)}</div><div class="text-muted small">${esc(i.code)}</div></div>
+                                                        <div><div class="fw-semibold">${esc(i.name)}</div><div class="text-muted small">${esc(i.code)}</div></div>
+                        </div>
+                        <div class="d-flex gap-2 mt-2">
+                            <input type="text" class="form-control form-control-sm" style="max-width:150px;" placeholder="Số lô (tự tạo nếu bỏ trống)"
+                                   value="${esc(i.batchNumber)}" onchange="updateBatchNumber(${i.medicineId}, this.value)" />
+                            <input type="date" class="form-control form-control-sm" style="max-width:150px;" title="Hạn sử dụng của lô"
+                                   value="${i.expiryDate}" onchange="updateExpiry(${i.medicineId}, this.value)" />
                         </div>
                     </td>
                     <td><input type="number" class="form-control form-control-sm" value="${i.quantity}" min="1" onchange="updateQuantity(${i.medicineId}, this.value)" /></td>
@@ -203,8 +218,16 @@
     document.getElementById('createForm').addEventListener('submit', function (e) {
         if (cart.length === 0) { e.preventDefault(); return; }
         document.getElementById('hiddenSupplierId').value = document.getElementById('supplierSelect').value;
+                const missingExpiry = cart.filter(i => !i.expiryDate);
+        if (missingExpiry.length > 0) {
+            e.preventDefault();
+            alert('Vui lòng nhập hạn sử dụng cho: ' + missingExpiry.map(i => i.name).join(', '));
+            return;
+        }
+
         document.getElementById('hiddenCartJson').value = JSON.stringify(cart.map(i => ({
-            medicineId: i.medicineId, quantity: i.quantity, importPrice: i.importPrice
+            medicineId: i.medicineId, quantity: i.quantity, importPrice: i.importPrice,
+            batchNumber: i.batchNumber || null, expiryDate: i.expiryDate
         })));
     });
 

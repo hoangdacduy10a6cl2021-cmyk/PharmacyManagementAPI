@@ -167,6 +167,7 @@
                         @if (isAdmin)
                         {
                             <td class="text-end">
+                                <a asp-controller="MedicineBatch" asp-action="Index" asp-route-id="@m.Id" class="act-btn" title="Xem các lô"><i class="bi bi-layers"></i></a>
                                 <a asp-action="Edit" asp-route-id="@m.Id" class="act-btn" title="Sửa"><i class="bi bi-pencil"></i></a>
                                 <form asp-action="Delete" asp-route-id="@m.Id" method="post" class="d-inline"
                                       onsubmit="return confirm('Xác nhận xoá/ngưng kinh doanh thuốc này?');">

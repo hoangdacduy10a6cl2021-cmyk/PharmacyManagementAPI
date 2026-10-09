@@ -10,6 +10,8 @@ namespace PharmacyManagementAPI.Models.DTOs
         public string? MedicineCode { get; set; }
         public int Quantity { get; set; }
         public decimal ImportPrice { get; set; }
+        public string? BatchNumber { get; set; }
+        public DateTime? ExpiryDate { get; set; }
         public decimal Subtotal => Quantity * ImportPrice;
     }
 
@@ -37,6 +39,11 @@ namespace PharmacyManagementAPI.Models.DTOs
 
         [Range(0, double.MaxValue)]
         public decimal ImportPrice { get; set; }
+
+        [MaxLength(50)]
+        public string? BatchNumber { get; set; }
+
+        public DateTime? ExpiryDate { get; set; }
     }
 
     public class CreatePurchaseOrderDto

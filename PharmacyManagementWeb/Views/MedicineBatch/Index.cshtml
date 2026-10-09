@@ -1,0 +1,148 @@
+﻿@model List<PharmacyManagementWeb.Models.ApiModels.MedicineBatchModel>
+@inject IConfiguration Config
+@{
+    var med = (PharmacyManagementWeb.Models.ApiModels.MedicineModel)ViewBag.Medicine;
+    ViewData["Title"] = "Các lô của " + med.Name;
+    bool isAdmin = User.IsInRole("Admin");
+
+    var active = Model.Where(b => b.Quantity > 0).ToList();
+    int totalQty = active.Sum(b => b.Quantity);
+    int expiredQty = Model.Where(b => b.Status == "Hết hạn").Sum(b => b.Quantity);
+    int sellable = totalQty - expiredQty;
+
+    string PillOf(string s) => s switch
+    {
+        "Còn hạn" => "pill-green",
+        "Sắp hết hạn" => "pill-yellow",
+        "Hết hạn" => "pill-red",
+        _ => "pill-gray"
+    };
+}
+
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-danger">@ViewBag.Error</div>
+}
+
+<div class="stat-card mb-3">
+    <div class="d-flex align-items-center gap-3 flex-wrap">
+        @if (!string.IsNullOrEmpty(med.ImageUrl))
+        {
+            <img src="@(Config["ApiSettings:BaseUrl"])@med.ImageUrl" alt="@med.Name" style="width:64px;height:64px;object-fit:cover;border-radius:14px;" />
+        }
+        else
+        {
+            <div class="d-flex align-items-center justify-content-center bg-light text-muted" style="width:64px;height:64px;border-radius:14px;font-size:11px;">No img</div>
+        }
+        <div>
+            <h5 class="fw-bold mb-0">@med.Name</h5>
+            <div class="text-muted small">@med.Code · @med.Unit</div>
+        </div>
+        <a asp-controller="Medicine" asp-action="Index" class="btn btn-outline-secondary ms-auto"><i class="bi bi-arrow-left me-1"></i>Danh sách thuốc</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-6 col-xl-3">
+        <div class="stat-tile compact tile-blue">
+            <div class="tile-icon"><i class="bi bi-layers"></i></div>
+            <div><div class="tile-label">Số lô còn hàng</div><div class="tile-value">@active.Count</div></div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="stat-tile compact tile-green">
+            <div class="tile-icon"><i class="bi bi-box-seam"></i></div>
+            <div><div class="tile-label">Tổng tồn kho</div><div class="tile-value">@totalQty</div></div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="stat-tile compact tile-orange">
+            <div class="tile-icon"><i class="bi bi-bag-check"></i></div>
+            <div><div class="tile-label">Có thể bán (còn hạn)</div><div class="tile-value">@sellable</div></div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="stat-tile compact tile-red">
+            <div class="tile-icon"><i class="bi bi-x-octagon"></i></div>
+            <div><div class="tile-label">Hết hạn, không bán được</div><div class="tile-value">@expiredQty</div></div>
+        </div>
+    </div>
+</div>
+
+<div class="stat-card">
+    <div class="text-muted small mb-3"><i class="bi bi-info-circle me-1"></i>Khi bán hàng, hệ thống tự lấy thuốc từ <strong>lô gần hết hạn trước</strong>. Lô đã hết hạn không bán được.</div>
+
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>Số lô</th>
+                    <th>Hạn dùng</th>
+                    <th>Còn lại</th>
+                    <th class="text-end">SL nhập</th>
+                    <th class="text-end">Còn lại</th>
+                    <th class="text-end">Giá nhập</th>
+                    <th>Ngày nhập</th>
+                    <th>Trạng thái</th>
+                    @if (isAdmin)
+                    {
+                        <th class="text-end">Thao tác</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var b in Model)
+                {
+                    <tr class="@(b.Quantity == 0 ? "row-cancelled" : "")">
+                        <td>
+                            <div class="fw-semibold">@b.BatchNumber</div>
+                            @if (!string.IsNullOrEmpty(b.Note))
+                            {
+                                <div class="text-muted small">@b.Note</div>
+                            }
+                        </td>
+                        <td>@(b.ExpiryDate.HasValue ? b.ExpiryDate.Value.ToString("dd/MM/yyyy") : "Không có hạn")</td>
+                        <td>
+                            @if (b.DaysToExpire.HasValue && b.Quantity > 0)
+                            {
+                                @if (b.DaysToExpire.Value < 0)
+                                {
+                                    <span class="text-danger fw-semibold">Quá hạn @(-b.DaysToExpire.Value) ngày</span>
+                                }
+                                else
+                                {
+                                    <span>@b.DaysToExpire.Value ngày</span>
+                                }
+                            }
+                            else
+                            {
+                                <span class="text-muted">-</span>
+                            }
+                        </td>
+                        <td class="text-end">@b.InitialQuantity</td>
+                        <td class="text-end fw-semibold">@b.Quantity</td>
+                        <td class="text-end">@b.ImportPrice.ToString("N0")đ</td>
+                        <td class="text-muted">@b.ReceivedDate.ToString("dd/MM/yyyy")</td>
+                        <td><span class="status-pill @PillOf(b.Status)">@b.Status</span></td>
+                        @if (isAdmin)
+                        {
+                            <td class="text-end">
+                                @if (b.Status == "Hết hạn")
+                                {
+                                    <form asp-action="Dispose" asp-route-id="@b.Id" asp-route-medicineId="@med.Id" method="post" class="d-inline"
+                                          onsubmit="return confirm('Hủy lô @b.BatchNumber? @b.Quantity @med.Unit đã hết hạn sẽ được đưa khỏi kho.');">
+                                        <button type="submit" class="act-btn danger" title="Hủy lô hết hạn"><i class="bi bi-trash3"></i></button>
+                                    </form>
+                                }
+                            </td>
+                        }
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="9"><div class="empty-state"><i class="bi bi-layers"></i>Thuốc này chưa có lô nào.</div></td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

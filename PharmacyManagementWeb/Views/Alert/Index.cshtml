@@ -83,7 +83,7 @@
                                 </td>
                                 <td>
                                     <div class="fw-semibold">@m.Name</div>
-                                    <div class="text-muted small">@m.Code</div>
+                                    <div class="text-muted small">@m.Code @(string.IsNullOrEmpty(m.BatchNumber) ? "" : "· Lô " + m.BatchNumber)</div>
                                 </td>
                                 <td class="text-end fw-semibold @(m.Stock <= Model.LowStockThreshold ? "text-danger" : "")">@m.Stock @m.Unit</td>
                                 <td>@(m.ExpiryDate?.ToString("dd/MM/yyyy") ?? "-")</td>
@@ -113,7 +113,7 @@
                                         }
                                         else
                                         {
-                                            <a asp-controller="Medicine" asp-action="Edit" asp-route-id="@m.Id" class="act-btn" title="Xem / sửa thuốc"><i class="bi bi-pencil"></i></a>
+                                            <a asp-controller="MedicineBatch" asp-action="Index" asp-route-id="@m.Id" class="act-btn" title="Xem các lô / hủy lô hết hạn"><i class="bi bi-layers"></i></a>
                                         }
                                     </td>
                                 }

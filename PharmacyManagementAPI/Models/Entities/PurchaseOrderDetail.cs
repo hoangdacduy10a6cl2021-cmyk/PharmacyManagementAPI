@@ -20,5 +20,11 @@ namespace PharmacyManagementAPI.Models.Entities
 
         [Column(TypeName = "decimal(18,2)")]
         public decimal ImportPrice { get; set; }
+
+        // Thông tin lô được tạo ra từ dòng nhập này
+        [MaxLength(50)]
+        public string? BatchNumber { get; set; }
+
+        public DateTime? ExpiryDate { get; set; }
     }
 }

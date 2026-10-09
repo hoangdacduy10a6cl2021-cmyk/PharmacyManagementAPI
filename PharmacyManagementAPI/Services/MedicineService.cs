@@ -22,14 +22,16 @@ namespace PharmacyManagementAPI.Services
         private readonly ApplicationDbContext _context;
         private readonly IWebHostEnvironment _env;
         private readonly IStoreSettingService _settings;
+        private readonly IBatchService _batches;
         private const long MAX_IMAGE_SIZE = 2 * 1024 * 1024; // 2MB
         private static readonly string[] AllowedImageExtensions = { ".jpg", ".jpeg", ".png", ".webp", ".gif" };
 
-        public MedicineService(ApplicationDbContext context, IWebHostEnvironment env, IStoreSettingService settings)
+        public MedicineService(ApplicationDbContext context, IWebHostEnvironment env, IStoreSettingService settings, IBatchService batches)
         {
             _context = context;
             _env = env;
             _settings = settings;
+            _batches = batches;
         }
 
         private string GetUploadFolder()
@@ -154,6 +156,15 @@ namespace PharmacyManagementAPI.Services
             _context.Medicines.Add(medicine);
             await _context.SaveChangesAsync();
 
+            // Có tồn kho ban đầu thì tạo luôn lô đầu tiên
+            if (dto.Stock > 0)
+            {
+                _batches.AddBatch(medicine.Id, "LO-DAU", dto.ExpiryDate, dto.ImportPrice, dto.Stock, null, "Lô đầu kỳ khi tạo thuốc");
+                await _context.SaveChangesAsync();
+                await _batches.SyncMedicineAsync(medicine);
+                await _context.SaveChangesAsync();
+            }
+
             await _context.Entry(medicine).Reference(m => m.Category).LoadAsync();
             if (medicine.SupplierId.HasValue)
                 await _context.Entry(medicine).Reference(m => m.Supplier).LoadAsync();
@@ -185,7 +196,6 @@ namespace PharmacyManagementAPI.Services
             medicine.Unit = dto.Unit;
             medicine.SellPrice = dto.SellPrice;
             medicine.ImportPrice = dto.ImportPrice;
-            medicine.ExpiryDate = dto.ExpiryDate;
             medicine.Barcode = dto.Barcode;
             medicine.IsActive = dto.IsActive;
 
