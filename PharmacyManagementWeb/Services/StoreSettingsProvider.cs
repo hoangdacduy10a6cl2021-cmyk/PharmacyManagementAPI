@@ -13,6 +13,7 @@ namespace PharmacyManagementWeb.Services
     public class StoreSettingsProvider : IStoreSettingsProvider
     {
         private const string CacheKey = "store-settings";
+        private const string PublicCacheKey = "store-settings-public";
 
         private readonly IApiClient _apiClient;
         private readonly IMemoryCache _cache;
@@ -30,9 +31,9 @@ namespace PharmacyManagementWeb.Services
             if (_cache.TryGetValue(CacheKey, out StoreSettingModel? cached) && cached != null)
                 return cached;
 
-            // Chưa đăng nhập thì chưa gọi được API, dùng giá trị mặc định
+            // Chưa đăng nhập: chỉ lấy được tên cửa hàng qua endpoint công khai (dùng cho trang Đăng nhập)
             if (_http.HttpContext?.User.Identity?.IsAuthenticated != true)
-                return new StoreSettingModel();
+                return await GetPublicAsync();
 
             try
             {
@@ -51,6 +52,32 @@ namespace PharmacyManagementWeb.Services
             return new StoreSettingModel();
         }
 
-        public void Invalidate() => _cache.Remove(CacheKey);
+        private async Task<StoreSettingModel> GetPublicAsync()
+        {
+            if (_cache.TryGetValue(PublicCacheKey, out StoreSettingModel? cached) && cached != null)
+                return cached;
+
+            try
+            {
+                var result = await _apiClient.GetAsync<StoreSettingModel>("/api/StoreSetting/public");
+                if (result.Success && result.Data != null && !string.IsNullOrWhiteSpace(result.Data.StoreName))
+                {
+                    _cache.Set(PublicCacheKey, result.Data, TimeSpan.FromMinutes(5));
+                    return result.Data;
+                }
+            }
+            catch
+            {
+                // API lỗi tạm thời: dùng tên mặc định
+            }
+
+            return new StoreSettingModel();
+        }
+
+        public void Invalidate()
+        {
+            _cache.Remove(CacheKey);
+            _cache.Remove(PublicCacheKey);
+        }
     }
 }

@@ -24,6 +24,15 @@ namespace PharmacyManagementAPI.Controllers
             return Ok(await _service.GetAsync());
         }
 
+        // Công khai (không cần đăng nhập): chỉ trả tên cửa hàng cho trang Đăng nhập
+        [AllowAnonymous]
+        [HttpGet("public")]
+        public async Task<IActionResult> GetPublic()
+        {
+            var s = await _service.GetAsync();
+            return Ok(new { storeName = s.StoreName });
+        }
+
         [Authorize(Roles = "Admin")]
         [HttpPut]
         public async Task<IActionResult> Update(UpdateStoreSettingDto dto)

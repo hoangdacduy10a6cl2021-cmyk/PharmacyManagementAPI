@@ -1,156 +1,290 @@
 ﻿@model PharmacyManagementWeb.Models.LoginViewModel
+@inject PharmacyManagementWeb.Services.IStoreSettingsProvider Store
 @{
     Layout = null;
+    var storeName = (await Store.GetAsync()).StoreName;
+    // Tách từ cuối để giữ hiệu ứng tô màu như thiết kế cũ
+    var trimmedName = storeName.Trim();
+    var lastSpace = trimmedName.LastIndexOf(' ');
+    var heroPrefix = lastSpace > 0 ? trimmedName.Substring(0, lastSpace) : "";
+    var heroLast = lastSpace > 0 ? trimmedName.Substring(lastSpace + 1) : trimmedName;
 }
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Đăng nhập - Tâm Thần Pharmacy</title>
+    <title>Đăng nhập - @storeName</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <style>
-        * { box-sizing: border-box; }
+            * {
+                box-sizing: border-box;
+            }
 
-        body.login-page {
-            margin: 0;
-            min-height: 100vh;
-            font-family: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif;
-            color: #fff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem;
-            /* Lớp trên cùng: ảnh nền (tuỳ chọn). Không có ảnh thì tự dùng nền gradient bên dưới */
-            background:
-                url('/images/login-bg.jpg') center / cover no-repeat,
-                radial-gradient(circle at 15% 20%, rgba(52, 211, 153, 0.35), transparent 45%),
-                radial-gradient(circle at 85% 80%, rgba(45, 212, 191, 0.30), transparent 45%),
-                linear-gradient(135deg, #064e3b 0%, #0f766e 55%, #115e59 100%);
-        }
+            body.login-page {
+                margin: 0;
+                min-height: 100vh;
+                font-family: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif;
+                color: #fff;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 2rem;
+                /* Lớp trên cùng: ảnh nền (tuỳ chọn). Không có ảnh thì tự dùng nền gradient bên dưới */
+                background: url('/images/login-bg.jpg') center / cover no-repeat, radial-gradient(circle at 15% 20%, rgba(52, 211, 153, 0.35), transparent 45%), radial-gradient(circle at 85% 80%, rgba(45, 212, 191, 0.30), transparent 45%), linear-gradient(135deg, #064e3b 0%, #0f766e 55%, #115e59 100%);
+            }
 
-        .login-shell {
-            width: 100%;
-            max-width: 1150px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 3rem;
-            align-items: center;
-        }
+            .login-shell {
+                width: 100%;
+                max-width: 1150px;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 3rem;
+                align-items: center;
+            }
 
-        /* ===== Bên trái ===== */
-        .login-hero { text-align: center; }
+            /* ===== Bên trái ===== */
+            .login-hero {
+                text-align: center;
+            }
 
-        .hero-logo { width: 96px; height: 96px; filter: drop-shadow(0 8px 20px rgba(0,0,0,0.25)); }
+            .hero-logo {
+                width: 96px;
+                height: 96px;
+                filter: drop-shadow(0 8px 20px rgba(0,0,0,0.25));
+            }
 
-        .hero-title { font-size: 2.6rem; font-weight: 700; margin: 1rem 0 0.2rem; line-height: 1.15; }
-        .hero-title span { color: #34d399; }
-        .hero-tagline { font-size: 1.2rem; font-weight: 400; opacity: 0.95; margin-bottom: 2.2rem; }
+            .hero-title {
+                font-size: 2.6rem;
+                font-weight: 700;
+                margin: 1rem 0 0.2rem;
+                line-height: 1.15;
+            }
 
-        .feature-list { display: inline-block; text-align: left; margin-bottom: 2rem; }
+                .hero-title span {
+                    color: #34d399;
+                }
 
-        .feature-item { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.1rem; }
+            .hero-tagline {
+                font-size: 1.2rem;
+                font-weight: 400;
+                opacity: 0.95;
+                margin-bottom: 2.2rem;
+            }
 
-        .feature-icon {
-            width: 52px; height: 52px; border-radius: 50%;
-            background: rgba(255,255,255,0.16);
-            border: 1px solid rgba(255,255,255,0.25);
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.4rem; flex-shrink: 0;
-        }
+            .feature-list {
+                display: inline-block;
+                text-align: left;
+                margin-bottom: 2rem;
+            }
 
-        .feature-title { font-weight: 600; }
-        .feature-desc { font-size: 0.82rem; opacity: 0.8; }
+            .feature-item {
+                display: flex;
+                align-items: center;
+                gap: 1rem;
+                margin-bottom: 1.1rem;
+            }
 
-        .hero-slogan {
-            font-family: 'Segoe Script', 'Brush Script MT', cursive;
-            font-style: italic;
-            font-size: 1.25rem;
-            opacity: 0.9;
-        }
+            .feature-icon {
+                width: 52px;
+                height: 52px;
+                border-radius: 50%;
+                background: rgba(255,255,255,0.16);
+                border: 1px solid rgba(255,255,255,0.25);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.4rem;
+                flex-shrink: 0;
+            }
 
-        /* ===== Thẻ đăng nhập ===== */
-        .login-card {
-            background: rgba(255,255,255,0.97);
-            color: #1e293b;
-            border-radius: 28px;
-            padding: 2.4rem 2.4rem 1.6rem;
-            box-shadow: 0 25px 60px rgba(0,0,0,0.30);
-            max-width: 470px;
-            width: 100%;
-            margin: 0 auto;
-        }
+            .feature-title {
+                font-weight: 600;
+            }
 
-        .card-logo { width: 62px; height: 62px; display: block; margin: 0 auto; }
-        .card-title { text-align: center; font-weight: 700; font-size: 1.6rem; color: #0f766e; margin: 0.6rem 0 0.3rem; }
+            .feature-desc {
+                font-size: 0.82rem;
+                opacity: 0.8;
+            }
 
-        .card-sub {
-            display: flex; align-items: center; gap: 0.8rem;
-            color: #0f766e; font-size: 0.9rem; justify-content: center; margin-bottom: 1.8rem;
-        }
-        .card-sub::before, .card-sub::after { content: ""; height: 1px; width: 38px; background: #99d8c8; }
+            .hero-slogan {
+                font-family: 'Segoe Script', 'Brush Script MT', cursive;
+                font-style: italic;
+                font-size: 1.25rem;
+                opacity: 0.9;
+            }
 
-        .field-label { font-weight: 600; font-size: 0.92rem; margin-bottom: 0.45rem; display: flex; align-items: center; gap: 0.5rem; }
-        .field-label i { color: #0f766e; }
+            /* ===== Thẻ đăng nhập ===== */
+            .login-card {
+                background: rgba(255,255,255,0.97);
+                color: #1e293b;
+                border-radius: 28px;
+                padding: 2.4rem 2.4rem 1.6rem;
+                box-shadow: 0 25px 60px rgba(0,0,0,0.30);
+                max-width: 470px;
+                width: 100%;
+                margin: 0 auto;
+            }
 
-        .input-icon { position: relative; margin-bottom: 0.4rem; }
-        .input-icon > i.lead-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #94a3b8; }
+            .card-logo {
+                width: 62px;
+                height: 62px;
+                display: block;
+                margin: 0 auto;
+            }
 
-        .field-input {
-            width: 100%;
-            border: 1px solid #dbe4e1;
-            border-radius: 12px;
-            padding: 0.8rem 2.6rem 0.8rem 2.6rem;
-            font-size: 0.95rem;
-            background: #fff;
-            outline: none;
-            transition: all 0.15s;
-        }
-        .field-input:focus { border-color: #10b981; box-shadow: 0 0 0 4px rgba(16,185,129,0.15); }
-        .field-input.input-validation-error { border-color: #ef4444; }
+            .card-title {
+                text-align: center;
+                font-weight: 700;
+                font-size: 1.6rem;
+                color: #0f766e;
+                margin: 0.6rem 0 0.3rem;
+            }
 
-        .toggle-pw {
-            position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
-            border: 0; background: transparent; color: #64748b; padding: 0.4rem 0.6rem; cursor: pointer;
-        }
+            .card-sub {
+                display: flex;
+                align-items: center;
+                gap: 0.8rem;
+                color: #0f766e;
+                font-size: 0.9rem;
+                justify-content: center;
+                margin-bottom: 1.8rem;
+            }
 
-        .field-block { margin-bottom: 1.2rem; }
-        .field-error { color: #dc2626; font-size: 0.8rem; }
+                .card-sub::before, .card-sub::after {
+                    content: "";
+                    height: 1px;
+                    width: 38px;
+                    background: #99d8c8;
+                }
 
-        .btn-login {
-            width: 100%;
-            border: 0;
-            border-radius: 12px;
-            padding: 0.9rem;
-            font-weight: 600;
-            font-size: 1.05rem;
-            color: #fff;
-            background: linear-gradient(90deg, #10b981, #0f766e);
-            box-shadow: 0 8px 20px rgba(16,185,129,0.35);
-            display: flex; align-items: center; justify-content: center; gap: 0.6rem;
-            transition: transform 0.15s, box-shadow 0.15s;
-            margin-top: 0.4rem;
-        }
-        .btn-login:hover { transform: translateY(-1px); box-shadow: 0 12px 26px rgba(16,185,129,0.4); }
+            .field-label {
+                font-weight: 600;
+                font-size: 0.92rem;
+                margin-bottom: 0.45rem;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            }
 
-        .card-footer-note {
-            text-align: center; color: #64748b; font-size: 0.82rem;
-            border-top: 1px solid #eef2f0; margin-top: 1.6rem; padding-top: 1.1rem;
-        }
-        .card-footer-note i { color: #0f766e; margin-right: 0.4rem; font-size: 1rem; }
+                .field-label i {
+                    color: #0f766e;
+                }
 
-        .login-alert {
-            background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca;
-            border-radius: 12px; padding: 0.65rem 0.9rem; font-size: 0.88rem; margin-bottom: 1.2rem;
-        }
+            .input-icon {
+                position: relative;
+                margin-bottom: 0.4rem;
+            }
 
-        @@media (max-width: 991px) {
-            .login-shell { grid-template-columns: 1fr; }
-            .login-hero { display: none; }
-        }
+                .input-icon > i.lead-icon {
+                    position: absolute;
+                    left: 14px;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    color: #94a3b8;
+                }
+
+            .field-input {
+                width: 100%;
+                border: 1px solid #dbe4e1;
+                border-radius: 12px;
+                padding: 0.8rem 2.6rem 0.8rem 2.6rem;
+                font-size: 0.95rem;
+                background: #fff;
+                outline: none;
+                transition: all 0.15s;
+            }
+
+                .field-input:focus {
+                    border-color: #10b981;
+                    box-shadow: 0 0 0 4px rgba(16,185,129,0.15);
+                }
+
+                .field-input.input-validation-error {
+                    border-color: #ef4444;
+                }
+
+            .toggle-pw {
+                position: absolute;
+                right: 8px;
+                top: 50%;
+                transform: translateY(-50%);
+                border: 0;
+                background: transparent;
+                color: #64748b;
+                padding: 0.4rem 0.6rem;
+                cursor: pointer;
+            }
+
+            .field-block {
+                margin-bottom: 1.2rem;
+            }
+
+            .field-error {
+                color: #dc2626;
+                font-size: 0.8rem;
+            }
+
+            .btn-login {
+                width: 100%;
+                border: 0;
+                border-radius: 12px;
+                padding: 0.9rem;
+                font-weight: 600;
+                font-size: 1.05rem;
+                color: #fff;
+                background: linear-gradient(90deg, #10b981, #0f766e);
+                box-shadow: 0 8px 20px rgba(16,185,129,0.35);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 0.6rem;
+                transition: transform 0.15s, box-shadow 0.15s;
+                margin-top: 0.4rem;
+            }
+
+                .btn-login:hover {
+                    transform: translateY(-1px);
+                    box-shadow: 0 12px 26px rgba(16,185,129,0.4);
+                }
+
+            .card-footer-note {
+                text-align: center;
+                color: #64748b;
+                font-size: 0.82rem;
+                border-top: 1px solid #eef2f0;
+                margin-top: 1.6rem;
+                padding-top: 1.1rem;
+            }
+
+                .card-footer-note i {
+                    color: #0f766e;
+                    margin-right: 0.4rem;
+                    font-size: 1rem;
+                }
+
+            .login-alert {
+                background: #fef2f2;
+                color: #b91c1c;
+                border: 1px solid #fecaca;
+                border-radius: 12px;
+                padding: 0.65rem 0.9rem;
+                font-size: 0.88rem;
+                margin-bottom: 1.2rem;
+            }
+
+            @@media (max-width: 991px) {
+                .login-shell {
+                    grid-template-columns: 1fr;
+                }
+
+                .login-hero {
+                    display: none;
+                }
+            }
     </style>
 </head>
 <body class="login-page">
@@ -171,7 +305,7 @@
                 <path d="M38 70 C46 58 56 49 68 40" stroke="#0d9488" stroke-width="2.2" fill="none" stroke-linecap="round" />
             </svg>
 
-            <h1 class="hero-title">Tâm Thần <span>Pharmacy</span></h1>
+            <h1 class="hero-title">@heroPrefix <span>@heroLast</span></h1>
             <div class="hero-tagline">Vì sức khỏe cộng đồng</div>
 
             <div class="feature-list">
@@ -216,7 +350,7 @@
                 <path d="M38 70 C46 58 56 49 68 40" stroke="#0d9488" stroke-width="2.2" fill="none" stroke-linecap="round" />
             </svg>
 
-            <div class="card-title">Tâm Thần Pharmacy</div>
+            <div class="card-title">@storeName</div>
             <div class="card-sub">Vì sức khỏe cộng đồng</div>
 
             @if (!ViewData.ModelState.IsValid)
@@ -261,12 +395,12 @@
     <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
     <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
     <script>
-        document.getElementById('togglePw').addEventListener('click', function () {
-            var input = document.getElementById('Password');
-            var show = input.type === 'password';
-            input.type = show ? 'text' : 'password';
-            this.querySelector('i').className = show ? 'bi bi-eye' : 'bi bi-eye-slash';
-        });
+            document.getElementById('togglePw').addEventListener('click', function () {
+                var input = document.getElementById('Password');
+                var show = input.type === 'password';
+                input.type = show ? 'text' : 'password';
+                this.querySelector('i').className = show ? 'bi bi-eye' : 'bi bi-eye-slash';
+            });
     </script>
 </body>
 </html>

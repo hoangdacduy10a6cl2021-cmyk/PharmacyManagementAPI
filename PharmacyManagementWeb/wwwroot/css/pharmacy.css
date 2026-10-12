@@ -35,6 +35,7 @@ body.theme-admin .badge-role {
 }
 
 body {
+    margin: 0; /* ghi đè margin-bottom: 60px của site.css (template mặc định) */
     background-color: #f4f7f6;
     font-family: 'Be Vietnam Pro', 'Segoe UI', system-ui, -apple-system, sans-serif;
     color: #1e293b;
@@ -862,6 +863,7 @@ body.theme-admin .brand-logo-box {
         border: 0;
     }
 }
+
 .brand-logo-svg {
     width: 42px;
     height: 42px;
