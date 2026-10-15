@@ -16,15 +16,24 @@ namespace PharmacyManagementWeb.Controllers
         }
 
         // Doanh thu
-        public async Task<IActionResult> Index(DateTime? fromDate, DateTime? toDate)
+        public async Task<IActionResult> Index(DateTime? fromDate, DateTime? toDate, int? employeeId)
         {
             var from = fromDate ?? DateTime.Today.AddDays(-6);
             var to = toDate ?? DateTime.Today;
 
             ViewBag.FromDate = from;
             ViewBag.ToDate = to;
+            ViewBag.EmployeeId = employeeId;
+
+            // Danh sách nhân viên cho bộ lọc doanh thu theo nhân viên
+            var usersResult = await _apiClient.GetAsync<List<UserModel>>("/api/User");
+            ViewBag.Employees = (usersResult.Data ?? new List<UserModel>())
+                .Where(u => u.Role != "Admin" || u.OrderCount > 0)
+                .OrderBy(u => u.FullName)
+                .ToList();
 
             var query = $"/api/Report/revenue?fromDate={from:yyyy-MM-dd}&toDate={to:yyyy-MM-dd}";
+            if (employeeId.HasValue) query += $"&userId={employeeId.Value}";
             var result = await _apiClient.GetAsync<RevenueReportModel>(query);
 
             if (!result.Success)

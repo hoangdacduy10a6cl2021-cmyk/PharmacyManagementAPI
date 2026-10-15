@@ -31,7 +31,17 @@
         public decimal TotalRevenue { get; set; }
         public int TotalOrders { get; set; }
         public decimal AverageOrderValue { get; set; }
+        public int? UserId { get; set; }
         public List<DailyRevenueDto> DailyBreakdown { get; set; } = new();
+        public List<EmployeeRevenueDto> ByEmployee { get; set; } = new();
+    }
+
+    public class EmployeeRevenueDto
+    {
+        public int UserId { get; set; }
+        public string FullName { get; set; } = string.Empty;
+        public int OrderCount { get; set; }
+        public decimal Revenue { get; set; }
     }
 
     // ===== Cảnh báo tồn kho / hạn dùng =====

@@ -7,7 +7,7 @@ namespace PharmacyManagementAPI.Services
 {
     public interface IOrderService
     {
-        Task<List<OrderDto>> GetAllAsync(int? customerId, DateTime? fromDate, DateTime? toDate);
+        Task<List<OrderDto>> GetAllAsync(int? customerId, DateTime? fromDate, DateTime? toDate, int? userId = null);
         Task<OrderDto?> GetByIdAsync(int id);
         Task<(OrderDto? data, string? error)> CreateAsync(CreateOrderDto dto, int userId, bool isAdmin);
         Task<(OrderDto? data, string? error)> CancelAsync(int id);
@@ -58,7 +58,7 @@ namespace PharmacyManagementAPI.Services
             }).ToList()
         };
 
-        public async Task<List<OrderDto>> GetAllAsync(int? customerId, DateTime? fromDate, DateTime? toDate)
+        public async Task<List<OrderDto>> GetAllAsync(int? customerId, DateTime? fromDate, DateTime? toDate, int? userId = null)
         {
             var query = _context.Orders
                 .Include(o => o.Customer)
@@ -68,6 +68,10 @@ namespace PharmacyManagementAPI.Services
 
             if (customerId.HasValue)
                 query = query.Where(o => o.CustomerId == customerId.Value);
+
+            // Lọc theo người bán (nhân viên chỉ xem hoá đơn của mình; Admin có thể lọc theo từng nhân viên)
+            if (userId.HasValue)
+                query = query.Where(o => o.UserId == userId.Value);
 
             if (fromDate.HasValue)
                 query = query.Where(o => o.OrderDate >= fromDate.Value);

@@ -49,7 +49,10 @@
 
             <nav class="nav flex-column">
                 <a class="nav-link @Active("Home")" asp-controller="Home" asp-action="Index"><i class="bi bi-house-door"></i><span>Trang chủ</span></a>
-                <a class="nav-link @Active("Order", "Index", "Create")" asp-controller="Order" asp-action="Index"><i class="bi bi-cart3"></i><span>Bán hàng</span></a>
+                @if (!isAdmin)
+                {
+                    <a class="nav-link @Active("Order", "Index", "Create")" asp-controller="Order" asp-action="Index"><i class="bi bi-cart3"></i><span>Bán hàng</span></a>
+                }
                 <a class="nav-link @Active("Order", "History", "Detail")" asp-controller="Order" asp-action="History"><i class="bi bi-receipt"></i><span>Hoá đơn</span></a>
                 <a class="nav-link @Active("Return")" asp-controller="Return" asp-action="Index"><i class="bi bi-arrow-return-left"></i><span>Đổi trả</span></a>
                 <a class="nav-link @Active("Consultation")" asp-controller="Consultation" asp-action="Index"><i class="bi bi-chat-heart"></i><span>Tư vấn</span></a>

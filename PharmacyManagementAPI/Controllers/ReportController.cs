@@ -20,7 +20,12 @@ namespace PharmacyManagementAPI.Controllers
         [HttpGet("dashboard")]
         public async Task<IActionResult> GetDashboard()
         {
-            return Ok(await _service.GetDashboardAsync());
+            // Nhân viên chỉ thấy số liệu hoá đơn của chính mình; Admin thấy toàn bộ cửa hàng
+            int? userId = null;
+            if (!User.IsInRole("Admin"))
+                userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+
+            return Ok(await _service.GetDashboardAsync(userId));
         }
 
         // Cảnh báo tồn kho / hạn dùng + chuông thông báo: cả Admin và Nhân viên
@@ -33,12 +38,12 @@ namespace PharmacyManagementAPI.Controllers
         // Các báo cáo dưới đây chỉ dành cho Admin
         [Authorize(Roles = "Admin")]
         [HttpGet("revenue")]
-        public async Task<IActionResult> GetRevenueReport([FromQuery] DateTime fromDate, [FromQuery] DateTime toDate)
+        public async Task<IActionResult> GetRevenueReport([FromQuery] DateTime fromDate, [FromQuery] DateTime toDate, [FromQuery] int? userId)
         {
             if (toDate < fromDate)
                 return BadRequest(new { message = "Ngày kết thúc phải sau ngày bắt đầu." });
 
-            return Ok(await _service.GetRevenueReportAsync(fromDate, toDate));
+            return Ok(await _service.GetRevenueReportAsync(fromDate, toDate, userId));
         }
 
         [Authorize(Roles = "Admin")]

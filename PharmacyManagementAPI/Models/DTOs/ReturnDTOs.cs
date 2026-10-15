@@ -46,6 +46,7 @@ namespace PharmacyManagementAPI.Models.DTOs
         public int OrderId { get; set; }
         public string OrderCode { get; set; } = string.Empty;
         public string? CustomerName { get; set; }
+        public int CreatedByUserId { get; set; }
         public string? CreatedByName { get; set; }
         public DateTime CreatedAt { get; set; }
         public string Reason { get; set; } = string.Empty;

@@ -23,7 +23,9 @@ namespace PharmacyManagementAPI.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            return Ok(await _service.GetAllAsync());
+            // Nhân viên chỉ xem phiếu tư vấn do mình tạo; Admin xem tất cả
+            int? creatorId = User.IsInRole("Admin") ? null : GetCurrentUserId();
+            return Ok(await _service.GetAllAsync(creatorId));
         }
 
         [HttpGet("{id:int}")]
@@ -31,6 +33,10 @@ namespace PharmacyManagementAPI.Controllers
         {
             var result = await _service.GetByIdAsync(id);
             if (result == null) return NotFound(new { message = "Không tìm thấy phiếu tư vấn." });
+
+            if (!User.IsInRole("Admin") && result.CreatedByUserId != GetCurrentUserId())
+                return NotFound(new { message = "Không tìm thấy phiếu tư vấn." });
+
             return Ok(result);
         }
 
@@ -45,6 +51,13 @@ namespace PharmacyManagementAPI.Controllers
         [HttpPost("{id:int}/complete")]
         public async Task<IActionResult> Complete(int id)
         {
+            if (!User.IsInRole("Admin"))
+            {
+                var existing = await _service.GetByIdAsync(id);
+                if (existing != null && existing.CreatedByUserId != GetCurrentUserId())
+                    return NotFound(new { message = "Không tìm thấy phiếu tư vấn." });
+            }
+
             var (data, error) = await _service.CompleteAsync(id);
             if (error != null)
             {

@@ -7,7 +7,7 @@ namespace PharmacyManagementAPI.Services
 {
     public interface IConsultationService
     {
-        Task<List<ConsultationDto>> GetAllAsync();
+        Task<List<ConsultationDto>> GetAllAsync(int? createdByUserId = null);
         Task<ConsultationDto?> GetByIdAsync(int id);
         Task<(ConsultationDto? data, string? error)> CreateAsync(CreateConsultationDto dto, int userId);
         Task<(ConsultationDto? data, string? error)> CompleteAsync(int id);
@@ -40,6 +40,7 @@ namespace PharmacyManagementAPI.Services
             Advice = c.Advice,
             FollowUpDate = c.FollowUpDate,
             Status = c.Status,
+            CreatedByUserId = c.CreatedByUserId,
             CreatedByName = c.CreatedBy?.FullName,
             CreatedAt = c.CreatedAt,
             Medicines = c.Medicines.Select(m => new ConsultationMedicineDto
@@ -55,9 +56,15 @@ namespace PharmacyManagementAPI.Services
         };
 
         // Trả về tối đa 500 phiếu mới nhất
-        public async Task<List<ConsultationDto>> GetAllAsync()
+        public async Task<List<ConsultationDto>> GetAllAsync(int? createdByUserId = null)
         {
-            var list = await Query().OrderByDescending(c => c.CreatedAt).Take(500).ToListAsync();
+            var query = Query();
+
+            // Nhân viên chỉ xem phiếu tư vấn do chính mình tạo
+            if (createdByUserId.HasValue)
+                query = query.Where(c => c.CreatedByUserId == createdByUserId.Value);
+
+            var list = await query.OrderByDescending(c => c.CreatedAt).Take(500).ToListAsync();
             return list.Select(ToDto).ToList();
         }
 

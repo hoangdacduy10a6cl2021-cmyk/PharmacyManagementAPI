@@ -7,9 +7,9 @@ namespace PharmacyManagementAPI.Services
 {
     public interface IReturnService
     {
-        Task<List<ReturnOrderDto>> GetAllAsync(string? status);
+        Task<List<ReturnOrderDto>> GetAllAsync(string? status, int? createdByUserId = null);
         Task<ReturnOrderDto?> GetByIdAsync(int id);
-        Task<(ReturnableOrderDto? data, string? error)> LookupAsync(string code);
+        Task<(ReturnableOrderDto? data, string? error)> LookupAsync(string code, int? onlySellerId = null);
         Task<(ReturnOrderDto? data, string? error)> CreateAsync(CreateReturnDto dto, int userId, bool isAdmin);
         Task<(ReturnOrderDto? data, string? error)> ApproveAsync(int id, int adminId);
         Task<(ReturnOrderDto? data, string? error)> RejectAsync(int id, int adminId, string? note);
@@ -45,6 +45,7 @@ namespace PharmacyManagementAPI.Services
             OrderId = r.OrderId,
             OrderCode = r.Order?.Code ?? "",
             CustomerName = r.Customer?.Name,
+            CreatedByUserId = r.CreatedByUserId,
             CreatedByName = r.CreatedBy?.FullName,
             CreatedAt = r.CreatedAt,
             Reason = r.Reason,
@@ -69,11 +70,15 @@ namespace PharmacyManagementAPI.Services
             }).ToList()
         };
 
-        public async Task<List<ReturnOrderDto>> GetAllAsync(string? status)
+        public async Task<List<ReturnOrderDto>> GetAllAsync(string? status, int? createdByUserId = null)
         {
             var query = Query();
             if (!string.IsNullOrWhiteSpace(status))
                 query = query.Where(r => r.Status == status);
+
+            // Nhân viên chỉ xem phiếu trả hàng do chính mình tạo
+            if (createdByUserId.HasValue)
+                query = query.Where(r => r.CreatedByUserId == createdByUserId.Value);
 
             var list = await query.OrderByDescending(r => r.CreatedAt).ToListAsync();
             return list.Select(ToDto).ToList();
@@ -95,7 +100,7 @@ namespace PharmacyManagementAPI.Services
                 .ToDictionaryAsync(x => x.Key, x => x.Qty);
         }
 
-        public async Task<(ReturnableOrderDto? data, string? error)> LookupAsync(string code)
+        public async Task<(ReturnableOrderDto? data, string? error)> LookupAsync(string code, int? onlySellerId = null)
         {
             var normalized = (code ?? "").Trim().ToUpper();
 
@@ -105,6 +110,11 @@ namespace PharmacyManagementAPI.Services
                 .FirstOrDefaultAsync(o => o.Code == normalized);
 
             if (order == null) return (null, $"Không tìm thấy hoá đơn có mã '{normalized}'.");
+
+            // Nhân viên chỉ tra được hoá đơn do chính mình bán
+            if (onlySellerId.HasValue && order.UserId != onlySellerId.Value)
+                return (null, $"Không tìm thấy hoá đơn có mã '{normalized}'.");
+
             if (order.Status == ORDER_CANCELLED) return (null, "Hoá đơn này đã bị hủy nên không thể trả hàng.");
 
             var returned = await GetReturnedMapAsync(order.Id);
@@ -146,6 +156,10 @@ namespace PharmacyManagementAPI.Services
                 .FirstOrDefaultAsync(o => o.Id == dto.OrderId);
 
             if (order == null) return (null, "Không tìm thấy hoá đơn.");
+
+            // Nhân viên chỉ được tạo phiếu trả cho hoá đơn do chính mình bán
+            if (!isAdmin && order.UserId != userId) return (null, "Không tìm thấy hoá đơn.");
+
             if (order.Status == ORDER_CANCELLED) return (null, "Hoá đơn này đã bị hủy nên không thể trả hàng.");
 
             var returned = await GetReturnedMapAsync(order.Id);

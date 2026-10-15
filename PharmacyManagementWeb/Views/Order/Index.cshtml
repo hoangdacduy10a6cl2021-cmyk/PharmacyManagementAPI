@@ -5,61 +5,377 @@
 }
 
 <style>
-    .pos-search { position: relative; }
-    .pos-search > i { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 1.05rem; }
-    .pos-search input { padding: 0.8rem 1rem 0.8rem 2.8rem; border-radius: 14px; font-size: 0.97rem; }
+    .pos-search {
+        position: relative;
+    }
+
+        .pos-search > i {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            font-size: 1.05rem;
+        }
+
+        .pos-search input {
+            padding: 0.8rem 1rem 0.8rem 2.8rem;
+            border-radius: 14px;
+            font-size: 0.97rem;
+        }
 
     .search-dropdown {
-        position: absolute; left: 0; right: 0; top: calc(100% + 6px);
-        background: #fff; border: 1px solid #e8edeb; border-radius: 14px;
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: calc(100% + 6px);
+        background: #fff;
+        border: 1px solid #e8edeb;
+        border-radius: 14px;
         box-shadow: 0 12px 30px rgba(16,24,40,0.12);
-        max-height: 340px; overflow-y: auto; z-index: 1000; display: none;
+        max-height: 340px;
+        overflow-y: auto;
+        z-index: 1000;
+        display: none;
     }
+
     .search-item {
-        display: flex; align-items: center; gap: 0.8rem; width: 100%;
-        padding: 0.6rem 0.9rem; border: 0; background: transparent; text-align: left;
-        border-bottom: 1px solid #f1f5f4; cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        width: 100%;
+        padding: 0.6rem 0.9rem;
+        border: 0;
+        background: transparent;
+        text-align: left;
+        border-bottom: 1px solid #f1f5f4;
+        cursor: pointer;
     }
-    .search-item:last-child { border-bottom: 0; }
-    .search-item:hover { background: var(--pharmacy-primary-soft); }
-    .search-item.out { opacity: 0.5; }
 
-    .qty-stepper { display: inline-flex; align-items: center; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; background: #fff; }
-    .qty-stepper button { border: 0; background: #f8fafc; width: 30px; height: 32px; font-size: 1.1rem; color: #475569; cursor: pointer; }
-    .qty-stepper button:hover { background: var(--pharmacy-primary-soft); color: var(--pharmacy-primary-dark); }
-    .qty-stepper input { width: 46px; border: 0; text-align: center; height: 32px; font-weight: 600; outline: none; -moz-appearance: textfield; }
-    .qty-stepper input::-webkit-outer-spin-button, .qty-stepper input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .search-item:last-child {
+            border-bottom: 0;
+        }
 
-    .btn-del { border: 0; background: #fef2f2; color: #dc2626; width: 34px; height: 34px; border-radius: 10px; }
-    .btn-del:hover { background: #fee2e2; }
+        .search-item:hover {
+            background: var(--pharmacy-primary-soft);
+        }
 
-    .cart-empty { text-align: center; padding: 3rem 1rem; color: #94a3b8; }
-    .cart-empty i { font-size: 2.6rem; display: block; margin-bottom: 0.5rem; }
+        .search-item.out {
+            opacity: 0.5;
+        }
 
-    .pos-side { position: sticky; top: 90px; }
+    .qty-stepper {
+        display: inline-flex;
+        align-items: center;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        overflow: hidden;
+        background: #fff;
+    }
 
-    .sum-row { display: flex; justify-content: space-between; align-items: center; padding: 0.35rem 0; }
-    .total-row { display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed #dbe4e1; margin-top: 0.6rem; padding-top: 0.9rem; }
-    .total-row .total-value { font-size: 1.7rem; font-weight: 700; color: var(--pharmacy-primary); }
+        .qty-stepper button {
+            border: 0;
+            background: #f8fafc;
+            width: 30px;
+            height: 32px;
+            font-size: 1.1rem;
+            color: #475569;
+            cursor: pointer;
+        }
 
-    .pay-options { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; }
+            .qty-stepper button:hover {
+                background: var(--pharmacy-primary-soft);
+                color: var(--pharmacy-primary-dark);
+            }
+
+        .qty-stepper input {
+            width: 46px;
+            border: 0;
+            text-align: center;
+            height: 32px;
+            font-weight: 600;
+            outline: none;
+            -moz-appearance: textfield;
+        }
+
+            .qty-stepper input::-webkit-outer-spin-button, .qty-stepper input::-webkit-inner-spin-button {
+                -webkit-appearance: none;
+                margin: 0;
+            }
+
+    .btn-del {
+        border: 0;
+        background: #fef2f2;
+        color: #dc2626;
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+    }
+
+        .btn-del:hover {
+            background: #fee2e2;
+        }
+
+    .cart-empty {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: #94a3b8;
+    }
+
+        .cart-empty i {
+            font-size: 2.6rem;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+    .pos-side {
+        position: sticky;
+        top: 90px;
+    }
+
+    .sum-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.35rem 0;
+    }
+
+    .total-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-top: 1px dashed #dbe4e1;
+        margin-top: 0.6rem;
+        padding-top: 0.9rem;
+    }
+
+        .total-row .total-value {
+            font-size: 1.7rem;
+            font-weight: 700;
+            color: var(--pharmacy-primary);
+        }
+
+    .pay-options {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.5rem;
+    }
+
     .pay-option {
-        border: 1.5px solid #e2e8f0; background: #fff; border-radius: 12px;
-        padding: 0.65rem 0.2rem; text-align: center; cursor: pointer;
-        font-size: 0.72rem; font-weight: 500; color: #475569; transition: all 0.15s;
+        border: 1.5px solid #e2e8f0;
+        background: #fff;
+        border-radius: 12px;
+        padding: 0.65rem 0.2rem;
+        text-align: center;
+        cursor: pointer;
+        font-size: 0.72rem;
+        font-weight: 500;
+        color: #475569;
+        transition: all 0.15s;
     }
-    .pay-option i { display: block; font-size: 1.35rem; margin-bottom: 0.2rem; }
-    .pay-option:hover { border-color: var(--pharmacy-primary); }
-    .pay-option.active { border-color: var(--pharmacy-primary); background: var(--pharmacy-primary-soft); color: var(--pharmacy-primary-dark); }
+
+        .pay-option i {
+            display: block;
+            font-size: 1.35rem;
+            margin-bottom: 0.2rem;
+        }
+
+        .pay-option:hover {
+            border-color: var(--pharmacy-primary);
+        }
+
+        .pay-option.active {
+            border-color: var(--pharmacy-primary);
+            background: var(--pharmacy-primary-soft);
+            color: var(--pharmacy-primary-dark);
+        }
 
     .btn-checkout {
-        width: 100%; border: 0; border-radius: 14px; padding: 0.95rem;
-        font-size: 1.08rem; font-weight: 700; color: #fff;
+        width: 100%;
+        border: 0;
+        border-radius: 14px;
+        padding: 0.95rem;
+        font-size: 1.08rem;
+        font-weight: 700;
+        color: #fff;
         background: linear-gradient(90deg, var(--pharmacy-primary), var(--pharmacy-primary-dark));
         box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-        display: flex; align-items: center; justify-content: center; gap: 0.6rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.6rem;
     }
-    .btn-checkout:disabled { background: #cbd5e1; box-shadow: none; cursor: not-allowed; }
+
+        .btn-checkout:disabled {
+            background: #cbd5e1;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+    /* ===== Panel thanh toán: chuyển khoản / thẻ / ví điện tử ===== */
+    .pay-panel {
+        border: 1.5px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 0.9rem;
+        margin-bottom: 1rem;
+        background: #fafcfb;
+    }
+
+    .pay-hint {
+        font-size: 0.78rem;
+        color: #64748b;
+    }
+
+    .bank-qr {
+        width: 100%;
+        max-width: 240px;
+        border-radius: 12px;
+        border: 1px solid #e8edeb;
+        background: #fff;
+    }
+
+    .bank-amount {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: var(--pharmacy-primary-dark);
+    }
+
+    .copy-btn {
+        border: 0;
+        background: var(--pharmacy-primary-soft);
+        color: var(--pharmacy-primary-dark);
+        border-radius: 8px;
+        padding: 0.1rem 0.5rem;
+        font-size: 0.75rem;
+    }
+
+    .credit-card {
+        position: relative;
+        border-radius: 16px;
+        padding: 1rem 1.1rem;
+        color: #fff;
+        min-height: 168px;
+        background: linear-gradient(135deg, #334155, #0f172a);
+        box-shadow: 0 10px 24px rgba(15,23,42,0.25);
+        transition: background 0.3s;
+    }
+
+        .credit-card.visa {
+            background: linear-gradient(135deg, #1d4ed8, #1e3a8a);
+        }
+
+        .credit-card.mastercard {
+            background: linear-gradient(135deg, #1f2937, #4b5563);
+        }
+
+        .credit-card.amex {
+            background: linear-gradient(135deg, #0e7490, #164e63);
+        }
+
+        .credit-card.jcb {
+            background: linear-gradient(135deg, #15803d, #14532d);
+        }
+
+    .cc-chip {
+        width: 38px;
+        height: 28px;
+        border-radius: 6px;
+        background: linear-gradient(135deg, #fde68a, #f59e0b);
+    }
+
+    .cc-brand {
+        font-weight: 800;
+        font-style: italic;
+        letter-spacing: 0.5px;
+        font-size: 1.05rem;
+    }
+
+    .cc-mc {
+        display: inline-flex;
+    }
+
+        .cc-mc span {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+            .cc-mc span:first-child {
+                background: #ef4444;
+            }
+
+            .cc-mc span:last-child {
+                background: #f59e0b;
+                margin-left: -9px;
+                opacity: 0.92;
+            }
+
+    .cc-number {
+        font-size: 1.2rem;
+        letter-spacing: 0.1em;
+        font-family: 'Courier New', monospace;
+        margin: 1rem 0 0.8rem;
+        white-space: nowrap;
+    }
+
+    .cc-label {
+        font-size: 0.58rem;
+        opacity: 0.7;
+        letter-spacing: 0.08em;
+    }
+
+    .cc-val {
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .wallet-options {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.4rem;
+    }
+
+    .wallet-btn {
+        border: 1.5px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 0.5rem 0.2rem;
+        font-size: 0.74rem;
+        font-weight: 700;
+        background: #fff;
+        cursor: pointer;
+        color: #475569;
+    }
+
+        .wallet-btn.active {
+            color: #fff;
+            border-color: transparent;
+        }
+
+    .wallet-pay {
+        border-radius: 14px;
+        color: #fff;
+        padding: 1rem;
+        text-align: center;
+    }
+
+    .wallet-qr {
+        background: #fff;
+        border-radius: 12px;
+        padding: 10px;
+        display: inline-block;
+        width: 190px;
+        height: 190px;
+    }
+
+        .wallet-qr svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
 </style>
 
 <div class="row g-3">
@@ -136,6 +452,64 @@
                     <button type="button" class="pay-option" data-method="Ví điện tử"><i class="bi bi-wallet2"></i>Ví điện tử</button>
                 </div>
 
+                <div id="payPanel" class="pay-panel d-none">
+                    <!-- Chuyển khoản -->
+                    <div id="panelBank" class="d-none text-center">
+                        <div class="small text-muted">Quét mã để chuyển tiền đến</div>
+                        <div class="fw-bold">@(Config["BankTransfer:AccountName"] ?? "")</div>
+                        <div class="small mb-2">
+                            @(Config["BankTransfer:BankName"] ?? "") · <span id="bankAccNumber">@(Config["BankTransfer:AccountNumber"] ?? "")</span>
+                            <button type="button" class="copy-btn ms-1" id="copyAccBtn"><i class="bi bi-clipboard"></i> Sao chép</button>
+                        </div>
+                        <img src="@(Config["BankTransfer:QrImage"] ?? "/images/qr-techcombank.png")" alt="Mã QR chuyển khoản" class="bank-qr" />
+                        <div class="mt-2">Số tiền cần chuyển: <span class="bank-amount" id="payAmountBank">0đ</span></div>
+                        <div class="pay-hint mt-1">Mã QR chưa kèm số tiền. Khách nhập đúng số tiền ở trên và chỉ bấm Thanh toán sau khi tiền đã về tài khoản.</div>
+                    </div>
+
+                    <!-- Thẻ -->
+                    <div id="panelCard" class="d-none">
+                        <div class="credit-card mb-3" id="ccPreview">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="cc-chip"></div>
+                                <div id="ccBrand" class="cc-brand">THẺ</div>
+                            </div>
+                            <div class="cc-number" id="ccNumberView">•••• •••• •••• ••••</div>
+                            <div class="d-flex justify-content-between gap-3">
+                                <div style="min-width:0;">
+                                    <div class="cc-label">CHỦ THẺ</div>
+                                    <div class="cc-val" id="ccNameView">HỌ VÀ TÊN</div>
+                                </div>
+                                <div>
+                                    <div class="cc-label">HẾT HẠN</div>
+                                    <div class="cc-val" id="ccExpView">MM/YY</div>
+                                </div>
+                            </div>
+                        </div>
+                        <input type="text" id="ccNumber" class="form-control mb-2" inputmode="numeric" placeholder="Số thẻ" autocomplete="off" />
+                        <div class="d-flex gap-2 mb-2">
+                            <input type="text" id="ccName" class="form-control" placeholder="Tên chủ thẻ" autocomplete="off" />
+                            <input type="text" id="ccExp" class="form-control" style="max-width:100px;" inputmode="numeric" placeholder="MM/YY" maxlength="5" autocomplete="off" />
+                        </div>
+                        <div id="ccStatus" class="pay-hint"></div>
+                        <div class="pay-hint mt-1"><i class="bi bi-shield-lock"></i> Thông tin thẻ chỉ hiển thị trên màn hình này, không được lưu và không gửi lên máy chủ.</div>
+                    </div>
+
+                    <!-- Ví điện tử -->
+                    <div id="panelWallet" class="d-none">
+                        <div class="small fw-semibold mb-2">Chọn ví</div>
+                        <div class="wallet-options mb-2" id="walletOptions"></div>
+                        <input type="text" id="walletPhone" class="form-control mb-2" inputmode="numeric" maxlength="10" placeholder="Số điện thoại ví (10 số)" autocomplete="off" />
+                        <div id="walletHint" class="pay-hint">Chọn ví và nhập số điện thoại để hiện mã thanh toán.</div>
+                        <div id="walletPay" class="wallet-pay d-none">
+                            <div class="small" id="walletPayTitle"></div>
+                            <div class="fs-4 fw-bold my-1" id="walletPayAmount"></div>
+                            <div class="wallet-qr my-2" id="walletQr"></div>
+                            <div class="small" id="walletPayPhone"></div>
+                            <div class="small opacity-75 mt-1">Mã QR mô phỏng dùng cho demo</div>
+                        </div>
+                    </div>
+                </div>
+
                 <form id="checkoutForm" asp-action="Create" method="post">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="customerId" id="hiddenCustomerId" />
@@ -181,267 +555,449 @@
 </div>
 
 @section Scripts {
-<script>
-    const apiBase = '@Config["ApiSettings:BaseUrl"]';
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@2.0.4/dist/qrcode.js"></script>
+    <script>
+        const apiBase = '@Config["ApiSettings:BaseUrl"]';
 
-    let cart = [];            // { medicineId, code, name, unit, sellPrice, stock, quantity, imageUrl }
-    let lastResults = [];
-    let paymentMethod = 'Tiền mặt';
+        let cart = [];            // { medicineId, code, name, unit, sellPrice, stock, quantity, imageUrl }
+        let lastResults = [];
+        let paymentMethod = 'Tiền mặt';
 
-    const searchInput = document.getElementById('medicineSearch');
-    const searchResults = document.getElementById('searchResults');
-    let searchTimeout;
+        const searchInput = document.getElementById('medicineSearch');
+        const searchResults = document.getElementById('searchResults');
+        let searchTimeout;
 
-    // ===== Tiện ích =====
-    function esc(s) {
-        return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-    }
-
-    function money(n) { return Number(n).toLocaleString('vi-VN') + 'đ'; }
-
-    function thumb(imageUrl, size) {
-        if (imageUrl) {
-            return `<img src="${apiBase}${imageUrl}" style="width:${size}px;height:${size}px;object-fit:cover;border-radius:8px;flex-shrink:0;" />`;
-        }
-        return `<div class="d-flex align-items-center justify-content-center bg-light text-muted" style="width:${size}px;height:${size}px;border-radius:8px;font-size:10px;flex-shrink:0;">No img</div>`;
-    }
-
-    // ===== Tìm thuốc =====
-    async function runSearch(term) {
-        const res = await fetch('/Order/SearchMedicine?term=' + encodeURIComponent(term));
-        lastResults = await res.json();
-        return lastResults;
-    }
-
-    searchInput.addEventListener('input', function () {
-        clearTimeout(searchTimeout);
-        const term = this.value.trim();
-        if (term.length === 0) { searchResults.style.display = 'none'; return; }
-
-        searchTimeout = setTimeout(async () => {
-            renderSearchResults(await runSearch(term));
-        }, 250);
-    });
-
-    // Nhấn Enter (hoặc máy quét mã vạch): thêm thuốc khớp mã nhất vào giỏ
-    searchInput.addEventListener('keydown', async function (e) {
-        if (e.key !== 'Enter') return;
-        e.preventDefault();
-        clearTimeout(searchTimeout);
-
-        const term = this.value.trim();
-        if (!term) return;
-
-        const data = await runSearch(term);
-        if (!data.length) { renderSearchResults(data); return; }
-
-        const exact = data.find(m => m.code.toLowerCase() === term.toLowerCase());
-        addToCart(exact || data[0]);
-    });
-
-    function renderSearchResults(items) {
-        if (!items.length) {
-            searchResults.innerHTML = '<div class="p-3 text-muted small">Không tìm thấy thuốc.</div>';
-            searchResults.style.display = 'block';
-            return;
+        // ===== Tiện ích =====
+        function esc(s) {
+            return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
         }
 
-        searchResults.innerHTML = items.map((m, idx) => `
-            <button type="button" class="search-item ${m.stock <= 0 ? 'out' : ''}" onclick="addFromResults(${idx})">
-                ${thumb(m.imageUrl, 44)}
-                <div class="flex-grow-1">
-                    <div class="fw-semibold">${esc(m.name)}</div>
-                    <div class="text-muted small">${esc(m.code)} · Tồn: ${m.stock} ${esc(m.unit)}</div>
-                </div>
-                <div class="fw-semibold" style="color:var(--pharmacy-primary-dark);">${money(m.sellPrice)}</div>
-            </button>
-        `).join('');
-        searchResults.style.display = 'block';
-    }
+        function money(n) { return Number(n).toLocaleString('vi-VN') + 'đ'; }
 
-    function addFromResults(idx) { addToCart(lastResults[idx]); }
-
-    document.addEventListener('click', function (e) {
-        if (!searchResults.contains(e.target) && e.target !== searchInput) {
-            searchResults.style.display = 'none';
-        }
-    });
-
-    // ===== Giỏ hàng =====
-    function addToCart(medicine) {
-        const existing = cart.find(i => i.medicineId === medicine.id);
-        if (existing) {
-            if (existing.quantity < medicine.stock) existing.quantity++;
-            else alert('Số lượng vượt quá tồn kho (' + medicine.stock + ')');
-        } else {
-            if (medicine.stock <= 0) { alert('Thuốc này đã hết hàng.'); return; }
-            cart.push({
-                medicineId: medicine.id,
-                code: medicine.code,
-                name: medicine.name,
-                unit: medicine.unit,
-                sellPrice: medicine.sellPrice,
-                stock: medicine.stock,
-                imageUrl: medicine.imageUrl,
-                quantity: 1
-            });
-        }
-        searchInput.value = '';
-        searchResults.style.display = 'none';
-        renderCart();
-        searchInput.focus();
-    }
-
-    function removeFromCart(medicineId) {
-        cart = cart.filter(i => i.medicineId !== medicineId);
-        renderCart();
-    }
-
-    function changeQty(medicineId, delta) {
-        const item = cart.find(i => i.medicineId === medicineId);
-        if (!item) return;
-        updateQuantity(medicineId, item.quantity + delta);
-    }
-
-    function updateQuantity(medicineId, qty) {
-        const item = cart.find(i => i.medicineId === medicineId);
-        if (!item) return;
-        qty = parseInt(qty) || 1;
-        if (qty < 1) qty = 1;
-        if (qty > item.stock) { alert('Số lượng vượt quá tồn kho (' + item.stock + ')'); qty = item.stock; }
-        item.quantity = qty;
-        renderCart();
-    }
-
-    document.getElementById('clearCartBtn').addEventListener('click', function () {
-        if (cart.length && confirm('Xoá toàn bộ thuốc trong giỏ hàng?')) { cart = []; renderCart(); }
-    });
-
-    function renderCart() {
-        const cartBody = document.getElementById('cartBody');
-
-        if (cart.length === 0) {
-            cartBody.innerHTML = `
-                <tr><td colspan="6">
-                    <div class="cart-empty"><i class="bi bi-basket"></i>Chưa có thuốc nào trong giỏ hàng.<br><span class="small">Tìm thuốc ở ô phía trên để thêm vào.</span></div>
-                </td></tr>`;
-        } else {
-            cartBody.innerHTML = cart.map((i, idx) => `
-                <tr>
-                    <td class="text-muted">${idx + 1}</td>
-                    <td>
-                        <div class="d-flex align-items-center gap-2">
-                            ${thumb(i.imageUrl, 46)}
-                            <div>
-                                <div class="fw-semibold">${esc(i.name)}</div>
-                                <div class="text-muted small">${esc(i.code)} · Tồn: ${i.stock} ${esc(i.unit)}</div>
-                            </div>
-                        </div>
-                    </td>
-                    <td class="text-end">${money(i.sellPrice)}</td>
-                    <td class="text-center">
-                        <div class="qty-stepper">
-                            <button type="button" onclick="changeQty(${i.medicineId}, -1)">&minus;</button>
-                            <input type="number" value="${i.quantity}" min="1" max="${i.stock}" onchange="updateQuantity(${i.medicineId}, this.value)" />
-                            <button type="button" onclick="changeQty(${i.medicineId}, 1)">+</button>
-                        </div>
-                    </td>
-                    <td class="text-end fw-semibold">${money(i.sellPrice * i.quantity)}</td>
-                    <td class="text-end"><button type="button" class="btn-del" onclick="removeFromCart(${i.medicineId})"><i class="bi bi-trash3"></i></button></td>
-                </tr>
-            `).join('');
+        function thumb(imageUrl, size) {
+            if (imageUrl) {
+                return `<img src="${apiBase}${imageUrl}" style="width:${size}px;height:${size}px;object-fit:cover;border-radius:8px;flex-shrink:0;" />`;
+            }
+            return `<div class="d-flex align-items-center justify-content-center bg-light text-muted" style="width:${size}px;height:${size}px;border-radius:8px;font-size:10px;flex-shrink:0;">No img</div>`;
         }
 
-        document.getElementById('cartCount').textContent = cart.reduce((s, i) => s + i.quantity, 0);
-        updateSummary();
-    }
+        // ===== Tìm thuốc =====
+        async function runSearch(term) {
+            const res = await fetch('/Order/SearchMedicine?term=' + encodeURIComponent(term));
+            lastResults = await res.json();
+            return lastResults;
+        }
 
-    function updateSummary() {
-        const totalAmount = cart.reduce((sum, i) => sum + i.sellPrice * i.quantity, 0);
-        const discount = parseFloat(document.getElementById('discountInput').value) || 0;
-        let finalAmount = totalAmount - discount;
-        if (finalAmount < 0) finalAmount = 0;
+        searchInput.addEventListener('input', function () {
+            clearTimeout(searchTimeout);
+            const term = this.value.trim();
+            if (term.length === 0) { searchResults.style.display = 'none'; return; }
 
-        document.getElementById('totalAmountText').textContent = money(totalAmount);
-        document.getElementById('finalAmountText').textContent = money(finalAmount);
-        document.getElementById('checkoutBtn').disabled = cart.length === 0;
-    }
-
-    document.getElementById('discountInput').addEventListener('input', updateSummary);
-
-    // ===== Phương thức thanh toán =====
-    document.querySelectorAll('#payOptions .pay-option').forEach(btn => {
-        btn.addEventListener('click', function () {
-            document.querySelectorAll('#payOptions .pay-option').forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            paymentMethod = this.dataset.method;
-        });
-    });
-
-    // ===== Gửi form thanh toán =====
-    document.getElementById('checkoutForm').addEventListener('submit', function (e) {
-        if (cart.length === 0) { e.preventDefault(); return; }
-
-        document.getElementById('hiddenCustomerId').value = document.getElementById('customerSelect').value;
-        document.getElementById('hiddenCartJson').value = JSON.stringify(cart.map(i => ({ medicineId: i.medicineId, quantity: i.quantity })));
-        document.getElementById('hiddenDiscount').value = document.getElementById('discountInput').value || 0;
-        document.getElementById('hiddenPaymentMethod').value = paymentMethod;
-    });
-
-    // ===== Tạo khách hàng nhanh qua modal =====
-    document.getElementById('saveNewCustomerBtn').addEventListener('click', async function () {
-        const name = document.getElementById('newCustomerName').value.trim();
-        const phone = document.getElementById('newCustomerPhone').value.trim();
-        const address = document.getElementById('newCustomerAddress').value.trim();
-        const errorBox = document.getElementById('newCustomerError');
-        errorBox.classList.add('d-none');
-
-        if (!name) { errorBox.textContent = 'Vui lòng nhập họ tên.'; errorBox.classList.remove('d-none'); return; }
-
-        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
-        const formData = new FormData();
-        formData.append('name', name);
-        formData.append('phone', phone);
-        formData.append('address', address);
-
-        const res = await fetch('/Order/QuickCreateCustomer', {
-            method: 'POST',
-            headers: { 'RequestVerificationToken': token },
-            body: formData
+            searchTimeout = setTimeout(async () => {
+                renderSearchResults(await runSearch(term));
+            }, 250);
         });
 
-        const data = await res.json();
-
-        if (!res.ok) {
-            errorBox.textContent = data.message || 'Không thể tạo khách hàng.';
-            errorBox.classList.remove('d-none');
-            return;
-        }
-
-        const select = document.getElementById('customerSelect');
-        const option = document.createElement('option');
-        option.value = data.id;
-        option.textContent = data.name;
-        option.selected = true;
-        select.appendChild(option);
-
-        document.getElementById('newCustomerName').value = '';
-        document.getElementById('newCustomerPhone').value = '';
-        document.getElementById('newCustomerAddress').value = '';
-
-        bootstrap.Modal.getInstance(document.getElementById('newCustomerModal')).hide();
-    });
-
-    // ===== Phím tắt F9 = Thanh toán =====
-    document.addEventListener('keydown', function (e) {
-        if (e.key === 'F9') {
+        // Nhấn Enter (hoặc máy quét mã vạch): thêm thuốc khớp mã nhất vào giỏ
+        searchInput.addEventListener('keydown', async function (e) {
+            if (e.key !== 'Enter') return;
             e.preventDefault();
-            if (!document.getElementById('checkoutBtn').disabled) {
-                document.getElementById('checkoutForm').requestSubmit();
+            clearTimeout(searchTimeout);
+
+            const term = this.value.trim();
+            if (!term) return;
+
+            const data = await runSearch(term);
+            if (!data.length) { renderSearchResults(data); return; }
+
+            const exact = data.find(m => m.code.toLowerCase() === term.toLowerCase());
+            addToCart(exact || data[0]);
+        });
+
+        function renderSearchResults(items) {
+            if (!items.length) {
+                searchResults.innerHTML = '<div class="p-3 text-muted small">Không tìm thấy thuốc.</div>';
+                searchResults.style.display = 'block';
+                return;
+            }
+
+            searchResults.innerHTML = items.map((m, idx) => `
+                <button type="button" class="search-item ${m.stock <= 0 ? 'out' : ''}" onclick="addFromResults(${idx})">
+                    ${thumb(m.imageUrl, 44)}
+                    <div class="flex-grow-1">
+                        <div class="fw-semibold">${esc(m.name)}</div>
+                        <div class="text-muted small">${esc(m.code)} · Tồn: ${m.stock} ${esc(m.unit)}</div>
+                    </div>
+                    <div class="fw-semibold" style="color:var(--pharmacy-primary-dark);">${money(m.sellPrice)}</div>
+                </button>
+            `).join('');
+            searchResults.style.display = 'block';
+        }
+
+        function addFromResults(idx) { addToCart(lastResults[idx]); }
+
+        document.addEventListener('click', function (e) {
+            if (!searchResults.contains(e.target) && e.target !== searchInput) {
+                searchResults.style.display = 'none';
+            }
+        });
+
+        // ===== Giỏ hàng =====
+        function addToCart(medicine) {
+            const existing = cart.find(i => i.medicineId === medicine.id);
+            if (existing) {
+                if (existing.quantity < medicine.stock) existing.quantity++;
+                else alert('Số lượng vượt quá tồn kho (' + medicine.stock + ')');
+            } else {
+                if (medicine.stock <= 0) { alert('Thuốc này đã hết hàng.'); return; }
+                cart.push({
+                    medicineId: medicine.id,
+                    code: medicine.code,
+                    name: medicine.name,
+                    unit: medicine.unit,
+                    sellPrice: medicine.sellPrice,
+                    stock: medicine.stock,
+                    imageUrl: medicine.imageUrl,
+                    quantity: 1
+                });
+            }
+            searchInput.value = '';
+            searchResults.style.display = 'none';
+            renderCart();
+            searchInput.focus();
+        }
+
+        function removeFromCart(medicineId) {
+            cart = cart.filter(i => i.medicineId !== medicineId);
+            renderCart();
+        }
+
+        function changeQty(medicineId, delta) {
+            const item = cart.find(i => i.medicineId === medicineId);
+            if (!item) return;
+            updateQuantity(medicineId, item.quantity + delta);
+        }
+
+        function updateQuantity(medicineId, qty) {
+            const item = cart.find(i => i.medicineId === medicineId);
+            if (!item) return;
+            qty = parseInt(qty) || 1;
+            if (qty < 1) qty = 1;
+            if (qty > item.stock) { alert('Số lượng vượt quá tồn kho (' + item.stock + ')'); qty = item.stock; }
+            item.quantity = qty;
+            renderCart();
+        }
+
+        document.getElementById('clearCartBtn').addEventListener('click', function () {
+            if (cart.length && confirm('Xoá toàn bộ thuốc trong giỏ hàng?')) { cart = []; renderCart(); }
+        });
+
+        function renderCart() {
+            const cartBody = document.getElementById('cartBody');
+
+            if (cart.length === 0) {
+                cartBody.innerHTML = `
+                    <tr><td colspan="6">
+                        <div class="cart-empty"><i class="bi bi-basket"></i>Chưa có thuốc nào trong giỏ hàng.<br><span class="small">Tìm thuốc ở ô phía trên để thêm vào.</span></div>
+                    </td></tr>`;
+            } else {
+                cartBody.innerHTML = cart.map((i, idx) => `
+                    <tr>
+                        <td class="text-muted">${idx + 1}</td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                ${thumb(i.imageUrl, 46)}
+                                <div>
+                                    <div class="fw-semibold">${esc(i.name)}</div>
+                                    <div class="text-muted small">${esc(i.code)} · Tồn: ${i.stock} ${esc(i.unit)}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="text-end">${money(i.sellPrice)}</td>
+                        <td class="text-center">
+                            <div class="qty-stepper">
+                                <button type="button" onclick="changeQty(${i.medicineId}, -1)">&minus;</button>
+                                <input type="number" value="${i.quantity}" min="1" max="${i.stock}" onchange="updateQuantity(${i.medicineId}, this.value)" />
+                                <button type="button" onclick="changeQty(${i.medicineId}, 1)">+</button>
+                            </div>
+                        </td>
+                        <td class="text-end fw-semibold">${money(i.sellPrice * i.quantity)}</td>
+                        <td class="text-end"><button type="button" class="btn-del" onclick="removeFromCart(${i.medicineId})"><i class="bi bi-trash3"></i></button></td>
+                    </tr>
+                `).join('');
+            }
+
+            document.getElementById('cartCount').textContent = cart.reduce((s, i) => s + i.quantity, 0);
+            updateSummary();
+        }
+
+        function updateSummary() {
+            const totalAmount = cart.reduce((sum, i) => sum + i.sellPrice * i.quantity, 0);
+            const discount = parseFloat(document.getElementById('discountInput').value) || 0;
+            let finalAmount = totalAmount - discount;
+            if (finalAmount < 0) finalAmount = 0;
+
+            document.getElementById('totalAmountText').textContent = money(totalAmount);
+            document.getElementById('finalAmountText').textContent = money(finalAmount);
+            currentFinal = finalAmount;
+            renderPayPanel();
+            refreshCheckout();
+        }
+
+        function refreshCheckout() {
+            document.getElementById('checkoutBtn').disabled = cart.length === 0 || !paymentReady();
+        }
+
+        document.getElementById('discountInput').addEventListener('input', updateSummary);
+
+        // ===== Phương thức thanh toán =====
+        document.querySelectorAll('#payOptions .pay-option').forEach(btn => {
+            btn.addEventListener('click', function () {
+                document.querySelectorAll('#payOptions .pay-option').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                paymentMethod = this.dataset.method;
+                showPayPanel();
+            });
+        });
+
+        // ===== Chuyển khoản / Thẻ / Ví điện tử =====
+        let currentFinal = 0;
+        const WALLETS = [
+            { key: 'MoMo', color: '#a50064' },
+            { key: 'ZaloPay', color: '#0068ff' },
+            { key: 'ShopeePay', color: '#ee4d2d' },
+            { key: 'VNPay', color: '#005baa' }
+        ];
+        let selectedWallet = null;
+
+        const ccNumber = document.getElementById('ccNumber');
+        const ccName = document.getElementById('ccName');
+        const ccExp = document.getElementById('ccExp');
+        const walletPhone = document.getElementById('walletPhone');
+
+        function showPayPanel() {
+            const map = { 'Chuyển khoản': 'panelBank', 'Thẻ': 'panelCard', 'Ví điện tử': 'panelWallet' };
+            ['panelBank', 'panelCard', 'panelWallet'].forEach(id => document.getElementById(id).classList.add('d-none'));
+            const panel = document.getElementById('payPanel');
+            if (map[paymentMethod]) {
+                panel.classList.remove('d-none');
+                document.getElementById(map[paymentMethod]).classList.remove('d-none');
+            } else {
+                panel.classList.add('d-none');
+            }
+            renderPayPanel();
+            refreshCheckout();
+        }
+
+        function renderPayPanel() {
+            document.getElementById('payAmountBank').textContent = money(currentFinal);
+            renderWalletPay();
+        }
+
+        function paymentReady() {
+            if (paymentMethod === 'Thẻ') return cardError() === '';
+            if (paymentMethod === 'Ví điện tử') return walletReady();
+            return true;
+        }
+
+        // --- Chuyển khoản: sao chép số tài khoản ---
+        document.getElementById('copyAccBtn').addEventListener('click', function () {
+            const num = document.getElementById('bankAccNumber').textContent.replace(/\s/g, '');
+            navigator.clipboard.writeText(num).then(() => {
+                this.innerHTML = '<i class="bi bi-check2"></i> Đã chép';
+                setTimeout(() => { this.innerHTML = '<i class="bi bi-clipboard"></i> Sao chép'; }, 1500);
+            });
+        });
+
+        // --- Thẻ ---
+        function detectBrand(d) {
+            if (/^4/.test(d)) return 'visa';
+            if (/^(5[1-5]|2[2-7])/.test(d)) return 'mastercard';
+            if (/^3[47]/.test(d)) return 'amex';
+            if (/^35/.test(d)) return 'jcb';
+            return '';
+        }
+
+        function groupCard(s, brand) {
+            if (brand === 'amex') return [s.slice(0, 4), s.slice(4, 10), s.slice(10, 15)].filter(Boolean).join(' ');
+            return (s.match(/.{1,4}/g) || []).join(' ');
+        }
+
+        function removeDiacritics(s) {
+            return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D');
+        }
+
+        function cardError() {
+            const d = ccNumber.value.replace(/\D/g, '');
+            const brand = detectBrand(d);
+            const need = brand === 'amex' ? 15 : 16;
+            if (d.length !== need) return 'Số thẻ cần đủ ' + need + ' số.';
+            if (ccName.value.trim().length < 2) return 'Chưa nhập tên chủ thẻ.';
+            const m = /^(\d{2})\/(\d{2})$/.exec(ccExp.value);
+            if (!m) return 'Ngày hết hạn nhập theo dạng MM/YY.';
+            const month = parseInt(m[1]), year = 2000 + parseInt(m[2]);
+            if (month < 1 || month > 12) return 'Tháng hết hạn không hợp lệ.';
+            const now = new Date();
+            if (year < now.getFullYear() || (year === now.getFullYear() && month < now.getMonth() + 1)) return 'Thẻ đã hết hạn.';
+            return '';
+        }
+
+        function updateCardPreview() {
+            const d = ccNumber.value.replace(/\D/g, '');
+            const brand = detectBrand(d);
+            const total = brand === 'amex' ? 15 : 16;
+            document.getElementById('ccPreview').className = 'credit-card mb-3 ' + brand;
+            document.getElementById('ccNumberView').textContent = groupCard(d.padEnd(total, '•'), brand);
+            document.getElementById('ccNameView').textContent = ccName.value.trim() || 'HỌ VÀ TÊN';
+            document.getElementById('ccExpView').textContent = ccExp.value || 'MM/YY';
+
+            const names = { visa: 'VISA', amex: 'AMEX', jcb: 'JCB' };
+            const brandEl = document.getElementById('ccBrand');
+            if (brand === 'mastercard') brandEl.innerHTML = '<span class="cc-mc"><span></span><span></span></span>';
+            else brandEl.textContent = names[brand] || 'THẺ';
+
+            const err = cardError();
+            const st = document.getElementById('ccStatus');
+            if (!ccNumber.value && !ccName.value && !ccExp.value) { st.textContent = ''; }
+            else if (err) { st.style.color = '#dc2626'; st.textContent = err; }
+            else { st.style.color = '#16a34a'; st.textContent = 'Thông tin thẻ hợp lệ, có thể thanh toán.'; }
+            refreshCheckout();
+        }
+
+        ccNumber.addEventListener('input', function () {
+            let d = this.value.replace(/\D/g, '');
+            const brand = detectBrand(d);
+            d = d.slice(0, brand === 'amex' ? 15 : 16);
+            this.value = groupCard(d, brand);
+            updateCardPreview();
+        });
+        ccName.addEventListener('input', function () {
+            this.value = removeDiacritics(this.value).toUpperCase().replace(/[^A-Z\s.'-]/g, '');
+            updateCardPreview();
+        });
+        ccExp.addEventListener('input', function () {
+            let d = this.value.replace(/\D/g, '').slice(0, 4);
+            if (d.length === 1 && parseInt(d) > 1) d = '0' + d;
+            this.value = d.length > 2 ? d.slice(0, 2) + '/' + d.slice(2) : d;
+            updateCardPreview();
+        });
+
+        // --- Ví điện tử ---
+        const walletBox = document.getElementById('walletOptions');
+        WALLETS.forEach(w => {
+            const b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'wallet-btn';
+            b.textContent = w.key;
+            b.addEventListener('click', function () {
+                selectedWallet = w;
+                walletBox.querySelectorAll('.wallet-btn').forEach(x => { x.classList.remove('active'); x.style.background = ''; });
+                b.classList.add('active');
+                b.style.background = w.color;
+                renderWalletPay();
+                refreshCheckout();
+            });
+            walletBox.appendChild(b);
+        });
+
+        walletPhone.addEventListener('input', function () {
+            this.value = this.value.replace(/\D/g, '').slice(0, 10);
+            renderWalletPay();
+            refreshCheckout();
+        });
+
+        function walletReady() {
+            return !!selectedWallet && /^0\d{9}$/.test(walletPhone.value);
+        }
+
+        function renderWalletPay() {
+            const pay = document.getElementById('walletPay');
+            const hint = document.getElementById('walletHint');
+            if (!walletReady()) {
+                pay.classList.add('d-none');
+                hint.classList.remove('d-none');
+                return;
+            }
+            hint.classList.add('d-none');
+            pay.classList.remove('d-none');
+            pay.style.background = selectedWallet.color;
+            document.getElementById('walletPayTitle').textContent = 'Thanh toán qua ' + selectedWallet.key;
+            document.getElementById('walletPayAmount').textContent = money(currentFinal);
+            document.getElementById('walletPayPhone').textContent = 'Ví: ' + walletPhone.value;
+            try {
+                const qr = qrcode(0, 'M');
+                qr.addData('PHARMACY|' + selectedWallet.key + '|' + walletPhone.value + '|' + currentFinal);
+                qr.make();
+                document.getElementById('walletQr').innerHTML = qr.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
+            } catch (e) {
+                document.getElementById('walletQr').textContent = '';
             }
         }
-    });
 
-    renderCart();
-</script>
+        // ===== Gửi form thanh toán =====
+        document.getElementById('checkoutForm').addEventListener('submit', function (e) {
+            if (cart.length === 0 || !paymentReady()) { e.preventDefault(); return; }
+
+            document.getElementById('hiddenCustomerId').value = document.getElementById('customerSelect').value;
+            document.getElementById('hiddenCartJson').value = JSON.stringify(cart.map(i => ({ medicineId: i.medicineId, quantity: i.quantity })));
+            document.getElementById('hiddenDiscount').value = document.getElementById('discountInput').value || 0;
+            document.getElementById('hiddenPaymentMethod').value = paymentMethod;
+        });
+
+        // ===== Tạo khách hàng nhanh qua modal =====
+        document.getElementById('saveNewCustomerBtn').addEventListener('click', async function () {
+            const name = document.getElementById('newCustomerName').value.trim();
+            const phone = document.getElementById('newCustomerPhone').value.trim();
+            const address = document.getElementById('newCustomerAddress').value.trim();
+            const errorBox = document.getElementById('newCustomerError');
+            errorBox.classList.add('d-none');
+
+            if (!name) { errorBox.textContent = 'Vui lòng nhập họ tên.'; errorBox.classList.remove('d-none'); return; }
+
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+            const formData = new FormData();
+            formData.append('name', name);
+            formData.append('phone', phone);
+            formData.append('address', address);
+
+            const res = await fetch('/Order/QuickCreateCustomer', {
+                method: 'POST',
+                headers: { 'RequestVerificationToken': token },
+                body: formData
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                errorBox.textContent = data.message || 'Không thể tạo khách hàng.';
+                errorBox.classList.remove('d-none');
+                return;
+            }
+
+            const select = document.getElementById('customerSelect');
+            const option = document.createElement('option');
+            option.value = data.id;
+            option.textContent = data.name;
+            option.selected = true;
+            select.appendChild(option);
+
+            document.getElementById('newCustomerName').value = '';
+            document.getElementById('newCustomerPhone').value = '';
+            document.getElementById('newCustomerAddress').value = '';
+
+            bootstrap.Modal.getInstance(document.getElementById('newCustomerModal')).hide();
+        });
+
+        // ===== Phím tắt F9 = Thanh toán =====
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'F9') {
+                e.preventDefault();
+                if (!document.getElementById('checkoutBtn').disabled) {
+                    document.getElementById('checkoutForm').requestSubmit();
+                }
+            }
+        });
+
+        renderCart();
+    </script>
 }

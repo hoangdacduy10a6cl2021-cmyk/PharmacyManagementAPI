@@ -7,9 +7,9 @@ namespace PharmacyManagementAPI.Services
 {
     public interface IDashboardService
     {
-        Task<DashboardDto> GetDashboardAsync();
+        Task<DashboardDto> GetDashboardAsync(int? userId = null);
         Task<AlertsDto> GetAlertsAsync();
-        Task<RevenueReportDto> GetRevenueReportAsync(DateTime fromDate, DateTime toDate);
+        Task<RevenueReportDto> GetRevenueReportAsync(DateTime fromDate, DateTime toDate, int? userId = null);
         Task<ProfitReportDto> GetProfitReportAsync(DateTime fromDate, DateTime toDate);
         Task<PaymentReportDto> GetPaymentReportAsync(DateTime fromDate, DateTime toDate);
     }
@@ -28,14 +28,19 @@ namespace PharmacyManagementAPI.Services
         }
 
         // Các phiếu trả hàng đã duyệt trong khoảng thời gian (tính theo ngày duyệt)
-        private async Task<List<ReturnOrder>> GetApprovedReturnsAsync(DateTime from, DateTime toExclusive)
+        // userId != null: chỉ lấy phiếu trả của hoá đơn do nhân viên đó bán
+        private async Task<List<ReturnOrder>> GetApprovedReturnsAsync(DateTime from, DateTime toExclusive, int? userId = null)
         {
-            return await _context.ReturnOrders
+            var query = _context.ReturnOrders
                 .Include(r => r.Order)
                 .Include(r => r.ReturnDetails).ThenInclude(d => d.Medicine)
                 .Where(r => r.Status == RETURN_APPROVED && r.ReviewedAt != null
-                            && r.ReviewedAt >= from && r.ReviewedAt < toExclusive)
-                .ToListAsync();
+                            && r.ReviewedAt >= from && r.ReviewedAt < toExclusive);
+
+            if (userId.HasValue)
+                query = query.Where(r => r.Order!.UserId == userId.Value);
+
+            return await query.ToListAsync();
         }
 
         // Giá vốn của hàng được nhập lại kho (không còn là chi phí)
@@ -45,17 +50,22 @@ namespace PharmacyManagementAPI.Services
         private static bool IsOnDay(ReturnOrder r, DateTime date) =>
             r.ReviewedAt.HasValue && r.ReviewedAt.Value.Date == date;
 
-        public async Task<DashboardDto> GetDashboardAsync()
+        public async Task<DashboardDto> GetDashboardAsync(int? userId = null)
         {
             var today = DateTime.Now.Date;
             var tomorrow = today.AddDays(1);
 
-            var todayOrders = await _context.Orders
+            // userId != null (nhân viên): chỉ tính hoá đơn của chính người đó
+            var orderScope = _context.Orders.AsQueryable();
+            if (userId.HasValue)
+                orderScope = orderScope.Where(o => o.UserId == userId.Value);
+
+            var todayOrders = await orderScope
                 .Where(o => o.OrderDate >= today && o.OrderDate < tomorrow && o.Status != CANCELLED)
                 .ToListAsync();
 
             var sevenDaysAgo = today.AddDays(-6);
-            var returns7 = await GetApprovedReturnsAsync(sevenDaysAgo, tomorrow);
+            var returns7 = await GetApprovedReturnsAsync(sevenDaysAgo, tomorrow, userId);
 
             var cfg = await _settings.GetEntityAsync();
             var lowThreshold = cfg.LowStockThreshold;
@@ -69,7 +79,7 @@ namespace PharmacyManagementAPI.Services
 
             // Top 5 thuốc bán chạy nhất (không tính hoá đơn đã hủy)
             var topSelling = await _context.OrderDetails
-                .Where(d => d.Order!.Status != CANCELLED)
+                .Where(d => d.Order!.Status != CANCELLED && (userId == null || d.Order.UserId == userId))
                 .Include(d => d.Medicine)
                 .GroupBy(d => new { d.MedicineId, d.Medicine!.Name })
                 .Select(g => new TopSellingMedicineDto
@@ -82,7 +92,7 @@ namespace PharmacyManagementAPI.Services
                 .Take(5)
                 .ToListAsync();
 
-            var recentOrders = await _context.Orders
+            var recentOrders = await orderScope
                 .Where(o => o.OrderDate >= sevenDaysAgo && o.OrderDate < tomorrow && o.Status != CANCELLED)
                 .ToListAsync();
 
@@ -174,15 +184,37 @@ namespace PharmacyManagementAPI.Services
             };
         }
 
-        public async Task<RevenueReportDto> GetRevenueReportAsync(DateTime fromDate, DateTime toDate)
+        public async Task<RevenueReportDto> GetRevenueReportAsync(DateTime fromDate, DateTime toDate, int? userId = null)
         {
             var toDateInclusive = toDate.Date.AddDays(1);
 
-            var orders = await _context.Orders
+            // Lấy toàn bộ hoá đơn / phiếu trả trong kỳ để vừa tính tổng theo bộ lọc, vừa thống kê theo từng nhân viên
+            var allOrders = await _context.Orders
+                .Include(o => o.User)
                 .Where(o => o.OrderDate >= fromDate.Date && o.OrderDate < toDateInclusive && o.Status != CANCELLED)
                 .ToListAsync();
 
-            var returns = await GetApprovedReturnsAsync(fromDate.Date, toDateInclusive);
+            var allReturns = await GetApprovedReturnsAsync(fromDate.Date, toDateInclusive);
+
+            // Doanh thu theo từng nhân viên (hoàn tiền trừ vào nhân viên đã bán hoá đơn gốc)
+            var byEmployee = allOrders
+                .GroupBy(o => new { o.UserId, Name = o.User?.FullName ?? "" })
+                .Select(g => new EmployeeRevenueDto
+                {
+                    UserId = g.Key.UserId,
+                    FullName = g.Key.Name,
+                    OrderCount = g.Count(),
+                    Revenue = g.Sum(o => o.FinalAmount)
+                            - allReturns.Where(r => r.Order != null && r.Order.UserId == g.Key.UserId).Sum(r => r.RefundAmount)
+                })
+                .OrderByDescending(e => e.Revenue)
+                .ToList();
+
+            // Áp dụng bộ lọc nhân viên (nếu có) cho tổng và biểu đồ theo ngày
+            var orders = userId.HasValue ? allOrders.Where(o => o.UserId == userId.Value).ToList() : allOrders;
+            var returns = userId.HasValue
+                ? allReturns.Where(r => r.Order != null && r.Order.UserId == userId.Value).ToList()
+                : allReturns;
 
             var dailyBreakdown = new List<DailyRevenueDto>();
             for (var date = fromDate.Date; date <= toDate.Date; date = date.AddDays(1))
@@ -205,10 +237,12 @@ namespace PharmacyManagementAPI.Services
             {
                 FromDate = fromDate.Date,
                 ToDate = toDate.Date,
+                UserId = userId,
                 TotalRevenue = totalRevenue,
                 TotalOrders = totalOrders,
                 AverageOrderValue = avgOrderValue,
-                DailyBreakdown = dailyBreakdown
+                DailyBreakdown = dailyBreakdown,
+                ByEmployee = byEmployee
             };
         }
 

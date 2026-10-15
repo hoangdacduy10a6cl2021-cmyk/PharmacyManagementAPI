@@ -2,6 +2,9 @@
 @{
     ViewData["Title"] = "Tạo phiếu nhập";
     var suppliers = ViewBag.Suppliers as List<PharmacyManagementWeb.Models.ApiModels.SupplierModel> ?? new();
+    var categories = ViewBag.Categories as List<PharmacyManagementWeb.Models.ApiModels.CategoryModel> ?? new();
+    object outOfStockData = ViewBag.OutOfStock ?? new List<object>();
+    var outOfStockJson = System.Text.Json.JsonSerializer.Serialize(outOfStockData);
 }
 
 <style>
@@ -31,11 +34,22 @@
 
 <div class="row g-3">
     <div class="col-xl-8">
+        <div class="stat-card mb-3" id="outOfStockCard" style="display:none;">
+            <h6 class="mb-2"><i class="bi bi-exclamation-triangle text-danger me-1"></i> Thuốc đã hết hàng</h6>
+            <div class="text-muted small mb-2">Bấm vào thuốc để thêm vào phiếu, nhà cung cấp sẽ được tự động chọn.</div>
+            <div id="outOfStockList" class="d-flex flex-wrap gap-2"></div>
+        </div>
+
         <div class="stat-card mb-3">
-            <div class="pos-search">
+            <div class="d-flex gap-2">
+                <div class="pos-search flex-grow-1">
                 <i class="bi bi-search"></i>
                 <input type="text" id="medicineSearch" class="form-control" placeholder="Tìm thuốc cần nhập theo tên hoặc mã..." autocomplete="off" />
                 <div id="searchResults" class="search-dropdown"></div>
+                </div>
+                <button type="button" class="btn btn-outline-success text-nowrap" data-bs-toggle="modal" data-bs-target="#newMedicineModal">
+                    <i class="bi bi-plus-circle me-1"></i>Thuốc mới
+                </button>
             </div>
         </div>
 
@@ -69,6 +83,7 @@
                         <option value="@s.Id">@s.Name</option>
                     }
                 </select>
+                <div id="supplierNote" class="small mb-3" style="display:none;"></div>
 
                 <div class="total-row">
                     <span class="fw-bold">Tổng tiền nhập</span>
@@ -82,6 +97,71 @@
                     <button type="submit" id="createBtn" class="btn-checkout" disabled><i class="bi bi-check2-circle"></i> Tạo phiếu nhập</button>
                 </form>
                 <a asp-action="Index" class="btn btn-outline-secondary w-100 mt-2">Quay lại danh sách</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="newMedicineModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius:16px;">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-capsule me-1"></i> Thêm loại thuốc mới</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="newMedError" class="alert alert-danger py-2" style="display:none;"></div>
+                <div class="row g-2">
+                    <div class="col-12">
+                        <label class="form-label small mb-1">Tên thuốc <span class="text-danger">*</span></label>
+                        <input type="text" id="nmName" class="form-control" maxlength="150" />
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small mb-1">Mã thuốc</label>
+                        <input type="text" id="nmCode" class="form-control" maxlength="20" placeholder="Để trống để tự tạo" />
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small mb-1">Danh mục <span class="text-danger">*</span></label>
+                        <select id="nmCategory" class="form-select">
+                            <option value="">-- Chọn --</option>
+                            @foreach (var c in categories)
+                            {
+                                <option value="@c.Id">@c.Name</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small mb-1">Đơn vị tính</label>
+                        <input type="text" id="nmUnit" class="form-control" value="Hộp" maxlength="20" />
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small mb-1">Mã vạch</label>
+                        <input type="text" id="nmBarcode" class="form-control" maxlength="50" />
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small mb-1">Giá nhập</label>
+                        <input type="number" id="nmImportPrice" class="form-control" min="0" step="any" value="0" />
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small mb-1">Giá bán</label>
+                        <input type="number" id="nmSellPrice" class="form-control" min="0" step="any" value="0" />
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small mb-1">Nhà cung cấp</label>
+                        <select id="nmSupplier" class="form-select">
+                            <option value="">-- Theo nhà cung cấp của phiếu nhập --</option>
+                            @foreach (var s in suppliers)
+                            {
+                                <option value="@s.Id">@s.Name</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="text-muted small mt-2">Thuốc mới được tạo với tồn kho 0, số lượng sẽ được cộng khi bạn lưu phiếu nhập.</div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" id="nmSaveBtn" class="btn btn-success"><i class="bi bi-check2 me-1"></i>Tạo và thêm vào phiếu</button>
             </div>
         </div>
     </div>
@@ -113,7 +193,7 @@
         if (term.length === 0) { searchResults.style.display = 'none'; return; }
 
         searchTimeout = setTimeout(async () => {
-            const res = await fetch('/Order/SearchMedicine?term=' + encodeURIComponent(term));
+            const res = await fetch('/PurchaseOrder/SearchMedicine?term=' + encodeURIComponent(term));
             lastResults = await res.json();
             renderSearchResults(lastResults);
         }, 250);
@@ -130,7 +210,7 @@
                 ${thumb(m.imageUrl, 44)}
                 <div class="flex-grow-1">
                     <div class="fw-semibold">${esc(m.name)}</div>
-                    <div class="text-muted small">${esc(m.code)} · Tồn hiện tại: ${m.stock}</div>
+                    <div class="text-muted small">${esc(m.code)} · Tồn hiện tại: ${m.stock <= 0 ? '<span class="text-danger fw-semibold">Hết hàng</span>' : m.stock}${m.supplierName ? ' · NCC: ' + esc(m.supplierName) : ''}</div>
                 </div>
             </button>
         `).join('');
@@ -147,12 +227,90 @@
         if (cart.find(i => i.medicineId === medicine.id)) {
             alert('Thuốc này đã có trong phiếu nhập.');
         } else {
-           cart.push({ medicineId: medicine.id, code: medicine.code, name: medicine.name, importPrice: 0, quantity: 1, imageUrl: medicine.imageUrl, batchNumber: '', expiryDate: '' });
+           cart.push({ medicineId: medicine.id, code: medicine.code, name: medicine.name, importPrice: medicine.importPrice || 0, quantity: 1, imageUrl: medicine.imageUrl, batchNumber: '', expiryDate: '' });
+            autoFillSupplier(medicine);
         }
         searchInput.value = '';
         searchResults.style.display = 'none';
         renderCart();
     }
+
+    // Tự động chọn nhà cung cấp theo thuốc được thêm vào phiếu (một phiếu nhập chỉ có 1 nhà cung cấp)
+    function autoFillSupplier(medicine) {
+        const sel = document.getElementById('supplierSelect');
+        const note = document.getElementById('supplierNote');
+        if (!medicine.supplierId) return;
+
+        const supplierId = String(medicine.supplierId);
+        const optionExists = Array.from(sel.options).some(o => o.value === supplierId);
+        if (!optionExists) return;
+
+        // Chưa chọn nhà cung cấp, hoặc đây là thuốc đầu tiên của phiếu -> tự điền
+        if (!sel.value || cart.length <= 1) {
+            sel.value = supplierId;
+            note.className = 'small mb-3 text-success';
+            note.innerHTML = '<i class="bi bi-magic me-1"></i>Đã tự chọn nhà cung cấp <b>' + esc(medicine.supplierName || '') + '</b> theo thuốc <b>' + esc(medicine.name) + '</b>.';
+            note.style.display = 'block';
+        } else if (sel.value !== supplierId) {
+            note.className = 'small mb-3 text-warning';
+            note.innerHTML = '<i class="bi bi-exclamation-triangle me-1"></i>Thuốc <b>' + esc(medicine.name) + '</b> thuộc nhà cung cấp <b>' + esc(medicine.supplierName || '') + '</b>, khác với nhà cung cấp đang chọn. Mỗi phiếu nhập chỉ có một nhà cung cấp, hãy tạo phiếu riêng nếu cần.';
+            note.style.display = 'block';
+        }
+        updateSummary();
+    }
+
+    // Danh sách thuốc đã hết hàng để nhập nhanh
+    const outOfStock = @Html.Raw(outOfStockJson);
+    (function renderOutOfStock() {
+        if (!outOfStock.length) return;
+        document.getElementById('outOfStockCard').style.display = 'block';
+        document.getElementById('outOfStockList').innerHTML = outOfStock.map((m, idx) =>
+            `<button type="button" class="btn btn-sm btn-outline-danger" onclick="addOutOfStock(${idx})">
+                <i class="bi bi-plus-circle me-1"></i>${esc(m.name)}${m.supplierName ? ' <span class="text-muted">(' + esc(m.supplierName) + ')</span>' : ''}
+            </button>`).join('');
+    })();
+    function addOutOfStock(idx) { addToCart(outOfStock[idx]); }
+
+    // Tạo nhanh loại thuốc mới
+    document.getElementById('nmSaveBtn').addEventListener('click', async function () {
+        const errBox = document.getElementById('newMedError');
+        errBox.style.display = 'none';
+
+        const body = new URLSearchParams();
+        body.append('__RequestVerificationToken', document.querySelector('#createForm input[name="__RequestVerificationToken"]').value);
+        body.append('name', document.getElementById('nmName').value.trim());
+        body.append('code', document.getElementById('nmCode').value.trim());
+        body.append('categoryId', document.getElementById('nmCategory').value || '0');
+        body.append('unit', document.getElementById('nmUnit').value.trim());
+        body.append('barcode', document.getElementById('nmBarcode').value.trim());
+        body.append('importPrice', document.getElementById('nmImportPrice').value || '0');
+        body.append('sellPrice', document.getElementById('nmSellPrice').value || '0');
+        const supplierId = document.getElementById('nmSupplier').value || document.getElementById('supplierSelect').value;
+        if (supplierId) body.append('supplierId', supplierId);
+
+        this.disabled = true;
+        try {
+            const res = await fetch('/PurchaseOrder/QuickCreateMedicine', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: body.toString()
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                errBox.textContent = data.message || 'Không thể tạo thuốc mới.';
+                errBox.style.display = 'block';
+                return;
+            }
+
+            bootstrap.Modal.getInstance(document.getElementById('newMedicineModal')).hide();
+            ['nmName', 'nmCode', 'nmBarcode'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('nmImportPrice').value = 0;
+            document.getElementById('nmSellPrice').value = 0;
+            addToCart(data);
+        } finally {
+            this.disabled = false;
+        }
+    });
 
     function removeFromCart(medicineId) { cart = cart.filter(i => i.medicineId !== medicineId); renderCart(); }
 

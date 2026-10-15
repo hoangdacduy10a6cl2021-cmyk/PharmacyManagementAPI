@@ -5,7 +5,10 @@
     DateTime to = ViewBag.ToDate;
     string? search = ViewBag.Search as string;
     string? status = ViewBag.Status as string;
-    bool hasFilter = !string.IsNullOrEmpty(search) || !string.IsNullOrEmpty(status);
+    int? employeeId = ViewBag.EmployeeId as int?;
+    bool isAdmin = User.IsInRole("Admin");
+    var employees = ViewBag.Employees as List<PharmacyManagementWeb.Models.ApiModels.UserModel> ?? new();
+    bool hasFilter = !string.IsNullOrEmpty(search) || !string.IsNullOrEmpty(status) || employeeId.HasValue;
 }
 
 @if (ViewBag.Error != null)
@@ -59,6 +62,16 @@
             <option value="completed" selected="@(status == "completed")">Hoàn thành</option>
             <option value="cancelled" selected="@(status == "cancelled")">Đã hủy</option>
         </select>
+        @if (isAdmin)
+        {
+            <select name="employeeId" class="form-select filter-select align-self-end" onchange="this.form.submit()">
+                <option value="">Tất cả nhân viên</option>
+                @foreach (var e in employees)
+                {
+                    <option value="@e.Id" selected="@(employeeId == e.Id)">@e.FullName</option>
+                }
+            </select>
+        }
         <button type="submit" class="btn btn-success align-self-end"><i class="bi bi-funnel me-1"></i>Lọc</button>
         @if (hasFilter)
         {

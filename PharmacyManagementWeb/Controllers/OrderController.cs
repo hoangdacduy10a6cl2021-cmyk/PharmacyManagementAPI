@@ -20,14 +20,22 @@ namespace PharmacyManagementWeb.Controllers
         // GET /Order - Màn hình bán hàng (POS)
         public async Task<IActionResult> Index()
         {
+            // Admin không bán hàng, chỉ xem doanh thu
+            if (User.IsInRole("Admin"))
+            {
+                TempData["ErrorMessage"] = "Quản trị viên không bán hàng. Bạn có thể xem doanh thu ở mục Báo cáo.";
+                return RedirectToAction("Index", "Report");
+            }
+
             var customersResult = await _apiClient.GetAsync<List<CustomerModel>>("/api/Customer");
             ViewBag.Customers = customersResult.Data ?? new List<CustomerModel>();
             return View();
         }
 
         // GET /Order/History - danh sách hoá đơn
-        public async Task<IActionResult> History(DateTime? fromDate, DateTime? toDate, string? search, string? status)
+        public async Task<IActionResult> History(DateTime? fromDate, DateTime? toDate, string? search, string? status, int? employeeId)
         {
+            var isAdmin = User.IsInRole("Admin");
             var from = (fromDate ?? DateTime.Today.AddDays(-29)).Date;
             var to = (toDate ?? DateTime.Today).Date;
             var toEnd = to.AddDays(1).AddSeconds(-1);
@@ -35,7 +43,20 @@ namespace PharmacyManagementWeb.Controllers
             var fromText = Uri.EscapeDataString(from.ToString("yyyy-MM-dd'T'HH:mm:ss"));
             var toText = Uri.EscapeDataString(toEnd.ToString("yyyy-MM-dd'T'HH:mm:ss"));
 
-            var result = await _apiClient.GetAsync<List<OrderModel>>($"/api/Order?fromDate={fromText}&toDate={toText}");
+            // Nhân viên: API tự giới hạn chỉ hoá đơn của mình. Admin: xem tất cả, lọc được theo nhân viên.
+            var url = $"/api/Order?fromDate={fromText}&toDate={toText}";
+            if (isAdmin && employeeId.HasValue) url += $"&userId={employeeId.Value}";
+
+            if (isAdmin)
+            {
+                var usersResult = await _apiClient.GetAsync<List<UserModel>>("/api/User");
+                ViewBag.Employees = (usersResult.Data ?? new List<UserModel>())
+                    .Where(u => u.Role != "Admin" || u.OrderCount > 0)
+                    .OrderBy(u => u.FullName)
+                    .ToList();
+            }
+
+            var result = await _apiClient.GetAsync<List<OrderModel>>(url);
             var all = result.Data ?? new List<OrderModel>();
 
             if (!result.Success) ViewBag.Error = result.ErrorMessage;
@@ -63,6 +84,7 @@ namespace PharmacyManagementWeb.Controllers
             ViewBag.ToDate = to;
             ViewBag.Search = search;
             ViewBag.Status = status;
+            ViewBag.EmployeeId = employeeId;
 
             return View(filtered.ToList());
         }
@@ -93,6 +115,8 @@ namespace PharmacyManagementWeb.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> QuickCreateCustomer(string name, string? phone, string? address)
         {
+            if (User.IsInRole("Admin")) return Forbid();
+
             if (string.IsNullOrWhiteSpace(name))
                 return BadRequest(new { message = "Tên khách hàng không được để trống." });
 
@@ -109,6 +133,8 @@ namespace PharmacyManagementWeb.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(int? customerId, string cartJson, decimal discountAmount, string paymentMethod)
         {
+            if (User.IsInRole("Admin")) return Forbid();
+
             List<CartItemInput>? items;
             try
             {

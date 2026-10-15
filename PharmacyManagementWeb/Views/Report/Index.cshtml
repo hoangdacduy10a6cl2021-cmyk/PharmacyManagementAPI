@@ -1,118 +1,96 @@
-﻿@model PharmacyManagementWeb.Models.ApiModels.RevenueReportModel
+﻿@inject PharmacyManagementWeb.Services.IStoreSettingsProvider Store
 @{
-    <partial name="_ReportTabs" />
-    ViewData["Title"] = "Báo cáo doanh thu";
+    ViewData["Title"] = "Phân quyền";
 
-    var today = DateTime.Today;
-    var monthStart = new DateTime(today.Year, today.Month, 1);
-
-    var days = Model.DailyBreakdown;
-    var maxRevenue = days.Any() ? days.Max(d => d.Revenue) : 0;
-    if (maxRevenue <= 0) maxRevenue = 1;
-    bool showChart = days.Count > 0 && days.Count <= 31;
-    bool showValues = days.Count <= 12;
-
-    string Short(decimal v) => v >= 1_000_000 ? (v / 1_000_000).ToString("0.#") + "tr"
-                             : v >= 1_000 ? (v / 1_000).ToString("0.#") + "k"
-                             : v.ToString("0");
-}
-
-@if (ViewBag.Error != null)
-{
-    <div class="alert alert-danger">@ViewBag.Error</div>
+    var groups = new[]
+    {
+        new { Title = "Bán hàng và chăm sóc khách", Rows = new[]
+        {
+            ("Xem trang chủ, thống kê trong ngày (nhân viên chỉ thấy số liệu của chính mình)", true, true),
+            ("Bán hàng, tạo hoá đơn (Admin không bán hàng)", true, false),
+            ("Giảm giá trên hoá đơn", true, false),
+            ("Xem, in, hủy hoá đơn của chính mình (hoàn tiền)", true, false),
+            ("Xem tất cả hoá đơn, lọc theo nhân viên", false, true),
+            ("Tạo phiếu đổi trả / trả hàng của hoá đơn mình bán (chờ Admin duyệt)", true, false),
+            ("Ghi nhận và xem phiếu tư vấn do chính mình tạo", true, true),
+            ("Tạo và xem đơn thuốc", true, true),
+            ("Xem, thêm, sửa khách hàng", true, true),
+            ("Xoá khách hàng", false, true),
+        }},
+        new { Title = "Thuốc và kho", Rows = new[]
+        {
+            ("Tra cứu thuốc, xem tồn kho, hạn dùng", true, true),
+            ("Xem cảnh báo và thông báo hết hàng, hết hạn", true, true),
+            ("Thêm, sửa, xoá thuốc, đổi ảnh thuốc", false, true),
+            ("Quản lý danh mục, nhà cung cấp", false, true),
+            ("Tạo và xem phiếu nhập hàng", false, true),
+            ("Quản lý khuyến mãi", false, true),
+            ("Duyệt hoặc từ chối phiếu trả hàng", false, true),
+            ("Kiểm kê kho và điều chỉnh tồn kho", false, true),
+        }},
+        new { Title = "Báo cáo và quản trị hệ thống", Rows = new[]
+        {
+            ("Báo cáo doanh thu toàn cửa hàng và lọc doanh thu theo từng nhân viên", false, true),
+            ("Báo cáo lợi nhuận, thanh toán", false, true),
+            ("Quản lý nhân viên, khoá / mở khoá tài khoản", false, true),
+            ("Phân quyền (gán vai trò)", false, true),
+            ("Xem nhật ký hệ thống", false, true),
+            ("Cài đặt cửa hàng (thông tin, ngưỡng cảnh báo, giảm giá tối đa)", false, true),
+        }},
+        new { Title = "Tài khoản cá nhân", Rows = new[]
+        {
+            ("Sửa thông tin và đổi mật khẩu của chính mình", true, true),
+        }}
+    };
 }
 
 <div class="stat-card mb-3">
-    <form method="get" class="list-toolbar">
+    <div class="d-flex align-items-center gap-3">
+        <div class="fh-icon" style="width:46px;height:46px;border-radius:14px;background:var(--pharmacy-primary-soft);color:var(--pharmacy-primary-dark);display:flex;align-items:center;justify-content:center;font-size:1.3rem;"><i class="bi bi-shield-lock"></i></div>
         <div>
-            <label class="form-label small mb-1">Từ ngày</label>
-            <input type="date" name="fromDate" value="@Model.FromDate.ToString("yyyy-MM-dd")" class="form-control" />
-        </div>
-        <div>
-            <label class="form-label small mb-1">Đến ngày</label>
-            <input type="date" name="toDate" value="@Model.ToDate.ToString("yyyy-MM-dd")" class="form-control" />
-        </div>
-        <div class="align-self-end">
-            <button type="submit" class="btn btn-success"><i class="bi bi-bar-chart-line me-1"></i>Xem báo cáo</button>
-        </div>
-
-        <div class="ms-auto d-flex gap-2 align-self-end">
-            <a asp-action="Index" asp-route-fromDate="@today.ToString("yyyy-MM-dd")" asp-route-toDate="@today.ToString("yyyy-MM-dd")" class="btn btn-outline-secondary btn-sm">Hôm nay</a>
-            <a asp-action="Index" asp-route-fromDate="@today.AddDays(-6).ToString("yyyy-MM-dd")" asp-route-toDate="@today.ToString("yyyy-MM-dd")" class="btn btn-outline-secondary btn-sm">7 ngày</a>
-            <a asp-action="Index" asp-route-fromDate="@monthStart.ToString("yyyy-MM-dd")" asp-route-toDate="@today.ToString("yyyy-MM-dd")" class="btn btn-outline-secondary btn-sm">Tháng này</a>
-        </div>
-    </form>
-</div>
-
-<div class="row g-3 mb-3">
-    <div class="col-md-4">
-        <div class="stat-tile tile-green">
-            <div class="tile-icon"><i class="bi bi-cash-coin"></i></div>
-            <div><div class="tile-label">Tổng doanh thu</div><div class="tile-value">@Model.TotalRevenue.ToString("N0")đ</div></div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="stat-tile tile-blue">
-            <div class="tile-icon"><i class="bi bi-receipt"></i></div>
-            <div><div class="tile-label">Tổng số đơn hàng</div><div class="tile-value">@Model.TotalOrders</div></div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="stat-tile tile-orange">
-            <div class="tile-icon"><i class="bi bi-graph-up-arrow"></i></div>
-            <div><div class="tile-label">Giá trị TB / đơn</div><div class="tile-value">@Model.AverageOrderValue.ToString("N0")đ</div></div>
+            <h6 class="mb-1">Hệ thống có 2 vai trò</h6>
+            <div class="text-muted small">
+                <span class="status-pill pill-blue">Quản trị viên</span> quản lý hệ thống, nhập hàng và xem doanh thu (không bán hàng).
+                <span class="status-pill pill-green ms-1">Nhân viên / Dược sĩ</span> chỉ bán hàng, xem hoá đơn và dữ liệu do chính mình tạo, và tra cứu.
+                Để đổi vai trò của một người, vào <a asp-action="Index">Nhân viên</a> rồi bấm nút sửa.
+            </div>
         </div>
     </div>
 </div>
 
-@if (showChart)
+@foreach (var g in groups)
 {
     <div class="stat-card mb-3">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h6 class="mb-0">Biểu đồ doanh thu theo ngày</h6>
-            <span class="text-muted small">Đơn vị: nghìn (k) / triệu (tr) đồng</span>
-        </div>
-        <div class="bar-chart" style="gap:@(days.Count > 14 ? "0.3rem" : "0.8rem");">
-            @foreach (var d in days)
-            {
-                var pct = d.Revenue <= 0 ? 3 : Math.Max(6, (int)Math.Round((double)(d.Revenue / maxRevenue) * 100));
-                <div class="bar-col" title="@d.Date.ToString("dd/MM/yyyy"): @d.Revenue.ToString("N0")đ - @d.OrderCount đơn">
-                    <div class="bar-value">@(showValues && d.Revenue > 0 ? Short(d.Revenue) : "")</div>
-                    <div class="bar-track">
-                        <div class="bar-fill @(d.Revenue <= 0 ? "empty" : "")" style="height:@(pct)%"></div>
-                    </div>
-                    <div class="bar-label">@d.Date.ToString("dd/MM")</div>
-                </div>
-            }
+        <h6 class="mb-3">@g.Title</h6>
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Chức năng</th>
+                        <th class="text-center" style="width:190px;">Nhân viên / Dược sĩ</th>
+                        <th class="text-center" style="width:150px;">Quản trị viên</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var r in g.Rows)
+                    {
+                        <tr>
+                            <td>@r.Item1</td>
+                            <td class="text-center">
+                                @if (r.Item2) { <i class="bi bi-check-circle-fill text-success fs-5"></i> }
+                                else { <i class="bi bi-x-circle-fill text-danger fs-5" style="opacity:.45;"></i> }
+                            </td>
+                            <td class="text-center">
+                                @if (r.Item3) { <i class="bi bi-check-circle-fill text-success fs-5"></i> }
+                                else { <i class="bi bi-x-circle-fill text-danger fs-5" style="opacity:.45;"></i> }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
         </div>
     </div>
 }
 
-<div class="stat-card">
-    <h6 class="mb-3">Chi tiết doanh thu theo ngày</h6>
-    <div class="table-responsive">
-        <table class="table align-middle">
-            <thead>
-                <tr>
-                    <th>Ngày</th>
-                    <th class="text-end">Doanh thu</th>
-                    <th class="text-end">Số đơn</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var d in days)
-                {
-                    <tr>
-                        <td>@d.Date.ToString("dd/MM/yyyy")</td>
-                        <td class="text-end fw-semibold">@d.Revenue.ToString("N0")đ</td>
-                        <td class="text-end">@d.OrderCount</td>
-                    </tr>
-                }
-                @if (!days.Any())
-                {
-                    <tr><td colspan="3"><div class="empty-state"><i class="bi bi-bar-chart-line"></i>Không có dữ liệu trong khoảng thời gian này.</div></td></tr>
-                }
-            </tbody>
-        </table>
-    </div>
-</div>
+@{ var discountPct = (await Store.GetAsync()).MaxStaffDiscountPercent; }
+<div class="text-muted small"><i class="bi bi-info-circle me-1"></i>Nhân viên chỉ được giảm giá tối đa @discountPct.ToString("0.##")% giá trị mỗi hoá đơn, Admin không bị giới hạn. Mức này chỉnh được ở Cài đặt cửa hàng.</div>

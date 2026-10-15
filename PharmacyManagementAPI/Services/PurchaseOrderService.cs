@@ -131,6 +131,11 @@ namespace PharmacyManagementAPI.Services
                     var medicine = medicines.First(m => m.Id == item.MedicineId);
                     medicine.ImportPrice = item.ImportPrice;
 
+                    // Thuốc chưa có nhà cung cấp thì ghi nhận luôn nhà cung cấp của phiếu nhập này
+                    // (lần sau hết hàng sẽ tự điền nhà cung cấp trên form nhập hàng)
+                    if (!medicine.SupplierId.HasValue)
+                        medicine.SupplierId = dto.SupplierId;
+
                     _batches.AddBatch(item.MedicineId, batchNumber, item.ExpiryDate, item.ImportPrice,
                                       item.Quantity, purchaseOrder.Id, null);
                 }

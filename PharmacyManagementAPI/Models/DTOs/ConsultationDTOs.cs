@@ -24,6 +24,7 @@ namespace PharmacyManagementAPI.Models.DTOs
         public string Advice { get; set; } = string.Empty;
         public DateTime? FollowUpDate { get; set; }
         public string Status { get; set; } = string.Empty;
+        public int CreatedByUserId { get; set; }
         public string? CreatedByName { get; set; }
         public DateTime CreatedAt { get; set; }
         public List<ConsultationMedicineDto> Medicines { get; set; } = new();

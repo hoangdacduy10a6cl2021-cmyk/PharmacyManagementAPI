@@ -8,7 +8,7 @@ namespace PharmacyManagementAPI.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
+    [Authorize(Roles = "Admin")] // Nhập hàng là nghiệp vụ của Admin
     public class PurchaseOrderController : ControllerBase
     {
         private readonly IPurchaseOrderService _service;
@@ -44,7 +44,6 @@ namespace PharmacyManagementAPI.Controllers
 
         // Chỉ Admin được tạo phiếu nhập (theo mockup - phần Quản lý nhập hàng nằm bên Admin)
         [HttpPost]
-        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create(CreatePurchaseOrderDto dto)
         {
             var userId = GetCurrentUserId();

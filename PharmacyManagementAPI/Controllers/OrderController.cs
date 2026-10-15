@@ -24,14 +24,18 @@ namespace PharmacyManagementAPI.Controllers
             return int.Parse(idClaim!);
         }
 
-        // GET /api/Order?customerId=1&fromDate=2026-01-01&toDate=2026-12-31
+        // GET /api/Order?customerId=1&fromDate=2026-01-01&toDate=2026-12-31&userId=3
+        // Nhân viên chỉ xem được hoá đơn do chính mình bán (bỏ qua userId truyền lên).
+        // Admin xem được tất cả và có thể lọc theo từng nhân viên bằng userId.
         [HttpGet]
         public async Task<IActionResult> GetAll(
             [FromQuery] int? customerId,
             [FromQuery] DateTime? fromDate,
-            [FromQuery] DateTime? toDate)
+            [FromQuery] DateTime? toDate,
+            [FromQuery] int? userId)
         {
-            return Ok(await _service.GetAllAsync(customerId, fromDate, toDate));
+            var sellerId = User.IsInRole("Admin") ? userId : GetCurrentUserId();
+            return Ok(await _service.GetAllAsync(customerId, fromDate, toDate, sellerId));
         }
 
         [HttpGet("{id}")]
@@ -39,15 +43,23 @@ namespace PharmacyManagementAPI.Controllers
         {
             var result = await _service.GetByIdAsync(id);
             if (result == null) return NotFound(new { message = "Không tìm thấy hoá đơn." });
+
+            // Nhân viên không được xem hoá đơn của người bán khác
+            if (!User.IsInRole("Admin") && result.UserId != GetCurrentUserId())
+                return NotFound(new { message = "Không tìm thấy hoá đơn." });
+
             return Ok(result);
         }
 
-        // Cả Admin và Nhân viên đều được bán hàng
+        // Chỉ Nhân viên bán hàng được tạo hoá đơn. Admin không bán hàng, chỉ xem doanh thu.
         [HttpPost]
         public async Task<IActionResult> Create(CreateOrderDto dto)
         {
+            if (User.IsInRole("Admin"))
+                return StatusCode(StatusCodes.Status403Forbidden, new { message = "Quản trị viên không bán hàng. Vui lòng dùng tài khoản nhân viên." });
+
             var userId = GetCurrentUserId();
-            var (data, error) = await _service.CreateAsync(dto, userId, User.IsInRole("Admin"));
+            var (data, error) = await _service.CreateAsync(dto, userId, false);
             if (error != null) return BadRequest(new { message = error });
             return CreatedAtAction(nameof(GetById), new { id = data!.Id }, data);
         }
@@ -56,6 +68,14 @@ namespace PharmacyManagementAPI.Controllers
         [HttpPost("{id}/cancel")]
         public async Task<IActionResult> Cancel(int id)
         {
+            // Nhân viên chỉ được hủy hoá đơn của chính mình
+            if (!User.IsInRole("Admin"))
+            {
+                var existing = await _service.GetByIdAsync(id);
+                if (existing != null && existing.UserId != GetCurrentUserId())
+                    return NotFound(new { message = "Không tìm thấy hoá đơn." });
+            }
+
             var (data, error) = await _service.CancelAsync(id);
             if (error != null)
             {
